@@ -1,0 +1,1057 @@
+--------------------------------------------------------------------------------
+Release 14.4 Trace  (lin64)
+Copyright (c) 1995-2012 Xilinx, Inc.  All rights reserved.
+
+/home/shunsuke/Xilinx/14.4/ISE_DS/ISE/bin/lin64/unwrapped/trce -intstyle ise -v
+3 -s 1 -n 3 -fastpaths -xml TOP.twx TOP.ncd -o TOP.twr TOP.pcf -ucf top.ucf
+
+Design file:              TOP.ncd
+Physical constraint file: TOP.pcf
+Device,package,speed:     xc5vlx50t,ff1136,-1 (PRODUCTION 1.73 2012-12-04, STEPPING level 0)
+Report level:             verbose report
+
+Environment Variable      Effect 
+--------------------      ------ 
+NONE                      No environment variables were set
+--------------------------------------------------------------------------------
+
+INFO:Timing:3412 - To improve timing, see the Timing Closure User Guide (UG612).
+INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths 
+   option. All paths that are not constrained will be reported in the 
+   unconstrained paths section(s) of the report.
+INFO:Timing:3339 - The clock-to-out numbers in this timing report are based on 
+   a 50 Ohm transmission line loading model.  For the details of this model, 
+   and for more information on accounting for different loading conditions, 
+   please see the device datasheet.
+
+================================================================================
+Timing constraint: TS_SYS_CLK = PERIOD TIMEGRP "SYS_CLK" 14.52 ns HIGH 50%;
+For more information, see Period Analysis in the Timing Closure User Guide (UG612).
+
+ 36108365537 paths analyzed, 946 endpoints analyzed, 20 failing endpoints
+ 20 timing errors detected. (20 setup errors, 0 hold errors, 0 component switching limit errors)
+ Minimum period is  15.250ns.
+--------------------------------------------------------------------------------
+
+Paths for end point fltOutBuf_24 (SLICE_X25Y75.D5), 546105140 paths
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.730ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn2_28 (FF)
+  Destination:          fltOutBuf_24 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.157ns (Levels of Logic = 22)
+  Clock Path Skew:      -0.058ns (1.142 - 1.200)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn2_28 to fltOutBuf_24
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y67.DQ      Tcko                  0.450   fltIn2<28>
+                                                       fltIn2_28
+    SLICE_X34Y66.B2      net (fanout=6)        0.779   fltIn2<28>
+    SLICE_X34Y66.COUT    Topcyb                0.501   fltIn2<24>
+                                                       faddRegister/Msub_lenRawSft_lut<5>
+                                                       faddRegister/Msub_lenRawSft_cy<7>
+    SLICE_X34Y67.CIN     net (fanout=1)        0.000   faddRegister/Msub_lenRawSft_cy<7>
+    SLICE_X34Y67.AMUX    Tcina                 0.271   fltIn2<28>
+                                                       faddRegister/Msub_lenRawSft_xor<8>
+    SLICE_X35Y64.A2      net (fanout=165)      1.470   faddRegister/lenRawSft<8>
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.COUT    Tbyp                  0.104   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.AMUX    Tcina                 0.271   fltOutBuf<24>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_xor<8>
+    SLICE_X25Y75.D5      net (fanout=9)        0.416   faddRegister/expOutSubRaw<8>
+    SLICE_X25Y75.CLK     Tas                   0.184   fltOutBuf<24>
+                                                       faddRegister/fltOut<24>_F
+                                                       faddRegister/fltOut<24>
+                                                       fltOutBuf_24
+    -------------------------------------------------  ---------------------------
+    Total                                     15.157ns (4.451ns logic, 10.706ns route)
+                                                       (29.4% logic, 70.6% route)
+
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.706ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn1_23 (FF)
+  Destination:          fltOutBuf_24 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.124ns (Levels of Logic = 22)
+  Clock Path Skew:      -0.067ns (1.142 - 1.209)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn1_23 to fltOutBuf_24
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y65.AQ      Tcko                  0.450   fltIn1<20>
+                                                       fltIn1_23
+    SLICE_X34Y65.A4      net (fanout=9)        0.387   fltIn1<23>
+    SLICE_X34Y65.DMUX    Topad                 0.743   fltIn1<20>
+                                                       faddRegister/Msub_lenRawSft_lut<0>
+                                                       faddRegister/Msub_lenRawSft_cy<3>
+    SLICE_X32Y67.D4      net (fanout=19)       0.753   faddRegister/lenRawSft<3>
+    SLICE_X32Y67.D       Tilo                  0.094   faddRegister/N7
+                                                       faddRegister/lenSft<4>11
+    SLICE_X35Y64.A4      net (fanout=49)       1.011   faddRegister/N7
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.COUT    Tbyp                  0.104   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.AMUX    Tcina                 0.271   fltOutBuf<24>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_xor<8>
+    SLICE_X25Y75.D5      net (fanout=9)        0.416   faddRegister/expOutSubRaw<8>
+    SLICE_X25Y75.CLK     Tas                   0.184   fltOutBuf<24>
+                                                       faddRegister/fltOut<24>_F
+                                                       faddRegister/fltOut<24>
+                                                       fltOutBuf_24
+    -------------------------------------------------  ---------------------------
+    Total                                     15.124ns (4.516ns logic, 10.608ns route)
+                                                       (29.9% logic, 70.1% route)
+
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.689ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn2_24 (FF)
+  Destination:          fltOutBuf_24 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.111ns (Levels of Logic = 22)
+  Clock Path Skew:      -0.063ns (1.142 - 1.205)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn2_24 to fltOutBuf_24
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y66.DQ      Tcko                  0.450   fltIn2<24>
+                                                       fltIn2_24
+    SLICE_X34Y65.B5      net (fanout=7)        0.400   fltIn2<24>
+    SLICE_X34Y65.DMUX    Topbd                 0.717   fltIn1<20>
+                                                       faddRegister/Msub_lenRawSft_lut<1>
+                                                       faddRegister/Msub_lenRawSft_cy<3>
+    SLICE_X32Y67.D4      net (fanout=19)       0.753   faddRegister/lenRawSft<3>
+    SLICE_X32Y67.D       Tilo                  0.094   faddRegister/N7
+                                                       faddRegister/lenSft<4>11
+    SLICE_X35Y64.A4      net (fanout=49)       1.011   faddRegister/N7
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.COUT    Tbyp                  0.104   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.AMUX    Tcina                 0.271   fltOutBuf<24>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_xor<8>
+    SLICE_X25Y75.D5      net (fanout=9)        0.416   faddRegister/expOutSubRaw<8>
+    SLICE_X25Y75.CLK     Tas                   0.184   fltOutBuf<24>
+                                                       faddRegister/fltOut<24>_F
+                                                       faddRegister/fltOut<24>
+                                                       fltOutBuf_24
+    -------------------------------------------------  ---------------------------
+    Total                                     15.111ns (4.490ns logic, 10.621ns route)
+                                                       (29.7% logic, 70.3% route)
+
+--------------------------------------------------------------------------------
+
+Paths for end point fltOutBuf_30 (SLICE_X27Y75.B6), 546105140 paths
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.626ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn2_28 (FF)
+  Destination:          fltOutBuf_30 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.050ns (Levels of Logic = 21)
+  Clock Path Skew:      -0.061ns (1.139 - 1.200)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn2_28 to fltOutBuf_30
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y67.DQ      Tcko                  0.450   fltIn2<28>
+                                                       fltIn2_28
+    SLICE_X34Y66.B2      net (fanout=6)        0.779   fltIn2<28>
+    SLICE_X34Y66.COUT    Topcyb                0.501   fltIn2<24>
+                                                       faddRegister/Msub_lenRawSft_lut<5>
+                                                       faddRegister/Msub_lenRawSft_cy<7>
+    SLICE_X34Y67.CIN     net (fanout=1)        0.000   faddRegister/Msub_lenRawSft_cy<7>
+    SLICE_X34Y67.AMUX    Tcina                 0.271   fltIn2<28>
+                                                       faddRegister/Msub_lenRawSft_xor<8>
+    SLICE_X35Y64.A2      net (fanout=165)      1.470   faddRegister/lenRawSft<8>
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.DMUX    Tcind                 0.402   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X27Y75.B6      net (fanout=1)        0.439   faddRegister/expOutSubRaw<7>
+    SLICE_X27Y75.CLK     Tas                   0.027   fltOutBuf<31>
+                                                       faddRegister/fltOut<30>1
+                                                       fltOutBuf_30
+    -------------------------------------------------  ---------------------------
+    Total                                     15.050ns (4.321ns logic, 10.729ns route)
+                                                       (28.7% logic, 71.3% route)
+
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.602ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn1_23 (FF)
+  Destination:          fltOutBuf_30 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.017ns (Levels of Logic = 21)
+  Clock Path Skew:      -0.070ns (1.139 - 1.209)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn1_23 to fltOutBuf_30
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y65.AQ      Tcko                  0.450   fltIn1<20>
+                                                       fltIn1_23
+    SLICE_X34Y65.A4      net (fanout=9)        0.387   fltIn1<23>
+    SLICE_X34Y65.DMUX    Topad                 0.743   fltIn1<20>
+                                                       faddRegister/Msub_lenRawSft_lut<0>
+                                                       faddRegister/Msub_lenRawSft_cy<3>
+    SLICE_X32Y67.D4      net (fanout=19)       0.753   faddRegister/lenRawSft<3>
+    SLICE_X32Y67.D       Tilo                  0.094   faddRegister/N7
+                                                       faddRegister/lenSft<4>11
+    SLICE_X35Y64.A4      net (fanout=49)       1.011   faddRegister/N7
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.DMUX    Tcind                 0.402   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X27Y75.B6      net (fanout=1)        0.439   faddRegister/expOutSubRaw<7>
+    SLICE_X27Y75.CLK     Tas                   0.027   fltOutBuf<31>
+                                                       faddRegister/fltOut<30>1
+                                                       fltOutBuf_30
+    -------------------------------------------------  ---------------------------
+    Total                                     15.017ns (4.386ns logic, 10.631ns route)
+                                                       (29.2% logic, 70.8% route)
+
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.585ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn2_24 (FF)
+  Destination:          fltOutBuf_30 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.004ns (Levels of Logic = 21)
+  Clock Path Skew:      -0.066ns (1.139 - 1.205)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn2_24 to fltOutBuf_30
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y66.DQ      Tcko                  0.450   fltIn2<24>
+                                                       fltIn2_24
+    SLICE_X34Y65.B5      net (fanout=7)        0.400   fltIn2<24>
+    SLICE_X34Y65.DMUX    Topbd                 0.717   fltIn1<20>
+                                                       faddRegister/Msub_lenRawSft_lut<1>
+                                                       faddRegister/Msub_lenRawSft_cy<3>
+    SLICE_X32Y67.D4      net (fanout=19)       0.753   faddRegister/lenRawSft<3>
+    SLICE_X32Y67.D       Tilo                  0.094   faddRegister/N7
+                                                       faddRegister/lenSft<4>11
+    SLICE_X35Y64.A4      net (fanout=49)       1.011   faddRegister/N7
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.DMUX    Tcind                 0.402   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X27Y75.B6      net (fanout=1)        0.439   faddRegister/expOutSubRaw<7>
+    SLICE_X27Y75.CLK     Tas                   0.027   fltOutBuf<31>
+                                                       faddRegister/fltOut<30>1
+                                                       fltOutBuf_30
+    -------------------------------------------------  ---------------------------
+    Total                                     15.004ns (4.360ns logic, 10.644ns route)
+                                                       (29.1% logic, 70.9% route)
+
+--------------------------------------------------------------------------------
+
+Paths for end point fltOutBuf_25 (SLICE_X27Y74.C5), 546105140 paths
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.592ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn2_28 (FF)
+  Destination:          fltOutBuf_25 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      15.013ns (Levels of Logic = 22)
+  Clock Path Skew:      -0.064ns (1.136 - 1.200)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn2_28 to fltOutBuf_25
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y67.DQ      Tcko                  0.450   fltIn2<28>
+                                                       fltIn2_28
+    SLICE_X34Y66.B2      net (fanout=6)        0.779   fltIn2<28>
+    SLICE_X34Y66.COUT    Topcyb                0.501   fltIn2<24>
+                                                       faddRegister/Msub_lenRawSft_lut<5>
+                                                       faddRegister/Msub_lenRawSft_cy<7>
+    SLICE_X34Y67.CIN     net (fanout=1)        0.000   faddRegister/Msub_lenRawSft_cy<7>
+    SLICE_X34Y67.AMUX    Tcina                 0.271   fltIn2<28>
+                                                       faddRegister/Msub_lenRawSft_xor<8>
+    SLICE_X35Y64.A2      net (fanout=165)      1.470   faddRegister/lenRawSft<8>
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.COUT    Tbyp                  0.104   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.AMUX    Tcina                 0.271   fltOutBuf<24>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_xor<8>
+    SLICE_X27Y74.C5      net (fanout=9)        0.427   faddRegister/expOutSubRaw<8>
+    SLICE_X27Y74.CLK     Tas                   0.029   fltOutBuf<25>
+                                                       faddRegister/fltOut<25>1
+                                                       fltOutBuf_25
+    -------------------------------------------------  ---------------------------
+    Total                                     15.013ns (4.296ns logic, 10.717ns route)
+                                                       (28.6% logic, 71.4% route)
+
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.568ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn1_23 (FF)
+  Destination:          fltOutBuf_25 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      14.980ns (Levels of Logic = 22)
+  Clock Path Skew:      -0.073ns (1.136 - 1.209)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn1_23 to fltOutBuf_25
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y65.AQ      Tcko                  0.450   fltIn1<20>
+                                                       fltIn1_23
+    SLICE_X34Y65.A4      net (fanout=9)        0.387   fltIn1<23>
+    SLICE_X34Y65.DMUX    Topad                 0.743   fltIn1<20>
+                                                       faddRegister/Msub_lenRawSft_lut<0>
+                                                       faddRegister/Msub_lenRawSft_cy<3>
+    SLICE_X32Y67.D4      net (fanout=19)       0.753   faddRegister/lenRawSft<3>
+    SLICE_X32Y67.D       Tilo                  0.094   faddRegister/N7
+                                                       faddRegister/lenSft<4>11
+    SLICE_X35Y64.A4      net (fanout=49)       1.011   faddRegister/N7
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.COUT    Tbyp                  0.104   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.AMUX    Tcina                 0.271   fltOutBuf<24>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_xor<8>
+    SLICE_X27Y74.C5      net (fanout=9)        0.427   faddRegister/expOutSubRaw<8>
+    SLICE_X27Y74.CLK     Tas                   0.029   fltOutBuf<25>
+                                                       faddRegister/fltOut<25>1
+                                                       fltOutBuf_25
+    -------------------------------------------------  ---------------------------
+    Total                                     14.980ns (4.361ns logic, 10.619ns route)
+                                                       (29.1% logic, 70.9% route)
+
+--------------------------------------------------------------------------------
+Slack (setup path):     -0.551ns (requirement - (data path - clock path skew + uncertainty))
+  Source:               fltIn2_24 (FF)
+  Destination:          fltOutBuf_25 (FF)
+  Requirement:          14.520ns
+  Data Path Delay:      14.967ns (Levels of Logic = 22)
+  Clock Path Skew:      -0.069ns (1.136 - 1.205)
+  Source Clock:         clk rising at 0.000ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.035ns
+
+  Clock Uncertainty:          0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter (TSJ):  0.070ns
+    Total Input Jitter (TIJ):   0.000ns
+    Discrete Jitter (DJ):       0.000ns
+    Phase Error (PE):           0.000ns
+
+  Maximum Data Path: fltIn2_24 to fltOutBuf_25
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X34Y66.DQ      Tcko                  0.450   fltIn2<24>
+                                                       fltIn2_24
+    SLICE_X34Y65.B5      net (fanout=7)        0.400   fltIn2<24>
+    SLICE_X34Y65.DMUX    Topbd                 0.717   fltIn1<20>
+                                                       faddRegister/Msub_lenRawSft_lut<1>
+                                                       faddRegister/Msub_lenRawSft_cy<3>
+    SLICE_X32Y67.D4      net (fanout=19)       0.753   faddRegister/lenRawSft<3>
+    SLICE_X32Y67.D       Tilo                  0.094   faddRegister/N7
+                                                       faddRegister/lenSft<4>11
+    SLICE_X35Y64.A4      net (fanout=49)       1.011   faddRegister/N7
+    SLICE_X35Y64.A       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_3_mux0000<4>1
+    SLICE_X35Y64.B1      net (fanout=3)        0.876   faddRegister/sftUnifFrc/uFrc<3><4>
+    SLICE_X35Y64.B       Tilo                  0.094   faddRegister/sftUnifFrc/uFrc<1><16>
+                                                       faddRegister/sftUnifFrc/uFrc_1_mux0000<4>
+    SLICE_X30Y65.B5      net (fanout=14)       0.598   faddRegister/sftUnifFrc/uFrc<1><4>
+    SLICE_X30Y65.B       Tilo                  0.094   faddRegister/roundFurther_inv
+                                                       faddRegister/roundFurther_inv1_SW0
+    SLICE_X32Y64.C3      net (fanout=2)        0.619   N519
+    SLICE_X32Y64.C       Tilo                  0.094   faddRegister/sndOver
+                                                       faddRegister/roundFurther1
+    SLICE_X31Y66.AX      net (fanout=1)        0.448   faddRegister/roundFurther
+    SLICE_X31Y66.COUT    Taxcy                 0.475   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<3>
+    SLICE_X31Y67.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<7>
+    SLICE_X31Y68.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<11>
+    SLICE_X31Y69.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.CIN     net (fanout=1)        0.010   faddRegister/Madd_frcOutAdder1_addsub0000_cy<15>
+    SLICE_X31Y70.COUT    Tbyp                  0.104   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.CIN     net (fanout=1)        0.000   faddRegister/Madd_frcOutAdder1_addsub0000_cy<19>
+    SLICE_X31Y71.DMUX    Tcind                 0.330   faddRegister/frcOutAdder1_addsub0000<23>
+                                                       faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C2      net (fanout=56)       1.516   faddRegister/Madd_frcOutAdder1_addsub0000_cy<23>
+    SLICE_X25Y68.C       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>_SW1
+    SLICE_X25Y68.B5      net (fanout=1)        0.367   N580
+    SLICE_X25Y68.B       Tilo                  0.094   N580
+                                                       faddRegister/frcIreg<14>
+    SLICE_X24Y73.B5      net (fanout=3)        0.590   faddRegister/frcIreg<14>
+    SLICE_X24Y73.B       Tilo                  0.094   N596
+                                                       faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B3      net (fanout=30)       0.848   faddRegister/padFrcIreg/uFrc_2_cmp_eq000027
+    SLICE_X22Y75.B       Tilo                  0.094   N412
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1_SW0
+    SLICE_X23Y76.A1      net (fanout=1)        0.861   N412
+    SLICE_X23Y76.A       Tilo                  0.094   fltOutBuf<2>
+                                                       faddRegister/padFrcIreg/uFrc_1_mux0000<23>1
+    SLICE_X24Y72.A4      net (fanout=47)       0.798   faddRegister/padFrcIreg/uFrc<1><23>
+    SLICE_X24Y72.A       Tilo                  0.094   faddRegister/padFrcIreg/uFrc<3><17>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.A4      net (fanout=1)        0.510   faddRegister/Msub_expOutSubRaw_Madd_lut<0>
+    SLICE_X25Y73.COUT    Topcya                0.509   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_lut<0>_rt
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<3>
+    SLICE_X25Y74.COUT    Tbyp                  0.104   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.CIN     net (fanout=1)        0.000   faddRegister/Msub_expOutSubRaw_Madd_cy<7>
+    SLICE_X25Y75.AMUX    Tcina                 0.271   fltOutBuf<24>
+                                                       faddRegister/Msub_expOutSubRaw_Madd_xor<8>
+    SLICE_X27Y74.C5      net (fanout=9)        0.427   faddRegister/expOutSubRaw<8>
+    SLICE_X27Y74.CLK     Tas                   0.029   fltOutBuf<25>
+                                                       faddRegister/fltOut<25>1
+                                                       fltOutBuf_25
+    -------------------------------------------------  ---------------------------
+    Total                                     14.967ns (4.335ns logic, 10.632ns route)
+                                                       (29.0% logic, 71.0% route)
+
+--------------------------------------------------------------------------------
+
+Hold Paths: TS_SYS_CLK = PERIOD TIMEGRP "SYS_CLK" 14.52 ns HIGH 50%;
+--------------------------------------------------------------------------------
+
+Paths for end point fltIn1_16 (SLICE_X47Y77.AX), 1 path
+--------------------------------------------------------------------------------
+Slack (hold path):      0.445ns (requirement - (clock path skew + uncertainty - data path))
+  Source:               fltIn1Buf_16 (FF)
+  Destination:          fltIn1_16 (FF)
+  Requirement:          0.000ns
+  Data Path Delay:      0.457ns (Levels of Logic = 0)
+  Clock Path Skew:      0.012ns (0.151 - 0.139)
+  Source Clock:         clk rising at 14.520ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.000ns
+
+  Minimum Data Path: fltIn1Buf_16 to fltIn1_16
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X47Y76.AQ      Tcko                  0.414   fltIn1Buf<19>
+                                                       fltIn1Buf_16
+    SLICE_X47Y77.AX      net (fanout=1)        0.272   fltIn1Buf<16>
+    SLICE_X47Y77.CLK     Tckdi       (-Th)     0.229   fltIn1<19>
+                                                       fltIn1_16
+    -------------------------------------------------  ---------------------------
+    Total                                      0.457ns (0.185ns logic, 0.272ns route)
+                                                       (40.5% logic, 59.5% route)
+
+--------------------------------------------------------------------------------
+
+Paths for end point fltIn1_17 (SLICE_X47Y77.BX), 1 path
+--------------------------------------------------------------------------------
+Slack (hold path):      0.457ns (requirement - (clock path skew + uncertainty - data path))
+  Source:               fltIn1Buf_17 (FF)
+  Destination:          fltIn1_17 (FF)
+  Requirement:          0.000ns
+  Data Path Delay:      0.469ns (Levels of Logic = 0)
+  Clock Path Skew:      0.012ns (0.151 - 0.139)
+  Source Clock:         clk rising at 14.520ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.000ns
+
+  Minimum Data Path: fltIn1Buf_17 to fltIn1_17
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X47Y76.BQ      Tcko                  0.414   fltIn1Buf<19>
+                                                       fltIn1Buf_17
+    SLICE_X47Y77.BX      net (fanout=1)        0.286   fltIn1Buf<17>
+    SLICE_X47Y77.CLK     Tckdi       (-Th)     0.231   fltIn1<19>
+                                                       fltIn1_17
+    -------------------------------------------------  ---------------------------
+    Total                                      0.469ns (0.183ns logic, 0.286ns route)
+                                                       (39.0% logic, 61.0% route)
+
+--------------------------------------------------------------------------------
+
+Paths for end point fltIn1_18 (SLICE_X47Y77.CX), 1 path
+--------------------------------------------------------------------------------
+Slack (hold path):      0.459ns (requirement - (clock path skew + uncertainty - data path))
+  Source:               fltIn1Buf_18 (FF)
+  Destination:          fltIn1_18 (FF)
+  Requirement:          0.000ns
+  Data Path Delay:      0.471ns (Levels of Logic = 0)
+  Clock Path Skew:      0.012ns (0.151 - 0.139)
+  Source Clock:         clk rising at 14.520ns
+  Destination Clock:    clk rising at 14.520ns
+  Clock Uncertainty:    0.000ns
+
+  Minimum Data Path: fltIn1Buf_18 to fltIn1_18
+    Location             Delay type         Delay(ns)  Physical Resource
+                                                       Logical Resource(s)
+    -------------------------------------------------  -------------------
+    SLICE_X47Y76.CQ      Tcko                  0.414   fltIn1Buf<19>
+                                                       fltIn1Buf_18
+    SLICE_X47Y77.CX      net (fanout=1)        0.275   fltIn1Buf<18>
+    SLICE_X47Y77.CLK     Tckdi       (-Th)     0.218   fltIn1<19>
+                                                       fltIn1_18
+    -------------------------------------------------  ---------------------------
+    Total                                      0.471ns (0.196ns logic, 0.275ns route)
+                                                       (41.6% logic, 58.4% route)
+
+--------------------------------------------------------------------------------
+
+Component Switching Limit Checks: TS_SYS_CLK = PERIOD TIMEGRP "SYS_CLK" 14.52 ns HIGH 50%;
+--------------------------------------------------------------------------------
+Slack: 12.854ns (period - min period limit)
+  Period: 14.520ns
+  Min period limit: 1.666ns (600.240MHz) (Tbgper_I)
+  Physical resource: bg/I0
+  Logical resource: bg/I0
+  Location pin: BUFGCTRL_X0Y31.I0
+  Clock network: iclk
+--------------------------------------------------------------------------------
+Slack: 13.702ns (period - (min low pulse limit / (low pulse / period)))
+  Period: 14.520ns
+  Low pulse: 7.260ns
+  Low pulse limit: 0.409ns (Tcl)
+  Physical resource: fltOutBuf<9>/CLK
+  Logical resource: fltOutBuf_10/CK
+  Location pin: SLICE_X12Y79.CLK
+  Clock network: clk
+--------------------------------------------------------------------------------
+Slack: 13.702ns (period - (min high pulse limit / (high pulse / period)))
+  Period: 14.520ns
+  High pulse: 7.260ns
+  High pulse limit: 0.409ns (Tch)
+  Physical resource: fltOutBuf<9>/CLK
+  Logical resource: fltOutBuf_10/CK
+  Location pin: SLICE_X12Y79.CLK
+  Clock network: clk
+--------------------------------------------------------------------------------
+
+
+1 constraint not met.
+
+
+Data Sheet report:
+-----------------
+All values displayed in nanoseconds (ns)
+
+Clock to Setup on destination clock MCLK1
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+MCLK1          |   15.250|         |         |         |
+---------------+---------+---------+---------+---------+
+
+
+Timing summary:
+---------------
+
+Timing errors: 20  Score: 9268  (Setup/Max: 9268, Hold: 0)
+
+Constraints cover 36108365537 paths, 0 nets, and 4359 connections
+
+Design statistics:
+   Minimum period:  15.250ns{1}   (Maximum frequency:  65.574MHz)
+
+
+------------------------------------Footnotes-----------------------------------
+1)  The minimum period statistic assumes all single cycle delays.
+
+Analysis completed Sun Jul 28 01:43:16 2013 
+--------------------------------------------------------------------------------
+
+Trace Settings:
+-------------------------
+Trace Settings 
+
+Peak Memory Usage: 537 MB
+
+
+
