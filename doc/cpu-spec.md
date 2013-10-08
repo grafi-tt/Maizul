@@ -81,21 +81,21 @@ Displacementは，メモリアドレス（のオフセット）として用い�
 ## ニーモニックの記法
 ### データサイズ
 <dl>
-    <dt>*u*ni byte</dt>
+    <dt><b>u</b>ni byte</dt>
         <dd>1byte(8bit)</dd>
-    <dt>*d*ouble byte</dt>
+    <dt><b>d</b>ouble byte</dt>
         <dd>2byte(16bit)</dd>
-    <dt>*q*uad byte</dt>
+    <dt><b>q</b>uad byte</dt>
         <dd>4byte(32bit)</dd>
-    <dt>*o*cto byte</dt>
+    <dt><b>o</b>cto byte</dt>
         <dd>8byte(64bit)</dd>
 </dl>
 
 ### 符号
 <dl>
-    <dt>*u*nsigned</dt>
+    <dt><b>u</b>nsigned</dt>
         <dd>符号無し</dd>
-    <dt>*s*igned</dt>
+    <dt><b>s</b>igned</dt>
         <dd>符号付き</dd>
 </dl>
 
