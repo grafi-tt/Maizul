@@ -18,25 +18,25 @@
         <th>31</th><th>30</th><th>29</th><th>28</th><th>27</th><th>26</th><th>25</th><th>24</th><th>23</th><th>22</th><th>21</th><th>20</th><th>19</th><th>18</th><th>17</th><th>16</th><th>15</th><th>14</th><th>13</th><th>12</th><th>11</th><th>10</th><th>9</th><th>8</th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
     </tr>
     <tr><td>RO</td>
-        <td span="6">OpCode</td><td span="5">Rs</td><td span="5">Rt</td><td span="3">Unused</td><td span="1">0</td><td span="7">Function</td><td span="5">Rd</td>
+        <td colspan="6">OpCode</td><td colspan="5">Rs</td><td colspan="5">Rt</td><td colspan="3">Unused</td><td colspan="1">0</td><td colspan="7">Function</td><td colspan="5">Rd</td>
     </tr>
     <tr><td>IO</td>
-        <td span="6">OpCode</td><td span="5">Rs</td><td span="8">Immediate</td><td span="1">1</td><td span="7">Function</td><td span="5">Rd</td>
+        <td colspan="6">OpCode</td><td colspan="5">Rs</td><td colspan="8">Immediate</td><td colspan="1">1</td><td colspan="7">Function</td><td colspan="5">Rd</td>
     </tr>
     <tr><td>FO</td>
-        <td span="6">OpCode</td><td span="5">Fs</td><td span="5">Ft</td><td span="3">Unused</td><td span="1">0</td><td span="7">Function</td><td span="5">Fd</td>
+        <td colspan="6">OpCode</td><td colspan="5">Fs</td><td colspan="5">Ft</td><td colspan="3">Unused</td><td colspan="1">0</td><td colspan="7">Function</td><td colspan="5">Fd</td>
     </tr>
     <tr><td>RM</td>
-        <td span="6">OpCode</td><td span="5">Ra</td><td span="5">Rb</td><td span="16">Displacement</td>
+        <td colspan="6">OpCode</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td>FM</td>
-        <td span="6">OpCode</td><td span="5">Fa</td><td span="5">Fb</td><td span="16">Displacement</td>
+        <td colspan="6">OpCode</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td>RJ</td>
-        <td span="6">OpCode</td><td span="1">0</td><td span="9">Function</td><td span="11">Unused</td><td span="5">R</td>
+        <td colspan="6">OpCode</td><td colspan="1">0</td><td colspan="9">Function</td><td colspan="11">Unused</td><td colspan="5">R</td>
     </tr>
     <tr><td>DJ</td>
-        <td span="6">OpCode</td><td span="1">1</td><td span="9">Function</td><td span="16">Displacement</td>
+        <td colspan="6">OpCode</td><td colspan="1">1</td><td colspan="9">Function</td><td colspan="16">Displacement</td>
     </tr>
 </table>
 
