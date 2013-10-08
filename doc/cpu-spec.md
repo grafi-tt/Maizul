@@ -163,7 +163,7 @@ memo
 #### mulqsh
 <dl>
     <dt>実装箇所</dt>
-        <dd>ライブラリ or アセンブラ</dd>
+        <dd>ライブラリ</dd>
     <dt>実装優先度</dt>
         <dd>余興</dd>
 </dl>
@@ -241,18 +241,6 @@ Rs < Rt
 Rs ≦ Rt
 
 ### ビット演算（RO，IO）
-#### not，noti
-<dl>
-    <dt>実装箇所</dt>
-        <dd>アセンブラ</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
-
-    nor R0 Rs Rd / nori R0 imm Rd
-
-全てのbitを反転．MinCamlのnotの実装に利用．
-
 #### nor，nori
 <dl>
     <dt>実装箇所</dt>
