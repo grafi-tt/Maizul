@@ -181,7 +181,7 @@ memo
 除算．詳細未定．
 
 
-### 比較命令
+### 比較命令（RO，IO）
 条件成立ならRdに1を，そうでないならRdに0を入れる
 
 #### eq，eqi
@@ -514,6 +514,14 @@ FPU班に任せる．
 ### メモリアクセス命令（RM，FM）
 最低限の命令のみ．即値のロード・ストアに対応するには命令フォーマットの変更が必要になりそう．
 
+#### 記法
+<dl>
+    <dt>register<dt>
+        <dd>t = 0<dd>
+    <dt>float<dt>
+        <dd>t = 1<dd>
+</dl>
+
 #### ldq，fldq
 <dl>
     <dt>実装箇所</dt>
@@ -548,10 +556,10 @@ Raの値をSRAM上のアドレスが指す位置にストア．
 
 #### 記法
 <dl>
-    <dd>register<dd>
-        <dt>t = 0<dt>
-    <dd>float<dd>
-        <dt>t = 1<dt>
+    <dt>register<dt>
+        <dd>t = 0<dd>
+    <dt>float<dt>
+        <dd>t = 1<dd>
 </dl>
 
 #### beq，fbeq
