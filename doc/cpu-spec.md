@@ -13,9 +13,9 @@
 
 
 ## 命令フォーマット
-*   1bit目が立ってれば分岐かジャンプか特殊命令，立ってなければそれ以外
-    *   4bit目が立ってれば特殊命令と分かる
+*   1bit目が立ってれば分岐かジャンプ，立ってなければそれ以外
 *   2bit目が立ってればメモリアクセス，立ってなければそれ以外
+*   ただし1bit目も2bit目も立ってれば特殊命令
 *   3bit目が立ってればオペランドは浮動小数点，立ってなければ整数
 
 というデコードを可能にしている．そのせいで分岐命令がカツカツになってしまったので，命令追加が必要なら変更の可能性有り．
@@ -40,19 +40,19 @@
         <td colspan="6">011xxx</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>R</b>egisiter-<b>B</b>ranch</td>
-        <td colspan="6">1001xx</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Displacement</td>
+        <td colspan="6">100xxx</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>F</b>loat-<b>B</b>ranch</td>
-        <td colspan="6">1011xx</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Displacement</td>
+        <td colspan="6">101xxx</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>R</b>egister-<b>J</b>ump</td>
-        <td colspan="6">100000</td><td colspan="5">0</td><td colspan="1">1</td><td colspan="1">1</td><td colspan="3">Function</td><td colspan="11">Unused</td><td colspan="5">R</td>
+        <td colspan="6">100111</td><td colspan="5">0</td><td colspan="1">0</td><td colspan="4">Function</td><td colspan="11">Unused</td><td colspan="5">R</td>
     </tr>
     <tr><td><b>D</b>isplacement-<b>J</b>ump</td>
-        <td colspan="6">100000</td><td colspan="5">0</td><td colspan="1">1</td><td colspan="1">0</td><td colspan="3">Function</td><td colspan="16">Displacement</td>
+        <td colspan="6">100111</td><td colspan="5">0</td><td colspan="1">1</td><td colspan="4">Function</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>Sp</b>ecial</td>
-        <td colspan="6">100000</td><td colspan="5">0</td><td colspan="1">0</td><td colspan="1">0</td><td colspan="3">Function</td><td colspan="16">Displacement</td>
+        <td colspan="6">11x000</td><td colspan="5">0</td><td colspan="5">Function</td><td colspan="16">Hoge</td>
     </tr>
 </table>
 
@@ -63,11 +63,11 @@ IO [     000xxx     ][     Rs      ][      Immediate       ][1][     Function   
 FO [     001xxx     ][     Fs      ][     Ft      ][Unused ][0][     Function      ][     Fd      ]
 RM [     010xxx     ][     Ra      ][     Rb      ][                 Displacement                 ]
 FM [     011xxx     ][     Fa      ][     Fb      ][                 Displacement                 ]
-RB [     1001xx     ][     Ra      ][     Rb      ][                 Displacement                 ]
-FB [     1011xx     ][     Fa      ][     Fb      ][                 Displacement                 ]
-RJ [     100000     ][      0      ][1][1][Functio][            Unused             ][      R      ]
-DJ [     100000     ][      0      ][1][0][Functio][                 Displacement                 ]
-SP [     100000     ][      0      ][0][0][Functio][            Unused             ][      R      ]
+RB [     100xxx     ][     Ra      ][     Rb      ][                 Displacement                 ]
+FB [     101xxx     ][     Fa      ][     Fb      ][                 Displacement                 ]
+RJ [     100111     ][      0      ][0][ Function ][            Unused             ][      R      ]
+DJ [     100111     ][      0      ][1][ Function ][                 Displacement                 ]
+SP [     11x000     ][      0      ][  Function   ][                     Hoge                     ]
 -->
 
 Unusedの値は何であっても動くはずだが，一応0を入れるようにする．
@@ -557,7 +557,7 @@ Raの値をSRAM上のアドレスが指す位置にストア．
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>10[t]100</code></dd>
+        <dd><code>10[t]000</code></dd>
 </dl>
 
 Ra = Rb / Fa = Fb ならジャンプ
@@ -569,7 +569,7 @@ Ra = Rb / Fa = Fb ならジャンプ
     <dt>実装優先度</dt>
         <dd>高速化</dd>
     <dt>opcode</dt>
-        <dd><code>10[t]101</code></dd>
+        <dd><code>10[t]001</code></dd>
 </dl>
 
 Ra ≠ Rb / Fa ≠ Fb ならジャンプ
@@ -581,7 +581,7 @@ Ra ≠ Rb / Fa ≠ Fb ならジャンプ
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>10[t]110</code></dd>
+        <dd><code>10[t]010</code></dd>
 </dl>
 
 Ra < Rb / Fa < Fb ならジャンプ
@@ -593,7 +593,7 @@ Ra < Rb / Fa < Fb ならジャンプ
     <dt>実装優先度</dt>
         <dd>高速化</dd>
     <dt>opcode</dt>
-        <dd><code>10[t]111</code></dd>
+        <dd><code>10[t]011</code></dd>
 </dl>
 
 Ra ≦ Rb / Fa ≦ Fb ならジャンプ
@@ -608,9 +608,9 @@ function
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>100000</code></dd>
+        <dd><code>100111</code></dd>
     <dt>function</dt>
-        <dd><code>000</code></dd>
+        <dd><code>0000</code></dd>
 </dl>
 
 R/Displacementにジャンプ．
@@ -622,9 +622,9 @@ R/Displacementにジャンプ．
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>100000</code></dd>
+        <dd><code>100111</code></dd>
     <dt>function</dt>
-        <dd><code>001</code></dd>
+        <dd><code>0001</code></dd>
 </dl>
 
 R/Displacementにジャンプ．このとき，PCをリンクレジスタ（R31）にセット．
@@ -636,11 +636,55 @@ R/Displacementにジャンプ．このとき，PCをリンクレジスタ（R31�
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>100000</code></dd>
+        <dd><code>100111</code></dd>
     <dt>function</dt>
-        <dd><code>010</code></dd>
+        <dd><code>0010</code></dd>
 </dl>
 
 0入力の命令．リンクレジスタ（R31）にジャンプ．命令フォーマットはDJとし，Displacementは取りあえず必ず0とする．
 
 jrを使ってアセンブラで実装することも可能だが，後々の高速化の可能性のために別命令にする．
+
+
+### 特殊命令（SP）
+#### get，fget
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>必須</dd>
+    <dt>opcode</dt>
+        <dd><code>11[t]000</code></dd>
+    <dt>function</dt>
+        <dd><code>00000</code></dd>
+</dl>
+
+<table>
+    <tr><td><b>Sp</b>ecial</td>
+        <td colspan="6">110000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">R</td>
+        <td colspan="6">111000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">F</td>
+    </tr>
+</table>
+
+標準出力なりシリアル通信なりから入力を受け取ってRまたはFの値とする．単なるバイト列として，ビッグエンディアンなので最上位ビットから順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### put，fput
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>必須</dd>
+    <dt>opcode</dt>
+        <dd><code>11[t]000</code></dd>
+    <dt>function</dt>
+        <dd><code>00001</code></dd>
+</dl>
+
+<table>
+    <tr><td><b>Sp</b>ecial</td>
+        <td colspan="6">110000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">R</td>
+        <td colspan="6">111000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">F</td>
+    </tr>
+</table>
+
+RまたはFの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位ビットから順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
