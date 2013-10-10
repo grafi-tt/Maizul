@@ -30,6 +30,9 @@
     <tr><td><b>I</b>mmediate-<b>O</b>peration</td>
         <td colspan="6">000xxx</td><td colspan="5">Rs</td><td colspan="8">Immediate</td><td colspan="1">1</td><td colspan="7">Function</td><td colspan="5">Rd</td>
     </tr>
+    <tr><td><b>L</b>ong Immediate-<b>O</b>peration</td>
+        <td colspan="6">000xxx</td><td colspan="5">Rs</td><td colspan="16">Long Immediate</td><td colspan="5">Rd</td>
+    </tr>
     <tr><td><b>F</b>loat-<b>O</b>peration</td>
         <td colspan="6">001xxx</td><td colspan="5">Fs</td><td colspan="5">Ft</td><td colspan="3">Unused</td><td colspan="1">0</td><td colspan="7">Function</td><td colspan="5">Fd</td>
     </tr>
@@ -58,8 +61,9 @@
 
 <!--
    31 30 29 28 27 26 25 24 23 22 21 20 19 28 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
-RO [     000xxx     ][     Rs      ][     Rt      ][Unused ][0][     Function      ][     Rd      ]
-IO [     000xxx     ][     Rs      ][      Immediate       ][1][     Function      ][     Rd      ]
+RO [     0000xx     ][     Rs      ][     Rt      ][Unused ][0][     Function      ][     Rd      ]
+IO [     0000xx     ][     Rs      ][      Immediate       ][1][     Function      ][     Rd      ]
+LO [     0001xx     ][     Rs      ][                Long Immediate                ][     Rd      ]
 FO [     001xxx     ][     Fs      ][     Ft      ][Unused ][0][     Function      ][     Fd      ]
 RM [     010xxx     ][     Ra      ][     Rb      ][                 Displacement                 ]
 FM [     011xxx     ][     Fa      ][     Fb      ][                 Displacement                 ]
@@ -72,9 +76,9 @@ SP [     11x000     ][      0      ][  Function   ][                     Hoge   
 
 Unusedの値は何であっても動くはずだが，一応0を入れるようにする．
 
-別記無い場合は，Rsが入力の左側，ImmediateもしくはRtが入力の右側，Rdが結果．左右というのは各命令に対応する二項演算子を考えた時にどっちに来るかということである（引き算やシフト演算などでは左右の区別が必要）．基本的にImmediateに対しては符号拡張しない．
+別記無い場合は，Rsが入力の左側，Long Immediate もしくはImmediateもしくはRtが入力の右側，Rdが結果．左右というのは各命令に対応する二項演算子を考えた時にどっちに来るかということである（引き算やシフト演算などでは左右の区別が必要）．
 
-Displacementは，メモリアドレス（のオフセット）として用いる値で，32bit単位のアクセスしか不要なので，byte単位でのアドレスから下2bitを端折った上で使う．
+Immediateに対しては符号拡張せず，Long Immediateに対しては符号拡張を行う．Displacementは，メモリアドレス（のオフセット）として用いる値で，32bit単位のアクセスしか不要なので，byte単位でのアドレスから下2bitを端折った上で使う．
 
 一つのレジスタしか入力として取らない命令は即値を受け取ることにする（12番目のbitを1）．即値として用いる値は何でも良いはずだが，一応必ず0ということにしておく．
 
@@ -102,10 +106,13 @@ Displacementは，メモリアドレス（のオフセット）として用い�
 
 ## 命令一覧
 
-### 算術命令（RO，IO）
-#### addqu，addqui
+### ALU（RO，IO，LO）
+ちょうど16命令．足りないようならまだ命令は増やせる．
+
+functionが0の命令のみ，LOフォーマットでも用いることができる．これによって，即値のレジスタへのロードを二命令で行える．
+
+#### xor，xori，xorl
 <dl>
-    <dt></dt>
     <dt>実装箇所</dt>
         <dd>コア</dd>
     <dt>実装優先度</dt>
@@ -116,144 +123,7 @@ Displacementは，メモリアドレス（のオフセット）として用い�
         <dd><code>0000000</code></dd>
 </dl>
 
-32bit符号無し整数同士の加算．下位bitは変化せず，オーバーフローは無視するため，符号付き整数の演算に使っても正しい結果を出す．
-memo
-#### subqu，subqui
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-    <dt>opcode</dt>
-        <dd><code>000000</code></dd>
-    <dt>function</dt>
-        <dd><code>0000001</code></dd>
-</dl>
-
-32bit符号無し整数同士の減算．下位bitは変化せず，アンダーフローは無視するため，符号付き整数の演算に使っても正しい結果を出す．
-
-#### mulqul，mulquli
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-    <dt>opcode</dt>
-        <dd><code>000000</code></dd>
-    <dt>function</dt>
-        <dd><code>0000010</code></dd>
-</dl>
-
-32bit符号無し整数同士の乗算．下32bitを格納．符号bitによって下位32bitは変化しないため，符号付き整数の演算に使っても正しい結果を出す．
-
-#### mulquh，mulquhi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-    <dt>opcode</dt>
-        <dd><code>000000</code></dd>
-    <dt>function</dt>
-        <dd><code>0000011</code></dd>
-</dl>
-
-符号無し32bit整数同士の乗算．上32bitを格納．
-
-#### mulqsh
-<dl>
-    <dt>実装箇所</dt>
-        <dd>ライブラリ</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
-
-符号付き32bit整数同士の乗算．上32bitを格納．Alphaのドキュメントに記載の数式参照
-
-#### div
-<dl>
-    <dt>実装箇所</dt>
-        <dd>ライブラリ</dd>
-    <dt>実装優先度</dt>
-        <dd>最低</dd>
-</dl>
-
-除算．詳細未定．
-
-
-### 比較命令（RO，IO）
-条件成立ならRdに1を，そうでないならRdに0を入れる
-
-#### eq，eqi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-    <dt>opcode</dt>
-        <dd><code>000001</code></dd>
-    <dt>function</dt>
-        <dd><code>0000000</code></dd>
-</dl>
-
-Rs = Rt
-
-#### ne，nei
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-    <dt>opcode</dt>
-        <dd><code>000001</code></dd>
-    <dt>function</dt>
-        <dd><code>0000001</code></dd>
-</dl>
-
-Rs ≠ Rt
-
-#### lt，lti
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-    <dt>opcode</dt>
-        <dd><code>000001</code></dd>
-    <dt>function</dt>
-        <dd><code>0000010</code></dd>
-</dl>
-
-Rs < Rt
-
-#### lte，ltei
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-    <dt>opcode</dt>
-        <dd><code>000001</code></dd>
-    <dt>function</dt>
-        <dd><code>0000011</code></dd>
-</dl>
-
-Rs ≦ Rt
-
-### ビット演算（RO，IO）
-#### nor，nori
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-    <dt>opcode</dt>
-        <dd><code>000010</code></dd>
-    <dt>function</dt>
-        <dd><code>0000000</code></dd>
-</dl>
-
-ビットごとのNOR．notの実装のために用いる．
+ビットごとのXOR．Long Immediateの-1とXORすることで，bitwiseのnotが可能．
 
 #### and，andi
 <dl>
@@ -262,7 +132,7 @@ Rs ≦ Rt
     <dt>実装優先度</dt>
         <dd>高速化</dd>
     <dt>opcode</dt>
-        <dd><code>000010</code></dd>
+        <dd><code>000000</code></dd>
     <dt>function</dt>
         <dd><code>0000001</code></dd>
 </dl>
@@ -276,26 +146,97 @@ Rs ≦ Rt
     <dt>実装優先度</dt>
         <dd>高速化</dd>
     <dt>opcode</dt>
-        <dd><code>000010</code></dd>
+        <dd><code>000000</code></dd>
     <dt>function</dt>
         <dd><code>0000010</code></dd>
 </dl>
 
 ビットごとのOR．
 
-#### xor，xori
+#### rotq，rotqi
 <dl>
     <dt>実装箇所</dt>
         <dd>コア</dd>
     <dt>実装優先度</dt>
-        <dd>高速化</dd>
+        <dd>最低</dd>
     <dt>opcode</dt>
-        <dd><code>000010</code></dd>
+        <dd><code>000000</code></dd>
     <dt>function</dt>
         <dd><code>0000011</code></dd>
 </dl>
 
-ビットごとのXOR．
+32bit整数に対する左循環シフト．シフト量としてRtもしくはImmediateの下位5bitを用いる．循環シフトは32を法として合同な動作をするので，これで正にも負にもシフトできていると言える．
+
+#### addqu，addqui，addqul
+<dl>
+    <dt></dt>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>必須</dd>
+    <dt>opcode</dt>
+        <dd><code>000001</code></dd>
+    <dt>function</dt>
+        <dd><code>0000000</code></dd>
+</dl>
+
+32bit符号無し整数同士の加算．下位bitは変化せず，オーバーフローは無視するため，符号付き整数の演算に使っても正しい結果を出す．
+
+#### subqu，subqui
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>必須</dd>
+    <dt>opcode</dt>
+        <dd><code>000001</code></dd>
+    <dt>function</dt>
+        <dd><code>0000001</code></dd>
+</dl>
+
+32bit符号無し整数同士の減算．下位bitは変化せず，アンダーフローは無視するため，符号付き整数の演算に使っても正しい結果を出す．
+
+##### eq，eqi
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>余興</dd>
+    <dt>opcode</dt>
+        <dd><code>000001</code></dd>
+    <dt>function</dt>
+        <dd><code>0000010</code></dd>
+</dl>
+
+Rs = Rt
+
+##### lt，lti
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>余興</dd>
+    <dt>opcode</dt>
+        <dd><code>000001</code></dd>
+    <dt>function</dt>
+        <dd><code>0000011</code></dd>
+</dl>
+
+Rs < Rt
+
+#### movh，movhs，movhl
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>必須</dd>
+    <dt>opcode</dt>
+        <dd><code>000010</code></dd>
+    <dt>function</dt>
+        <dd><code>0000000</code></dd>
+</dl>
+
+Rsの下位16bitをRdの下位16bitに，RtまたはImmediateまたはLong Immediateの下位16bitをRdの上位16bitにセット．
 
 #### lsftq，lsftqi
 <dl>
@@ -304,9 +245,9 @@ Rs ≦ Rt
     <dt>実装優先度</dt>
         <dd>余興</dd>
     <dt>opcode</dt>
-        <dd><code>000011</code></dd>
+        <dd><code>000010</code></dd>
     <dt>function</dt>
-        <dd><code>0000000</code></dd>
+        <dd><code>0000001</code></dd>
 </dl>
 
 32bit整数に対する左シフト．RtもしくはImmediateは，unsignedとして扱う，つまり単に下6bitだけを用いる．
@@ -318,9 +259,9 @@ Rs ≦ Rt
     <dt>実装優先度</dt>
         <dd>余興</dd>
     <dt>opcode</dt>
-        <dd><code>000011</code></dd>
+        <dd><code>000010</code></dd>
     <dt>function</dt>
-        <dd><code>0000001</code></dd>
+        <dd><code>0000010</code></dd>
 </dl>
 
 32bit整数に対する右論理シフト．シフト量は必ず正で，RtもしくはImmediateの下位5bitだけを用いる．
@@ -332,44 +273,70 @@ Rs ≦ Rt
     <dt>実装優先度</dt>
         <dd>余興</dd>
     <dt>opcode</dt>
+        <dd><code>000010</code></dd>
+    <dt>function</dt>
+        <dd><code>0000011</code></dd>
+</dl>
+
+32bit整数に対する右算術シフト．シフト量は必ず正で，RtもしくはImmediateの下位5bitだけを用いる．
+
+#### mulqul，mulquli，mulqull
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>余興</dd>
+    <dt>opcode</dt>
+        <dd><code>000011</code></dd>
+    <dt>function</dt>
+        <dd><code>0000000</code></dd>
+</dl>
+
+32bit符号無し整数同士の乗算．下32bitを格納．符号bitによって下位32bitは変化しないため，符号付き整数の演算に使っても正しい結果を出す．
+
+#### mulquh，mulquhi
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>余興</dd>
+    <dt>opcode</dt>
+        <dd><code>000011</code></dd>
+    <dt>function</dt>
+        <dd><code>0000001</code></dd>
+</dl>
+
+符号無し32bit整数同士の乗算．上32bitを格納．
+
+符号付き32bit整数同士の乗算は，ソフトウェアによって補正することで行う．Alphaのドキュメントに記載の数式参照
+
+#### movez，movezi
+<dl>
+    <dt>実装箇所</dt>
+        <dd>コア</dd>
+    <dt>実装優先度</dt>
+        <dd>高速化</dd>
+    <dt>opcode</dt>
         <dd><code>000011</code></dd>
     <dt>function</dt>
         <dd><code>0000010</code></dd>
 </dl>
 
-32bit整数に対する右算術シフト．シフト量は必ず正で，RtもしくはImmediateの下位5bitだけを用いる．
+Rsが0に等しいなら，RdをRtあるいはImmediateで置き換える．
 
-#### rotq，rotqi
+#### movnz，movnzi
 <dl>
     <dt>実装箇所</dt>
         <dd>コア</dd>
     <dt>実装優先度</dt>
-        <dd>最低</dd>
+        <dd>高速化</dd>
     <dt>opcode</dt>
         <dd><code>000011</code></dd>
     <dt>function</dt>
         <dd><code>0000011</code></dd>
 </dl>
 
-32bit整数に対する左循環シフト．シフト量としてRtもしくはImmediateの下位5bitを用いる．循環シフトは32を法として合同な動作をするので，これで正にも負にもシフトできていると言える．
-
-
-### 実装しなさそうな命令
-すでにALUに16命令用意したが，これ以上増やしてもしょうがない気がするので以下は実装しない予定．
-
-ただしmez，mnzは，min-rtの高速化に役立つ可能性もあり，コンパイラの対応が可能なら他の必須でない命令を潰して実装するべきかもしれない．
-
-#### mez，mezi
-Rsが0に等しいなら，RdをRtあるいはImmediateで置き換える．
-
-#### mnz，mnzi
 Rsが0に等しくないなら，RdをRtあるいはImmediateで置き換える．
-
-#### clzq
-一入力．Leading Zeroを数える．
-
-#### cppq
-一入力．popcount．
 
 
 ### 浮動小数点演算（FO）
