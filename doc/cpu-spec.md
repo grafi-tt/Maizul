@@ -4,10 +4,6 @@
 基本的にはDEC Alpha．比較や論理演算周りは，Alphaは直交性が高く美しいもののCPU実験で使うには無駄が多そうだったのでむしろMIPSに近づけた．厳密な意味論は書いていないが，曖昧性なく読めるようには書くつもり．不明な点が有れば指摘して欲しい．
 
 
-## TODO
-*   opcodeの決定．
-
-
 ## 大まかな仕様
 整数レジスタ，浮動小数点レジスタともに，32bitでそれぞれ32個．ビッグエンディアン．R0はゼロ固定で，R31はリンクレジスタとして用いる．命令は固定長32bit．
 
@@ -118,7 +114,8 @@ functionが0の命令のみ，LOフォーマットでも用いることができ
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>000000</code></dd>
+        <dd>Register / Immediate <code>000000</code></dd>
+        <dd>Long Immediate <code>000100</code></dd>
     <dt>function</dt>
         <dd><code>0000000</code></dd>
 </dl>
@@ -175,7 +172,8 @@ functionが0の命令のみ，LOフォーマットでも用いることができ
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>000001</code></dd>
+        <dd>Register / Immediate <code>000001</code></dd>
+        <dd>Long Immediate <code>000101</code></dd>
     <dt>function</dt>
         <dd><code>0000000</code></dd>
 </dl>
@@ -231,7 +229,8 @@ Rs < Rt
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>000010</code></dd>
+        <dd>Register / Immediate <code>000010</code></dd>
+        <dd>Long Immediate <code>000110</code></dd>
     <dt>function</dt>
         <dd><code>0000000</code></dd>
 </dl>
@@ -287,7 +286,8 @@ Rsの下位16bitをRdの下位16bitに，RtまたはImmediateまたはLong Immed
     <dt>実装優先度</dt>
         <dd>余興</dd>
     <dt>opcode</dt>
-        <dd><code>000011</code></dd>
+        <dd>Register / Immediate <code>000011</code></dd>
+        <dd>Long Immediate <code>000111</code></dd>
     <dt>function</dt>
         <dd><code>0000000</code></dd>
 </dl>
