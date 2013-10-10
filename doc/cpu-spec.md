@@ -44,14 +44,11 @@
     <tr><td><b>F</b>loat-<b>B</b>ranch</td>
         <td colspan="6">101xxx</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Displacement</td>
     </tr>
-    <tr><td><b>R</b>egister-<b>J</b>ump</td>
-        <td colspan="6">100111</td><td colspan="5">0</td><td colspan="1">0</td><td colspan="4">Function</td><td colspan="11">Unused</td><td colspan="5">R</td>
-    </tr>
-    <tr><td><b>D</b>isplacement-<b>J</b>ump</td>
-        <td colspan="6">100111</td><td colspan="5">0</td><td colspan="1">1</td><td colspan="4">Function</td><td colspan="16">Displacement</td>
+    <tr><td><b>J</b>ump</td>
+        <td colspan="6">1100xx</td><td colspan="5">Ra</td><td colspan="5">Function</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>Sp</b>ecial</td>
-        <td colspan="6">11x000</td><td colspan="5">0</td><td colspan="5">Function</td><td colspan="16">Hoge</td>
+        <td colspan="6">11x100</td><td colspan="5">0</td><td colspan="5">Function</td><td colspan="16">Hoge</td>
     </tr>
 </table>
 
@@ -65,9 +62,8 @@ RM [     010xxx     ][     Ra      ][     Rb      ][                 Displacemen
 FM [     011xxx     ][     Fa      ][     Fb      ][                 Displacement                 ]
 RB [     100xxx     ][     Ra      ][     Rb      ][                 Displacement                 ]
 FB [     101xxx     ][     Fa      ][     Fb      ][                 Displacement                 ]
-RJ [     100111     ][      0      ][0][ Function ][            Unused             ][      R      ]
-DJ [     100111     ][      0      ][1][ Function ][                 Displacement                 ]
-SP [     11x000     ][      0      ][  Function   ][                     Hoge                     ]
+J  [     1100xx     ][     Ra      ][  Function   ][                 Displacement                 ]
+SP [     11x1xx     ][                                    Hoge                                    ]
 -->
 
 Unusedの値は何であっても動くはずだが，一応0を入れるようにする．
@@ -567,7 +563,6 @@ Ra ≦ Rb / Fa ≦ Fb ならジャンプ
 
 
 ### 無条件ジャンプ命令（RJ，DJ）
-function
 #### jr，jd
 <dl>
     <dt>実装箇所</dt>
@@ -575,9 +570,9 @@ function
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>100111</code></dd>
+        <dd><code>110000</code></dd>
     <dt>function</dt>
-        <dd><code>0000</code></dd>
+        <dd><code>00000</code></dd>
 </dl>
 
 R/Displacementにジャンプ．
@@ -589,9 +584,9 @@ R/Displacementにジャンプ．
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>100111</code></dd>
+        <dd><code>110000</code></dd>
     <dt>function</dt>
-        <dd><code>0001</code></dd>
+        <dd><code>00001</code></dd>
 </dl>
 
 R/Displacementにジャンプ．このとき，PCをリンクレジスタ（R31）にセット．
@@ -603,14 +598,13 @@ R/Displacementにジャンプ．このとき，PCをリンクレジスタ（R31�
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>100111</code></dd>
+        <dd><code>110000</code></dd>
     <dt>function</dt>
-        <dd><code>0010</code></dd>
+        <dd><code>00010</code></dd>
 </dl>
 
 0入力の命令．リンクレジスタ（R31）にジャンプ．命令フォーマットはDJとし，Displacementは取りあえず必ず0とする．
 
-jrを使ってアセンブラで実装することも可能だが，後々の高速化の可能性のために別命令にする．
 
 
 ### 特殊命令（SP）
@@ -621,15 +615,18 @@ jrを使ってアセンブラで実装することも可能だが，後々の高
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>11[t]000</code></dd>
-    <dt>function</dt>
-        <dd><code>00000</code></dd>
+        <dd><code>11[t]100</code></dd>
 </dl>
 
 <table>
-    <tr><td><b>Sp</b>ecial</td>
-        <td colspan="6">110000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">R</td>
-        <td colspan="6">111000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">F</td>
+    <tr>
+        <th>31</th><th>30</th><th>29</th><th>28</th><th>27</th><th>26</th><th>25</th><th>24</th><th>23</th><th>22</th><th>21</th><th>20</th><th>19</th><th>18</th><th>17</th><th>16</th><th>15</th><th>14</th><th>13</th><th>12</th><th>11</th><th>10</th><th>9</th><th>8</th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
+    </tr>
+    <tr>
+        <td colspan="6">110100</td><td colspan="21">000000000000000000000</td><td colspan="5">R</td>
+    </tr>
+    <tr>
+        <td colspan="6">111100</td><td colspan="21">000000000000000000000</td><td colspan="5">F</td>
     </tr>
 </table>
 
@@ -642,15 +639,18 @@ jrを使ってアセンブラで実装することも可能だが，後々の高
     <dt>実装優先度</dt>
         <dd>必須</dd>
     <dt>opcode</dt>
-        <dd><code>11[t]000</code></dd>
-    <dt>function</dt>
-        <dd><code>00001</code></dd>
+        <dd><code>11[t]100</code></dd>
 </dl>
 
 <table>
-    <tr><td><b>Sp</b>ecial</td>
-        <td colspan="6">110000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">R</td>
-        <td colspan="6">111000</td><td colspan="5">0</td><td colspan="5">00000</td><td colspan="11">Unused</td><td colspan="5">F</td>
+    <tr>
+        <th>31</th><th>30</th><th>29</th><th>28</th><th>27</th><th>26</th><th>25</th><th>24</th><th>23</th><th>22</th><th>21</th><th>20</th><th>19</th><th>18</th><th>17</th><th>16</th><th>15</th><th>14</th><th>13</th><th>12</th><th>11</th><th>10</th><th>9</th><th>8</th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
+    </tr>
+    <tr>
+        <td colspan="6">110100</td><td colspan="21">000000000000000000001</td><td colspan="5">R</td>
+    </tr>
+    <tr>
+        <td colspan="6">111100</td><td colspan="21">000000000000000000001</td><td colspan="5">F</td>
     </tr>
 </table>
 

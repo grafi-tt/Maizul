@@ -85,6 +85,10 @@ architecture StateMachine of Top is
     end component;
 
     signal clk, iclk : std_logic;
+    signal halt : boolean;
+
+    type state is (Hai, Run, Bye);
+    signal state : state;
 
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);
@@ -132,7 +136,7 @@ begin
     begin
         if (rising_edge(clk)) then
             case state is
-                when 2 => -- waiting signal
+                when Hai => -- waiting signal
                     if (recved = '1' and ok = '0') then
                         ok <= '1';
                         with haiState select
@@ -151,16 +155,16 @@ begin
                             haiState <= 2;
                         elsif byeState = 0 then
                             state <= 1;
-                            run <= '0';
+                            halt <= true;
                         end if;
                     end if;
 
-                when 1 => -- CPU running
-                    if run = '0' then
+                when Run => -- CPU running
+                    if halt = false then
                         state <= '0';
                     end if;
 
-                when 0 => -- telling bye
+                when Bye => -- telling bye
                     if sent = '1' and go = '0' then
                         go <= '1';
                         with byeState select
