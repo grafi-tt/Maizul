@@ -1,36 +1,30 @@
-type value = VInt of int | Nop | VLabel of string 
+type nop = Nop 
 
-and reg = VReg of int 
 
-and adrs = VAdrs of int
+type expr = 
+  | ELabel of string
+  | EAdd of int * int * int
+  | EAddi of int * int * int  
+  | ESub of int * int * int
+  | ESubi of int * int * int
+  | Eq of int * int * int 
+  | Eqi of int * int * int 
+  | ELess of int * int * int
+  | ELessi of int * int * int 
+  | ENor of int * int * int
+  | ENori of int * int * int
+  | EAnd of int * int * int 
+  | EAndi of int * int * int
+  | ENot of int * int 
+  | EOr of int * int * int
+  | EOri of int * int * int 
+  | ELd of int * int 
+  | ESt of int * int
+  | EBeq of int * int * string 
+  | EBne of int * int * string
+  | EBlt of int * int * string
+  | EJump of int
+  | EJumpl of string 
+  | Nop 
 
-and expr = 
-  | EConst of value 
-  | ELabel of string 
-  | EAdd of reg * reg * reg
-  | EAddi of reg * reg * value  
-  | ESub of reg * reg * reg
-  | ESubi of reg * reg * int 
-  | Eq of reg * reg * reg 
-  | Eqi of reg * reg * int 
-  | ELess of reg * reg * reg
-  | ELessi of reg * reg * int 
-  | ENor of reg * reg * reg
-  | ENori of reg * reg * int 
-  | EAnd of reg * reg * reg 
-  | EAndi of reg * reg * int 
-  | EOr of reg * reg * reg
-  | EOri of reg * reg * int 
-  | ELd of reg * adrs
-  | ESt of reg * adrs
-  | EBeq of reg * reg * string
-  | EBne of reg * reg * string
-  | EBlt of reg * reg * string
-  | EJump of adrs
-  | EJumpi of string 
- 
-and num = 
-  | ENum of int 
-
- 
 exception No_type_error
