@@ -13,7 +13,7 @@ rule token = parse
   | ","         { COMM }
   | ":"         { COL }
   | ";;"        { EOL } 
-  | natural digit* as x { NUM x } 
+  | natural digit* as x { NUM (int_of_string x) } 
   | "addqu"     { ADDQU }
   | "addqui"    { ADDQUI } 
   | "subqu"     { SUBQU }
