@@ -195,14 +195,7 @@ ALUCode `1111`
 #### fadd，faddn，faddp，faddm
 FPUCode `0000`
 
-fadd．仕様はFPUと相談．
-
-#### fsub，fsubn，fsubp，fsubm
-FPUCode `0000`
-
     Fd := Fa + Fb
-
-仕様はFPU係と相談で決める．
 
 #### fsub，fsubn，fsubp，fdubm
 FPUCode `0001`
