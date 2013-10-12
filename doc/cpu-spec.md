@@ -171,22 +171,22 @@ ALUCode `1011`
 
     Rd := ftoi(Fa)
 
-#### feq，feqi
+#### feq
 ALUCode `1100`
 
     Rd := Fa = Fb
 
-#### fne，fnei
+#### fne
 ALUCode `1101`
 
     Rd := Fa ≠ Fb
 
-#### flt，flti
+#### flt
 ALUCode `1110`
 
     Rd := Fa < Fb
 
-#### fge，fgei
+#### fge
 ALUCode `1111`
 
     Rd := Fa ≧ Fb
