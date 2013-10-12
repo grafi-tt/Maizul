@@ -1,23 +1,28 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.types.all;
 
 entity Branch is
     port (
         clk : in std_logic;
 
-        enable : in std_logic;
+        enable : in boolean;
         code : in std_logic_vector(3 downto 0);
 
-        opA : in value;
-        opB : in value;
+        opA : in value_t;
+        opB : in value_t;
         addr : in blkram_addr;
 
+        outLine : out value_t;
         PCLine : out blkram_addr;
-        result : out std_logic);
+        result : out boolean);
 end Branch;
 
 architecture BranchImp of Branch is
+    signal a : value_t;
+    signal b : value_t;
+
     signal rEq : boolean;
     signal uLt : boolean;
     signal sLt : boolean;
@@ -28,8 +33,10 @@ architecture BranchImp of Branch is
     signal zATmp : boolean;
     signal zBTmp : boolean;
 
+    constant z31 : std_logic_vector(30 downto 0) := (others => '0');
+
 begin
-    everyClock : process(clk)
+    every_clock_do : process(clk)
     begin
         if rising_edge(clk) then
             a <= opA;
@@ -47,13 +54,15 @@ begin
                   uLt or rEq when "0101",
 
                   fEq when "1000",
-                  not fEq when "1000",
-                  fLt when "1000",
-                  fLt or fEq when "1000";
+                  not fEq when "1001",
+                  fLt when "1010",
+                  fLt or fEq when "1011",
+
+                  false when others;
 
     ltTmp <= unsigned(a(30 downto 0)) < unsigned(b(30 downto 0));
-    zATmp <= a(30 downto 23) = 0;
-    zBTmp <= a(30 downto 23) = 0;
+    zATmp <= a(30 downto 0) = z31;
+    zBTmp <= a(30 downto 0) = z31;
 
     rEq <= a = b;
     uLt <= (a(31) = '1' and b(31) = '0') or

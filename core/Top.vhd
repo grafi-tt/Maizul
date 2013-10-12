@@ -1,5 +1,9 @@
 library ieee;
+library unisim;
 use ieee.std_logic_1164.all;
+use unisim.vcomponents.all;
+use work.types.all;
+
 
 entity Top is
     port (
@@ -84,35 +88,70 @@ architecture StateMachine of Top is
             xFlowThruPin : out std_logic);
     end component;
 
-    signal clk, iclk : std_logic;
-    signal halt : boolean;
+    component DataPath is
+        port (
+            clk : in std_logic;
+            halt : in boolean;
 
-    type state is (Hai, Run, Bye);
-    signal state : state;
+            serialOk : buffer std_logic;
+            serialGo : buffer std_logic;
+            serialRecvData : in std_logic_vector(7 downto 0);
+            serialSendData : out std_logic_vector(7 downto 0);
+            serialRecved : in std_logic;
+            serialSent : in std_logic;
+
+            sramLoad : out std_logic;
+            sramStore : out std_logic;
+            sramAddr : out sram_addr;
+            sramStoreLine : out value_t;
+            sramLoadLine : in value_t);
+    end component;
+
+    signal clk, iclk : std_logic;
+    signal halt : boolean := true;
+
+    signal ok : std_logic := '0';
+    signal go : std_logic := '0';
+    signal recved, sent : std_logic;
+    signal recvData : std_logic_vector(7 downto 0);
+    signal sendData : std_logic_vector(7 downto 0);
+    signal waitData : std_logic_vector(7 downto 0);
+
+    signal load : std_logic;
+    signal store : std_logic;
+    signal addr : sram_addr := (others => '0');
+    signal storeLine : value_t;
+    signal loadLine : value_t;
+
+    type state_t is (Hai, Run, Bye);
+    signal state : state_t := Hai;
+
+    signal haiState : integer range 3 downto 0 := 3;
+    signal byeState : integer range 3 downto 0 := 3;
 
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);
     bg : BUFG port map (i => iclk, o => clk);
 
-    recv : U232CRecv port map (
+    u232c_recv_map : U232CRecv port map (
         clk => clk,
         ok => ok,
         data => recvData,
         rxPin => RS_RX,
         recved => recved);
 
-    send : U232CSend port map (
+    u232c_send_map : U232CSend port map (
         clk => clk,
         go => go,
         data => sendData,
         txPin => RS_TX,
         sent => sent);
 
-    sram : SRAM port map (
+    sram_map : SRAM port map (
         clk => clk,
         load => load,
         store => store,
-        addr => addr,
+        addr => std_logic_vector(addr),
         storeData => storeLine,
         loadData => loadLine,
 
@@ -132,6 +171,21 @@ begin
         sleepPin => ZZA,
         xFlowThruPin => XFT);
 
+    data_path_map : DataPath port map (
+        clk => clk,
+        halt => halt,
+        serialOk => ok,
+        serialGo => go,
+        serialRecvData => recvData,
+        serialSendData => sendData,
+        serialRecved => recved,
+        serialSent => sent,
+        sramLoad => load,
+        sramStore => store,
+        sramAddr => addr,
+        sramStoreLine => storeLine,
+        sramLoadLine => loadLine);
+
     every_clock_do : process(clk)
     begin
         if (rising_edge(clk)) then
@@ -139,52 +193,63 @@ begin
                 when Hai => -- waiting signal
                     if (recved = '1' and ok = '0') then
                         ok <= '1';
-                        with haiState select
-                            waitData <= "0x48" when 2,
-                                        "0x61" when 1,
-                                        "0x69" when others;
-                        with haiState select
-                            haiState <= 1 when 2,
-                                        0 when 1,
-                                        2 when 0;
+                        case haiState is
+                            when 3 =>
+                                null;
+                            when 2 =>
+                                waitData <= x"48";
+                            when 1 =>
+                                waitData <= x"61";
+                            when 0 =>
+                                waitData <= x"69";
+                        end case;
                     end if;
 
                     if (recved = '0' and ok = '1') then
                         ok <= '0';
-                        if waitData /= recvData then
+                        if haiState = 3 then
                             haiState <= 2;
-                        elsif byeState = 0 then
-                            state <= 1;
-                            halt <= true;
+                        elsif waitData /= recvData then
+                            haiState <= 3;
+                        elsif haiState = 0 then
+                            haiState <= 3;
+                            state <= Run;
+                            halt <= false;
+                        else
+                            haiState <= haiState - 1;
                         end if;
                     end if;
 
                 when Run => -- CPU running
                     if halt = false then
-                        state <= '0';
+                        state <= Bye;
                     end if;
 
                 when Bye => -- telling bye
                     if sent = '1' and go = '0' then
-                        go <= '1';
-                        with byeState select
-                            sendData <= "0x42" when 2,
-                                        "0x79" when 1,
-                                        "0x65" when others;
-                        with byeState select
-                            byeState <= 1 when 2,
-                                        0 when 1,
-                                        2 when 0;
-
+                        case byeState is
+                            when 3 =>
+                                go <= '1';
+                                sendData <= x"42";
+                                byeState <= 2;
+                            when 2 =>
+                                go <= '1';
+                                sendData <= x"79";
+                                byeState <= 1;
+                            when 1 =>
+                                go <= '1';
+                                sendData <= x"65";
+                                byeState <= 0;
+                            when 0 =>
+                                state <= Hai;
+                                byeState <= 3;
+                        end case;
                     end if;
 
                     if sent = '0' and go = '1' then
                         go <= '0';
-                        if byeState = 0 then
-                            state <= 2;
-                        end if;
                     end if;
             end case;
         end if;
     end process;
-end TopImp;
+end StateMachine;

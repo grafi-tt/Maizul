@@ -31,6 +31,7 @@ end SRAM;
 architecture ZBTControl of SRAM is
     signal load1 : std_logic := '0';
     signal load2 : std_logic := '0';
+
 begin
     everyClock : process(clk)
     begin
@@ -57,4 +58,5 @@ begin
     xLinearOrderPin <= '1';
     sleepPin <= '0';
     xFlowThruPin <= '1';
-end ZBTImp;
+
+end ZBTControl;

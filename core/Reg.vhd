@@ -1,39 +1,45 @@
 library ieee;
 use ieee.std_logic_1164.all;
-
-library cpuex;
-use cpuex.types.all;
+use work.types.all;
 
 entity Reg is
     port (
         clk : in std_logic;
+        blocking : in boolean;
 
-        delayEnable : in std_logic;
-        delay : in schedule;
+        delayEnable : in boolean;
+        delay : in schedule_t;
+        writer : in std_logic;
 
-        value : buffer value;
-        schedule : buffer schedule;
+        value : buffer value_t;
+        schedule : buffer schedule_t;
 
-        writtenLine : in value;
-        storeLine : out value);
+        writeLineA : in value_t;
+        writeLineB : in value_t);
 end Reg;
 
-architecture Implementation Reg is
-    signal delayTmp : schedule;
+architecture Implementation of Reg is
+    signal currentWriter : std_logic;
 
 begin
     everyClock : process(clk)
-        schedule <= ("00" & schedule(13 downto 0)) or delayTmp;
+    begin
+        if (rising_edge(clk)) then
+            if delayEnable then
+                currentWriter <= writer;
+                schedule <= delay;
+            elsif (not blocking) then
+                schedule <= ("0" & schedule(6 downto 0));
+            end if;
 
-        if (schedule(1 downto 0) == "01") then
-            value <= writtenLine;
-        end if;
-
-        if (schedule(1 downto 0) == "10") then
-            storeLine <= value;
+            if (schedule(0) = '1') then
+                if (currentWriter = '0') then
+                    value <= writeLineA;
+                else
+                    value <= writeLineB;
+                end if;
+            end if;
         end if;
     end process;
 
-    delayTmp <= delay when delayEnable = '1' else
-                (others => '0');
 end Implementation;
