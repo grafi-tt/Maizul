@@ -104,92 +104,74 @@ ALUCode `0010`
 
     Rd := Ra = (Rb or sign_extend(Immediate))
 
-#### ne，nei
+#### lt，lti
 ALUCode `0011`
 
-    Rd := Ra ≠ (Rb or sign_extend(Immediate))
-
-#### lt，lti
-ALUCode `0100`
-
-    Rd := Ra < (Rb or sign_extend(Immediate))
-
-#### ge，gei
-ALUCode `0101`
-
-    Rd := Ra ≧ (Rb or sign_extend(Immediate))
+    Rd := Ra < (Rb or sign_extend(Immediate)) （符号付き整数として比較）
 
 #### and，andi
-ALUCode `0110`
+ALUCode `0100`
 
     Rd := Ra & (Rb or sign_extend(Immediate))
 
 #### or，ori
-ALUCode `0111`
+ALUCode `0101`
 
     Rd := Ra | (Rb or sign_extend(Immediate))
 
 #### xor，xori
-ALUCode `0100`
+ALUCode `0110`
 
     Rd := Ra ^ (Rb or sign_extend(Immediate))
 
 #### sll，slli
-ALUCode `0101`
+ALUCode `0111`
 
     Rd := Ra << lower_5bit(Rb or Immediate)
 
 #### srl，srli
-ALUCode `0110`
+ALUCode `1000`
 
     Rd := Ra >> lower_5bit(Rb or Immediate) (ただし論理シフト)
 
 #### sra，srai
-ALUCode `0111`
+ALUCode `1001`
 
     Rd := Ra >> lower_5bit(Rt or Immediate) (ただし算術シフト)
 
 #### cat，cati
-ALUCode `1000`
+ALUCode `1010`
 
    Rd := lower_16bit(Ra) | ((lower_16bit(Rb) or Immediate) << 16)
 
 #### mul，mulli
-ALUCode `1001`
+ALUCode `1011`
 
-    Rd := lower_32bit(Ra * (Rb or Immediate))
+min-rtに必須ではないけど、これくらいは入れときたい。高速化目指したarchでは省くかも。
+
+    Rd := lower_32bit(Ra * (Rb or Immediate)) （符号付きとしての乗算でも符号無しとしての乗算でも結果は同じ）
 
 #### fmovr
-ALUCode `1010`
+ALUCode `1100`
 
     Rd := Fa
 
 #### ftor
-ALUCode `1011`
+ALUCode `1101`
 
 1クロックで回るなら実装したい．
 
     Rd := ftoi(Fa)
 
 #### feq
-ALUCode `1100`
+ALUCode `1110`
 
     Rd := Fa = Fb
 
-#### fne
-ALUCode `1101`
-
-    Rd := Fa ≠ Fb
-
 #### flt
-ALUCode `1110`
-
-    Rd := Fa < Fb
-
-#### fge
 ALUCode `1111`
 
-    Rd := Fa ≧ Fb
+    Rd := Fa < Fb
 
 ### FPU（FO）
 #### fadd，faddn，faddp，faddm
