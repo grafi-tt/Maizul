@@ -40,7 +40,6 @@ static inline void set_fpr(inst_t tag, float v) {
 }
 
 static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
-	// TODO sgn
 	float w;
 	switch (sgn) {
 	case 0b00:
