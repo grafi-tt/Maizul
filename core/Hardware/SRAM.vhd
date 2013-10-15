@@ -7,8 +7,7 @@ entity SRAM is
         load : in std_logic;
         store : in std_logic;
         addr : in std_logic_vector(19 downto 0);
-        storeData : in std_logic_vector(31 downto 0);
-        loadData : out std_logic_vector(31 downto 0);
+        dataPin : inout std_logic_vector(31 downto 0);
 
         clkPin1 : out std_logic;
         clkPin2 : out std_logic;
@@ -46,7 +45,6 @@ begin
     addrPin <= addr;
     xStorePin <= load;
     xMaskPin <= "0000" when (load or store) = '1' else "1111";
-    dataPin <= (others => 'Z') when load2 = '1' else storeData;
     loadData <= dataPin;
 
     xEnablePin1 <= '0';

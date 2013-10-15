@@ -17,8 +17,7 @@ entity DataPath is
         sramLoad : out std_logic;
         sramStore : out std_logic;
         sramAddr : out sram_addr;
-        sramStoreLine : out value_t;
-        sramLoadLine : in value_t);
+        sramDataLine : inout value_t);
 end DataPath;
 
 architecture DataPathImp of DataPath is
@@ -59,31 +58,14 @@ architecture DataPathImp of DataPath is
     component ALU is
         port (
             clk : in std_logic;
-
             enable : in boolean;
             code : in std_logic_vector(3 downto 0);
-
-            opS : in value_t;
-            opT : in value_t;
-
-            outLine : out value_t);
-    end component;
-
-    component Mem is
-        port (
-            clk : in std_logic;
-
-            enable : in boolean;
-            code : in std_logic_vector(3 downto 0);
-
-            base : in sram_addr;
-            disp : in sram_addr;
-
-            storeValue : in value_t;
-            outLine : out value_t;
-
-            loadLine : in value_t;
-            storeLine : out value_t);
+            tagD : in tag_t;
+            valA : in value_t;
+            valB : in value_t;
+            emitEnable : out boolean;
+            emitTag : out tag_t;
+            emitVal : out value_t);
     end component;
 
     component Branch is
@@ -121,7 +103,6 @@ architecture DataPathImp of DataPath is
             blocking : out boolean);
     end component;
 
-    signal instruction : instruction_t;
     signal fetched : instruction_t;
     signal pc : blkram_addr;
     signal fetchedPC : blkram_addr;
@@ -129,42 +110,38 @@ architecture DataPathImp of DataPath is
     signal jumpAddr : blkram_addr;
     signal PCLine : blkram_addr;
 
-    signal opcode : std_logic_vector(5 downto 0);
-    signal opFunction : std_logic_vector(6 downto 0);
-    signal delay : std_logic_vector(7 downto 0);
-    signal writer : std_logic;
+    signal instruction : instruction_t;
 
-    signal aluCode : std_logic_vector(3 downto 0);
+    signal opH : std_logic_vector(1 downto 0);
+    signal opL : std_logic_vector(3 downto 0);
+    signal opLL : std_logic_vector(2 downto 0);
 
-    signal isOp : boolean;
-    signal isMem : boolean;
-    signal isBranch : boolean;
-    signal isJumpOrSpecial : boolean;
-    signal isFP : boolean;
-    signal isSpecial : boolean;
+    signal tagX : tag_t;
+    signal tagY : tag_t;
+    signal tagZ : tag_t;
+    signal imm : std_logic_vector(15 downto 0);
 
-    signal aluEnable : boolean;
-    signal fpuEnable : boolean;
-    signal memEnable : boolean;
-    signal branchEnable : boolean;
-    signal ioEnable : boolean;
+    signal valY : value_t;
+    signal valRegY : value_t;
+    signal valZ : value_t;
+    signal valRegZ : value_t;
 
-    signal tagA : std_logic_vector(4 downto 0);
-    signal tagB : std_logic_vector(4 downto 0);
-    signal tagC : std_logic_vector(4 downto 0);
-    signal noTagB : boolean;
+    signal enableA : boolean;
+    signal enableF : boolean;
+    signal enableM : boolean;
+    signal enableB : boolean;
+    signal enableIO : boolean;
 
-    signal displacement : blkram_addr;
-    signal sramDisplacement : sram_addr;
+    signal pipeTagA : tag_t;
+    signal pipeEnableA : boolean;
+    signal emitTagA : tag_t;
+    signal emitValA : value_t;
 
-    signal valA : value_t;
-    signal valB : value_t;
-    signal valBReg : value_t;
-    signal valBShortImm : value_t;
-    signal valBLongImm : value_t;
+    signal target : blkram_addr;
+    signal disp : sram_addr;
 
-    signal scheduleA : schedule_t;
-    signal scheduleB : schedule_t;
+    signal stallY : boolean;
+    signal fowardY : boolean;
 
     signal aluLine : value_t;
     signal branchLine : value_t;
@@ -178,19 +155,23 @@ architecture DataPathImp of DataPath is
 begin
     reg_set_map : RegSet port map (
         clk => clk,
-        blocking => blocking,
-        tagS => tagA,
-        tagT => tagB,
-        tagD => tagC,
-        delayD => delay,
-        writer => writer,
-        valS => valA,
-        valT => valBReg,
-        scheduleS => scheduleA,
-        scheduleT => scheduleB,
-        writeLineA => unifiedLine,
-        writeLineB => memLine);
-    unifiedLine <= aluLine or branchLine or ioLine;
+        tagS => tagY,
+        valS => valY,
+        tagT => tagZ,
+        valT => valRegZ,
+        tagW => tagW,
+        lineW => valW,
+        tagM => emitTagM,
+        modeM => modeM,
+        lineM => lineM);
+    tagW <= emitTagA when emitEnableA else
+            emitTagB when emitEnableB else
+            emitTagIO when emitEnableIO else
+            (others => '0');
+    valW <= emitValA when emitEnableA else
+            emitValB when emitEnableB else
+            emitValIO when emitEnableIO else
+            (others => '0');
 
     fetch_map : Fetch port map (
         clk => clk,
@@ -202,36 +183,29 @@ begin
 
     alu_map : ALU port map (
         clk => clk,
-        enable => aluEnable,
-        code => aluCode,
-        opS => valA,
-        opT => valB,
-        outLine => aluLine);
-    aluCode <= opcode(1 downto 0) & opFunction(1 downto 0);
-    aluEnable <= isOp and (not isFP) and (not stall);
-
-    mem_map : Mem port map (
-        clk => clk,
-        enable => memEnable,
-        code => opcode(3 downto 0),
-        base => sram_addr(valBReg(19 downto 0)),
-        disp => sramDisplacement,
-        storeValue => valA,
-        outLine => memLine,
-        loadLine => sramLoadLine,
-        storeLine => sramStoreLine);
-    memEnable <= isMem and (not stall);
+        enable => enableA,
+        code => codeA,
+        tagD => tagX,
+        valA => valY,
+        valB => valZ,
+        emitEnable => emitEnableA;
+        emitTag => emitTagA;
+        emitVal => emitValA);
+    enableA <= (opH = "00" or (opH = "01" and opLL = "000")) and (not stall);
+    codeA <= instruction(29 downto 26) when op00 else
+             instruction(3 downto 0);
 
     branch_map : Branch port map (
         clk => clk,
         enable => branchEnable,
-        code => opcode(3 downto 0),
+        code => opL,
         opA => valA,
         opB => valB,
-        addr => jumpAddr,
+        target => jumpAddr,
         PCLine => PCLine,
         result => jump);
-    branchEnable <= (isBranch or (isJumpOrSpecial and (not isSpecial))) and (not stall);
+    enableB <= (opH = "11" or (opH = "01" and opLL = "001")) and (not stall);
+    target <= blkram_addr(imm);
 
     io_map : IO port map(
         clk => clk,
@@ -246,51 +220,71 @@ begin
         putVal => valA,
         getLine => ioLine,
         blocking => blocking);
-    ioEnable <= isJumpOrSpecial and isSpecial and (not stall);
+    enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
 
-    every_clock_do : process(clk)
+    everyClock : process(clk)
     begin
         if rising_edge(clk) then
             if not stall then
                 instruction <= fetched;
                 pc <= fetchedPC;
             end if;
+
+            sramAddr <= sram_addr(unsigned(base) + unsigned(disp));
+            sramLoad <= (not mode) and enable;
+            sramStore <= mode and enable;
+
+            load1 <= sramLoad;
+            load <= load1;
+
+            tagM2 <= tagM3;
+            tagM1 <= tagM2;
+            tagM <= tagM1;
+
+            pipeValMTmp <= valX;
+            emitValMTmp <= pipeValM;
+
         end if;
     end process;
 
-    opcode <= instruction(31 downto 26);
-    isOp <= opcode(5 downto 4) = "00";
-    isMem <= opcode(5 downto 4) = "01";
-    isBranch <= opcode(5 downto 4) = "10";
-    isJumpOrSpecial <= opcode(5 downto 4) = "11";
+    sramDataLine <= (others => 'Z') when load == '1' else emitValM;
+
+    opH <= instruction(31 downto 30);
+    opL <= instruction(29 downto 26);
+    opLL <= instruction(28 downto 26);
+
     isFP <= opcode(3) = '1';
-    isSpecial <= opcode(2) = '1';
-    writer <= '1' when isMem else '0';
 
-    tagA <= instruction(25 downto 21);
-    tagB <= instruction(20 downto 16);
-    tagC <= "11111" when isJumpOrSpecial else
-            instruction(4 downto 0);
+    tagX <= tag_t(instruction(25 downto 21));
+    tagY <= tag_t(instruction(20 downto 16));
+    tagZ <= tag_t(instruction(15 downto 10));
+    imm <= tag_t(instruction(15 downto 0));
 
-    displacement <= blkram_addr(instruction(15 downto 0));
-    sramDisplacement <= sram_addr("0000" & instruction(15 downto 0));
+    -- TODO: eliminate copy-and-paste
+    valY <= (others => '0') when tagY = "00000" else
+            sramDataLine when tagY = tagM and load = '1' else
+            valAlu when tagY = tagAlu else
+            valRegY;
 
-    valB <= valBLongImm when opcode(2) = '1' else
-            valBShortImm when instruction(12) = '1' else
-            valBReg;
+    valZ <= x"0000" & imm when opcode(0 downto 1) /= "01" or opcode(3 downto 4) /= "00" else
+            (others => '0') when tagZ = "00000" else
+            sramDataLine when tagZ = tagM and load = '1' else
+            valAlu when tagZ = tagAlu else
+            valRegZ;
 
-    delay <= "00000001" when isOp and (not isFP) else
-             "00000111" when isMem else
-             "00000000";
+    pipeValM <= (others => '0') when tagM2 = "00000" else
+                sramDataLine when tagM2 = tagM and load = '1' else
+                valAlu when tagM2 = tagAlu else
+                valRegY;
 
-    noTagB <= (isOp and (opCode(2) ='1' or instruction(12) = '1')) or isJumpOrSpecial;
+    emitValM <= (others => '0') when tagM1 = "00000" else
+                sramDataLine when tagM1 = tagM and load = '1' else
+                valAlu when tagM1 = tagAlu else
+                valRegY;
 
     stall <= halt or
              blocking or
              scheduleA(0) /= '0' or
              ((not noTagB) and scheduleB(0) /= '1');
-
-    jumpAddr <= blkram_addr(valA(15 downto 0) or std_logic_vector(displacement)) when isJumpOrSpecial else
-                displacement;
 
 end DataPathImp;

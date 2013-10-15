@@ -67,8 +67,7 @@ architecture StateMachine of Top is
             load : in std_logic;
             store : in std_logic;
             addr : in std_logic_vector (19 downto 0);
-            storeData : in std_logic_vector (31 downto 0);
-            loadData : out std_logic_vector (31 downto 0);
+            data : inout std_logic_vector (31 downto 0);
 
             clkPin1 : out std_logic;
             clkPin2 : out std_logic;
@@ -120,8 +119,7 @@ architecture StateMachine of Top is
     signal load : std_logic;
     signal store : std_logic;
     signal addr : sram_addr := (others => '0');
-    signal storeLine : value_t;
-    signal loadLine : value_t;
+    signal dataLine : value_t;
 
     type state_t is (Hai, Run, Bye);
     signal state : state_t := Hai;
@@ -152,8 +150,7 @@ begin
         load => load,
         store => store,
         addr => std_logic_vector(addr),
-        storeData => storeLine,
-        loadData => loadLine,
+        data => dataLine,
 
         clkPin1 => ZCLKMA(0),
         clkPin2 => ZCLKMA(1),
@@ -183,8 +180,7 @@ begin
         sramLoad => load,
         sramStore => store,
         sramAddr => addr,
-        sramStoreLine => storeLine,
-        sramLoadLine => loadLine);
+        sramDataLine => dataLine);
 
     every_clock_do : process(clk)
     begin

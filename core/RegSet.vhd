@@ -7,22 +7,15 @@ entity RegSet is
     port (
         clk : in std_logic;
         blocking : in boolean;
-
-        tagS : in std_logic_vector(4 downto 0);
-        tagT : in std_logic_vector(4 downto 0);
-        tagD : in std_logic_vector(4 downto 0);
-
-        delayD : in schedule_t;
-        writer : in std_logic;
-
+        tagS : in tag_t;
         valS : out value_t;
+        tagT : in tag_t;
         valT : out value_t;
-
-        scheduleS : out schedule_t;
-        scheduleT : out schedule_t;
-
-        writeLineA : in value_t;
-        writeLineB : in value_t);
+        tagW : in tag_t;
+        lineW : in value_t;
+        tagM : in tag_t;
+        modeM : in boolean;
+        lineM : inout value_t);
 end RegSet;
 
 -- TODO : use generic for schedule length
@@ -30,49 +23,41 @@ architecture Multiplexer of RegSet is
     component Reg is
         port (
             clk : in std_logic;
-            blocking : in boolean;
-
-            delayEnable : in boolean;
-            delay : in schedule_t;
-
-            value : buffer value_t;
-            schedule : buffer schedule_t;
-
-            writeLineA : in value_t;
-            writeLineB : in value_t);
+            val : buffer value_t;
+            enableW : in boolean;
+            lineW : in value_t;
+            enableM : in boolean;
+            modeM : in boolean;
+            lineM : inout value_t);
     end component;
 
-    type schedule_set_t is array(31 downto 0) of schedule_t;
-    signal scheduleSet : schedule_set_t;
-
     type value_set_t is array(31 downto 0) of value_t;
-    signal valueSet : value_set_t;
+    signal valSet : value_set_t;
 
-    type delay_enable_set_t is array(31 downto 1) of boolean;
-    signal delayEnableSet : delay_enable_set_t;
+    type enable_w_set is array(31 downto 1) of boolean;
+    signal enableWSet : enable_w_set;
+
+    type enable_m_set is array(31 downto 1) of boolean;
+    signal enableWSet : enable_w_set;
 
 begin
+    valSet(0) <= (others => '0');
+
     reg_set_gen : for i in 31 downto 1 generate
         reg_port : Reg port map (
             clk => clk,
-            blocking => blocking,
-            delayEnable => delayEnableSet(i),
-            delay => delayD,
-            value => valueSet(i),
-            schedule => scheduleSet(i),
-            writeLineA => writeLineA,
-            writeLineB => writeLineB);
+            val => valSet(i),
+            enableW => enableWSet(i);
+            lineW => lineW,
+            enableM => enableMSet(i);
+            modeM => modeM;
+            lineM => lineM);
 
-        delayEnableSet(i) <= to_integer(unsigned(tagD)) = i;
+        enableWSet(i) <= to_integer(unsigned(tagW)) = i;
+        enableMSet(i) <= to_integer(unsigned(tagM)) = i;
     end generate reg_set_gen;
-
-    valueSet(0) <= (others => '0');
-    scheduleSet(0) <= (others => '0');
 
     valS <= valueSet(to_integer(unsigned(tagS)));
     valT <= valueSet(to_integer(unsigned(tagT)));
-
-    scheduleS <= scheduleSet(to_integer(unsigned(tagS)));
-    scheduleT <= scheduleSet(to_integer(unsigned(tagT)));
 
 end Multiplexer;

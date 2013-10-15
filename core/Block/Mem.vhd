@@ -6,19 +6,20 @@ use work.types.all;
 entity Mem is
     port (
         clk : in std_logic;
-        stall : out boolean;
-
         enable : in boolean;
-        code : in std_logic_vector(3 downto 0);
-
         base : in sram_addr;
         disp : in sram_addr;
-
-        storeValue : in value_t;
-        outLine : out value_t;
-
-        loadLine : in value_t;
-        storeLine : out value_t);
+        tag : in tag_t;
+        pipeTag1 : buffer tag_t;
+        pipeTag2 : buffer tag_t;
+        emitTag : out tag_t;
+        pipeMode1 : buffer boolean;
+        pipeMode2 : buffer boolean;
+        emitMode : out boolean;
+        sramAddr : out std_logic_vector(19 downto 0);
+        sramData : inout value_t;
+        sramLoad : out std_logic;
+        sramStore : out std_logic);
 end Mem;
 
 architecture Connection of Mem is
@@ -29,16 +30,17 @@ architecture Connection of Mem is
     signal val1 : value_t;
 
 begin
-    every_clock_do : process(clk)
+    everyClock : process(clk)
     begin
         if rising_edge(clk) then
-            addr <= sram_addr(unsigned(base) + unsigned(disp));
         end if;
+
         val1 <= storeValue;
         storeLine <= val1;
     end process;
 
     load <= (not code(0)) when enable else '0';
     store <= code(0) when enable else '0';
+
 
 end Connection;
