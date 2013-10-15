@@ -32,9 +32,6 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
     <tr><td><b>F</b>loat-<b>S</b>pecial</td>
         <td colspan="5">01101</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Fy</td><td colspan="16">Function</td>
     </tr>
-    <tr><td><b>D</b>E<b>B</b>UG</td>
-        <td colspan="6">011111</td><td colspan="5">00000</td><td colspan="5">00000</td><td colspan="16">Arbitrary Debug Function on Simulator</td>
-    </tr>
     <tr><td><b>R</b>egisiter-<b>M</b>emory</td>
         <td colspan="3">100</td><td colspan="3">RMCode</td><td colspan="5">Rm</td><td colspan="5">Rv</td><td colspan="16">Displacement</td>
     </tr>
@@ -57,7 +54,6 @@ FO [    01100    ][t][    Ra/Fa    ][    Rb/Fb    ][     Fd      ][      _      
 J  [    0101  ][hint][     Rt      ][     Rl      ][                    Target                    ]
 RS [    01001    ][t][    Rx/Fx    ][     Ry      ][                   Function                   ]
 FS [    01101    ][t][    Rx/Fx    ][     Fy      ][                   Function                   ]
-DB [    011111      ][    00000    ][    00000    ][    Arbitrary Debug Function on Simulator     ]
 RM [  100  ][RMCode ][     Rm      ][     Rv      ][                 Displacement                 ]
 FM [  101  ][FMCode ][     Rm      ][     Fv      ][                 Displacement                 ]
 RB [  110  ][RBCode ][     Ra      ][     Rb      ][                    Target                    ]
