@@ -89,20 +89,26 @@ FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target  
 ## 命令一覧
 
 ### ALU（RO，IO）
+
+    Rbv := Rb when type == 0
+    Rbv := sign_extend(Immediate) when type == 1
+
+とする．
+
 #### add，addi
 ALUCode `0000`
 
-    Rd := Ra + (Rb or Immediate)（演算結果の溢れは無視）
+    Rd := Ra + Rbv （演算結果の溢れは無視）
 
 #### sub，subi
 ALUCode `0001`
 
-    Rd := Ra - (Rb or Immediate)（演算結果の溢れは無視）
+    Rd := Ra - Rbv （演算結果の溢れは無視）
 
 #### eq，eqi
 ALUCode `0010`
 
-    Rd := Ra = (Rb or sign_extend(Immediate))
+    Rd := Ra == Rbv
 
 #### lt，lti
 ALUCode `0011`
@@ -112,44 +118,44 @@ ALUCode `0011`
 #### and，andi
 ALUCode `0100`
 
-    Rd := Ra & (Rb or sign_extend(Immediate))
+    Rd := Ra & Rbv
 
 #### or，ori
 ALUCode `0101`
 
-    Rd := Ra | (Rb or sign_extend(Immediate))
+    Rd := Ra | Rbv
 
 #### xor，xori
 ALUCode `0110`
 
-    Rd := Ra ^ (Rb or sign_extend(Immediate))
+    Rd := Ra ^ Rbv
 
 #### sll，slli
 ALUCode `0111`
 
-    Rd := Ra << lower_5bit(Rb or Immediate)
+    Rd := Ra << lower_5bit(Rbv)
 
 #### srl，srli
 ALUCode `1000`
 
-    Rd := Ra >> lower_5bit(Rb or Immediate) (ただし論理シフト)
+    Rd := Ra >> lower_5bit(Rbv) (ただし論理シフト)
 
 #### sra，srai
 ALUCode `1001`
 
-    Rd := Ra >> lower_5bit(Rt or Immediate) (ただし算術シフト)
+    Rd := Ra >> lower_5bit(Rbv) (ただし算術シフト)
 
 #### cat，cati
 ALUCode `1010`
 
-   Rd := lower_16bit(Ra) | ((lower_16bit(Rb) or Immediate) << 16)
+   Rd := lower_16bit(Ra) | (lower_16bit(Rbv) << 16)
 
-#### mul，mulli
+#### mul，muli
 ALUCode `1011`
 
 min-rtに必須ではないけど、これくらいは入れときたい。高速化目指したarchでは省くかも。
 
-    Rd := lower_32bit(Ra * (Rb or Immediate)) （符号付きとしての乗算でも符号無しとしての乗算でも結果は同じ）
+    Rd := lower_32bit(Ra * Rbv) （符号付きとしての乗算でも符号無しとしての乗算でも結果は同じ）
 
 #### fmovr
 ALUCode `1100`

@@ -76,43 +76,43 @@ static inline float int_as_float(int32_t i) {
 static void issue();
 static void step();
 
-static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t ub, int32_t sb) {
+static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t b) {
 	switch (code) {
 	case 0b0000:
-		set_gpr(tagD, a + ub);
+		set_gpr(tagD, a + b);
 		return issue();
 	case 0b0001:
-		set_gpr(tagD, a - ub);
+		set_gpr(tagD, a - b);
 		return issue();
 	case 0b0010:
-		set_gpr(tagD, ((int32_t) a) == sb);
+		set_gpr(tagD, a == b);
 		return issue();
 	case 0b0011:
-		set_gpr(tagD, ((int32_t) a) < sb);
+		set_gpr(tagD, ((int32_t) a) < ((int32_t) b));
 		return issue();
 	case 0b0100:
-		set_gpr(tagD, a & sb);
+		set_gpr(tagD, a & b);
 		return issue();
 	case 0b0101:
-		set_gpr(tagD, a | sb);
+		set_gpr(tagD, a | b);
 		return issue();
 	case 0b0110:
-		set_gpr(tagD, a ^ sb);
+		set_gpr(tagD, a ^ b);
 		return issue();
 	case 0b0111:
-		set_gpr(tagD, a << bits(ub, 4, 0));
+		set_gpr(tagD, a << bits(b, 4, 0));
 		return issue();
 	case 0b1000:
-		set_gpr(tagD, ((uint32_t) a) >> bits(ub, 4, 0));
+		set_gpr(tagD, a >> bits(b, 4, 0));
 		return issue();
 	case 0b1001:
-		set_gpr(tagD, a >> bits(ub, 4, 0)); // relying on undefined behavior
+		set_gpr(tagD, ((int32_t) a) >> bits(b, 4, 0)); // relying on undefined behavior
 		return issue();
 	case 0b1010:
-		set_gpr(tagD, (a & ((1 << 16) - 1)) | (ub << 16));
+		set_gpr(tagD, (a & ((1 << 16) - 1)) | (b << 16));
 		return issue();
 	case 0b1011:
-		set_gpr(tagD, a * ub);
+		set_gpr(tagD, a * b);
 		return issue();
 	default:
 		assert(false);
@@ -306,11 +306,11 @@ static void issue() {
 
 	switch (bits(inst, 31, 30)) {
 	case 0b00:
-		return alu(bits(inst, 29, 26), tagA, GPR[tagB], imm, (int32_t) (int16_t) imm);
+		return alu(bits(inst, 29, 26), tagA, GPR[tagB], (uint32_t) (int32_t) (int16_t) imm);
 	case 0b01:
 		switch (bits(inst, 29, 26)) {
 			case 0b0000:
-				return alu(bits(inst, 3, 0), tagA, GPR[tagB], GPR[tagC], (int32_t) GPR[tagC]);
+				return alu(bits(inst, 3, 0), tagA, GPR[tagB], GPR[tagC]);
 			case 0b0001:
 				return aluf(bits(inst, 3, 0), tagA, FPR[tagB], FPR[tagC]);
 			case 0b0010:
