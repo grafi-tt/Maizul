@@ -20,17 +20,20 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
     </tr>
     <tr><td><b>R</b>egister-<b>O</b>peration</td>
         <td colspan="5">01000</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Rd</td><td colspan="7">_</td><td colspan="4">ALUCode</td>
-    </tr>
-    <tr><td><b>J</b>ump</td>
-        <td colspan="5">01001</td><td colspan="1">addressing</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
-    </tr>
     <tr><td><b>F</b>loat-<b>O</b>peration</td>
         <td colspan="5">01100</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Fd</td><td colspan="5">_</td><td colspan="2">sign</td><td colspan="4">FPUCode</td>
+    </tr>
+    <tr><td><b>J</b>ump</td>
+        <td colspan="5">0101</td><td colspan="2">hint</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
+    </tr>
     <tr><td><b>R</b>egister-<b>S</b>pecial</td>
-        <td colspan="5">01010</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
+        <td colspan="5">01001</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
     </tr>
     <tr><td><b>F</b>loat-<b>S</b>pecial</td>
-        <td colspan="5">01110</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Fy</td><td colspan="16">Function</td>
+        <td colspan="5">01101</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Fy</td><td colspan="16">Function</td>
+    </tr>
+    <tr><td><b>D</b>E<b>B</b>UG</td>
+        <td colspan="6">011111</td><td colspan="5">00000</td><td colspan="5">00000</td><td colspan="16">Arbitrary Debug Function on Simulator</td>
     </tr>
     <tr><td><b>R</b>egisiter-<b>M</b>emory</td>
         <td colspan="3">100</td><td colspan="3">RMCode</td><td colspan="5">Rm</td><td colspan="5">Rv</td><td colspan="16">Displacement</td>
@@ -50,15 +53,19 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
    31 30 29 28 27 26 25 24 23 22 21 20 19 28 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
 IO [ 00 ][ ALUcode  ][     Ra      ][     Rd      ][                  Immediate                   ]
 RO [    01000    ][t][    Ra/Fa    ][    Rb/Fb    ][     Rd      ][         _         ][ ALUCode  ]
-J  [    01001    ][a][     Rt      ][     Rl      ][                    Target                    ]
 FO [    01100    ][t][    Ra/Fa    ][    Rb/Fb    ][     Fd      ][      _      ][sgn ][ FPUCode  ]
-RS [    01010    ][t][    Rx/Fx    ][     Ry      ][                   Function                   ]
-FS [    01110    ][t][    Rx/Fx    ][     Fy      ][                   Function                   ]
+J  [    0101  ][hint][     Rt      ][     Rl      ][                    Target                    ]
+RS [    01001    ][t][    Rx/Fx    ][     Ry      ][                   Function                   ]
+FS [    01101    ][t][    Rx/Fx    ][     Fy      ][                   Function                   ]
+DB [    011111      ][    00000    ][    00000    ][    Arbitrary Debug Function on Simulator     ]
 RM [  100  ][RMCode ][     Rm      ][     Rv      ][                 Displacement                 ]
 FM [  101  ][FMCode ][     Rm      ][     Fv      ][                 Displacement                 ]
 RB [  110  ][RBCode ][     Ra      ][     Rb      ][                    Target                    ]
 FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target                    ]
 -->
+
+### type
+入力オペランドが整数か浮動小数点数かを示す．
 
 <dl>
     <dt>type = 0</dt>
@@ -66,6 +73,9 @@ FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target  
     <dt>type = 1</dt>
         <dd>Fa，Fb，Fyを使用</dd>
 </dl>
+
+### sign
+浮動小数点の演算結果の符号の操作．
 
 <dl>
     <dt>sign = 00</dt>
@@ -78,11 +88,18 @@ FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target  
         <dd>minus 負</dd>
 </dl>
 
+### hint
+jmp命令実行時の分岐予測の方向を示す．まだコアの側で実装していないが，ある程度の高速化には必須だと思うので必ず適切にセットすること．
+
 <dl>
-    <dt>addressing = 0</dt>
-        <dd>Rtをジャンプ先にする</dd>
-    <dt>addressing = 1</dt>
-        <dd>Target即値をジャンプ先にする</dd>
+    <dt>hint = 00</dt>
+        <dd>命令中の即値にジャンプすると予測．単なるジャンプのときに用いる．</dd>
+    <dt>hint = 01</dt>
+        <dd>命令中の即値にジャンプしつつ，リンクレジスタとして用いるレジスタに格納する値を，内部的なスタックにプッシュと予測．関数呼び出しのときに用いる．</dd>
+    <dt>hint = 10</dt>
+        <dd>スタックに積まれた値にジャンプし，スタックをポップすると予測．関数からのリターンのときに用いる．</dd>
+    <dt>hint = 11</dt>
+        <dd>今のところ未定義．Alphaではコルーチンを実現するような怪しい挙動が定まっていたが，それを実装するメリットも無さそうだし，コンパイラ班と相談ということで．</dd>
 </dl>
 
 
@@ -285,39 +302,52 @@ RBCode `011` / FBCode `011`
 
 
 ### 無条件ジャンプ命令（J）
-一命令のみ．addressingの区別を無くして二値を足し合わせるようにすると，分岐予測が大変になのでやめておく．コンパイラ側での希望があれば考える．
+一命令のみ．
 
 #### jmp
 
-    (PC, Rl) := ((addressing = '0' ? Rt : Target), PC + 4)
+    (PC, Rl) := (Rt | Target, PC + 4)
 
-    この一命令で，関数呼び出しおよびreturnも実現できる．Rl，Rtがそれぞれ，関数呼び出し時，関数リターン時のリンクレジスタになる．
+
+この一命令で，関数呼び出しおよびreturnも実現できる．Rl，Rtがそれぞれ，関数呼び出し時，関数リターン時のリンクレジスタになる．上の方に書いたが，適切にhintをつけないとコアでは低速になる．
+
+RtとTargetをorするという挙動だが，実際にはどちらか片方だけを用いてもう片方を0に固定する使い方を主に想定している．
 
 ### 特殊命令（RS，FS）
+Functionを広く取ったが，現状シリアル通信のみ．
+
 #### get
-Function 0000000000000001 / RS / type = 0
-
-RyをR0に固定
-
-標準出力なりシリアル通信なりから入力を受け取ってRxの値とする．単なるバイト列として，ビッグエンディアンなので最上位から順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
-
-#### fget
-Function 0000000000000001 / FS / type = 1
-
-FyをF0に固定
-
-標準出力なりシリアル通信なりから入力を受け取ってFxの値とする．単なるバイト列として，ビッグエンディアンなので最上位から順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
-
-#### put
-Function 0000000000000001 / RS / type = 0
+Function `0000000000000000` / RS / type = 0
 
 RxをR0に固定
 
-Ryの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位から順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+要するに `01001000000xxxxx0000000000000000`で，xxxxxに値を書き込むレジスタの番号を指定．
 
-#### fput
-Function 0000000000000001 / FS / type = 1
+標準出力なりシリアル通信なりから入力を受け取ってRyの値とする．単なるバイト列として，ビッグエンディアンなので最上位から順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### fget
+Function `0000000000000000` / FS / type = 1
 
 FxをF0に固定
 
-Fyの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位から順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+要するに `01101100000xxxxx0000000000000000`で，xxxxxに値を書き込むレジスタの番号を指定．
+
+標準出力なりシリアル通信なりから入力を受け取ってFyの値とする．単なるバイト列として，ビッグエンディアンなので最上位から順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### put
+Function `0000000000000001` / RS / type = 0
+
+RyをR0に固定
+
+要するに `010010xxxxx000000000000000000001`で，xxxxxに値を読み込むレジスタの番号を指定．
+
+Rxの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位から順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### fput
+Function `0000000000000001` / FS / type = 1
+
+FyをF0に固定
+
+要するに `011011xxxxx000000000000000000001`で，xxxxxに値を読み込むレジスタの番号を指定．
+
+Fxの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位から順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
