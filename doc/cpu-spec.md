@@ -16,27 +16,27 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
         <th>31</th><th>30</th><th>29</th><th>28</th><th>27</th><th>26</th><th>25</th><th>24</th><th>23</th><th>22</th><th>21</th><th>20</th><th>19</th><th>18</th><th>17</th><th>16</th><th>15</th><th>14</th><th>13</th><th>12</th><th>11</th><th>10</th><th>9</th><th>8</th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
     </tr>
     <tr><td><b>I</b>mmediate-<b>O</b>peration</td>
-        <td colspan="2">00</td><td colspan="4">ALUCode</td><td colspan="5">Rd</td><td colspan="5">Ra</td><td colspan="16">Immediate</td>
+        <td colspan="2">00</td><td colspan="4">ALUCode</td><td colspan="5">Ra</td><td colspan="5">Rd</td><td colspan="16">Immediate</td>
     </tr>
     <tr><td><b>R</b>egister-<b>O</b>peration</td>
-        <td colspan="5">01000</td><td colspan="1">type</td><td colspan="5">Rd</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="7">_</td><td colspan="4">ALUCode</td>
+        <td colspan="5">01000</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Rd</td><td colspan="7">_</td><td colspan="4">ALUCode</td>
     </tr>
     <tr><td><b>J</b>ump</td>
-        <td colspan="5">01001</td><td colspan="1">addressing</td><td colspan="5">Rl</td><td colspan="5">Rt</td><td colspan="16">Displacement</td>
+        <td colspan="5">01001</td><td colspan="1">addressing</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>F</b>loat-<b>O</b>peration</td>
-        <td colspan="5">01100</td><td colspan="1">type</td><td colspan="5">Fd</td><td colspan="5">Fa/Ra</td><td colspan="5">Fb/Rb</td><td colspan="5">_</td><td colspan="2">sign</td><td colspan="4">FPUCode</td>
+        <td colspan="5">01100</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Fd</td><td colspan="5">_</td><td colspan="2">sign</td><td colspan="4">FPUCode</td>
     <tr><td><b>R</b>egister-<b>S</b>pecial</td>
-        <td colspan="5">01010</td><td colspan="1">type</td><td colspan="5">Rx</td><td colspan="5">Ry/Fy</td><td colspan="16">Function</td>
+        <td colspan="5">01010</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
     </tr>
     <tr><td><b>F</b>loat-<b>S</b>pecial</td>
-        <td colspan="5">01110</td><td colspan="1">type</td><td colspan="5">Fx</td><td colspan="5">Ry/Fy</td><td colspan="16">Function</td>
+        <td colspan="5">01110</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Fy</td><td colspan="16">Function</td>
     </tr>
     <tr><td><b>R</b>egisiter-<b>M</b>emory</td>
-        <td colspan="3">100</td><td colspan="3">RMCode</td><td colspan="5">Rv</td><td colspan="5">Rm</td><td colspan="16">Displacement</td>
+        <td colspan="3">100</td><td colspan="3">RMCode</td><td colspan="5">Rm</td><td colspan="5">Rv</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>F</b>loat-<b>M</b>emory</td>
-        <td colspan="3">101</td><td colspan="3">FMCode</td><td colspan="5">Fv</td><td colspan="5">Rm</td><td colspan="16">Displacement</td>
+        <td colspan="3">101</td><td colspan="3">FMCode</td><td colspan="5">Rm</td><td colspan="5">Fv</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>R</b>egisiter-<b>B</b>ranch</td>
         <td colspan="3">110</td><td colspan="3">RBCode</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Target</td>
@@ -48,14 +48,14 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
 
 <!--
    31 30 29 28 27 26 25 24 23 22 21 20 19 28 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
-IO [ 00 ][ ALUcode  ][     Rd      ][     Ra      ][                  Immediate                   ]
-RO [    01000    ][t][     Rd      ][    Ra/Fa    ][    Rb/Fb    ][         _         ][ ALUCode  ]
-J  [    01001    ][a][     Rl      ][     Rt      ][                    Target                    ]
-FO [    01100    ][t][     Fd      ][    Ra/Fa    ][    Rb/Fb    ][      _      ][sgn ][ FPUCode  ]
-RS [    01010    ][t][     Rx      ][    Ry/Fy    ][                   Function                   ]
-FS [    01110    ][t][     Fx      ][    Ry/Fy    ][                   Function                   ]
-RM [  100  ][RMCode ][     Rv      ][     Rm      ][                 Displacement                 ]
-FM [  101  ][FMCode ][     Fv      ][     Rm      ][                 Displacement                 ]
+IO [ 00 ][ ALUcode  ][     Ra      ][     Rd      ][                  Immediate                   ]
+RO [    01000    ][t][    Ra/Fa    ][    Rb/Fb    ][     Rd      ][         _         ][ ALUCode  ]
+J  [    01001    ][a][     Rt      ][     Rl      ][                    Target                    ]
+FO [    01100    ][t][    Ra/Fa    ][    Rb/Fb    ][     Fd      ][      _      ][sgn ][ FPUCode  ]
+RS [    01010    ][t][    Rx/Fx    ][     Ry      ][                   Function                   ]
+FS [    01110    ][t][    Rx/Fx    ][     Fy      ][                   Function                   ]
+RM [  100  ][RMCode ][     Rm      ][     Rv      ][                 Displacement                 ]
+FM [  101  ][FMCode ][     Rm      ][     Fv      ][                 Displacement                 ]
 RB [  110  ][RBCode ][     Ra      ][     Rb      ][                    Target                    ]
 FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target                    ]
 -->
