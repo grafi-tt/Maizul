@@ -6,16 +6,15 @@ use work.types.all;
 entity Branch is
     port (
         clk : in std_logic;
-
-        enable : in boolean;
         code : in std_logic_vector(3 downto 0);
-
-        opA : in value_t;
-        opB : in value_t;
-        addr : in blkram_addr;
-
-        outLine : out value_t;
-        PCLine : out blkram_addr;
+        tagL : in tag_t;
+        valA : in value_t;
+        valB : in value_t;
+        link : in blkram_addr;
+        target : in blkram_addr;
+        emitTag : out tag_t;
+        emitLink : out blkram_addr;
+        emitTarget : out blkram_addr;
         result : out boolean);
 end Branch;
 
@@ -34,39 +33,37 @@ architecture BranchImp of Branch is
     signal zBTmp : boolean;
 
     constant z31 : std_logic_vector(30 downto 0) := (others => '0');
+    signal effCode : std_logic_vector(2 downto 0);
 
 begin
     every_clock_do : process(clk)
     begin
         if rising_edge(clk) then
-            a <= opA;
-            b <= opB;
-            PCLine <= addr;
+            emitTag <= tagL;
+            a <= valA;
+            b <= valB;
+            emitTag <= tagL;
+            emitLink <= link;
+            emitTarget <= target;
         end if;
     end process;
 
-    with code select
-        result <= rEq when "0000",
-                  not rEq when "0001",
-                  sLt when "0010",
-                  sLt or rEq when "0011",
-                  uLt when "0100",
-                  uLt or rEq when "0101",
-
-                  fEq when "1000",
-                  not fEq when "1001",
-                  fLt when "1010",
-                  fLt or fEq when "1011",
-
-                  false when others;
+    effCode <= code(3) & code(1 downto 0); -- eliminate redundant bit
+    with effCode select
+        result <= rEq when "000",
+                  not rEq when "001",
+                  sLt when "010",
+                  sLt or rEq when "011",
+                  fEq when "100",
+                  not fEq when "101",
+                  fLt when "110",
+                  fLt or fEq when others; -- "111"
 
     ltTmp <= unsigned(a(30 downto 0)) < unsigned(b(30 downto 0));
     zATmp <= a(30 downto 0) = z31;
-    zBTmp <= a(30 downto 0) = z31;
+    zBTmp <= b(30 downto 0) = z31;
 
     rEq <= a = b;
-    uLt <= (a(31) = '1' and b(31) = '0') or
-           ((a(31) = b(31)) and ltTmp);
     sLt <= (a(31) = '0' and b(31) = '1') or
            ((a(31) = b(31)) and ltTmp);
     fEq <= rEq or (zATmp and zBTmp);

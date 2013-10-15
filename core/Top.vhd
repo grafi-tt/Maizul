@@ -64,8 +64,8 @@ architecture StateMachine of Top is
     component SRAM is
         port (
             clk : in std_logic;
-            load : in std_logic;
-            store : in std_logic;
+            load : in boolean;
+            store : in boolean;
             addr : in std_logic_vector (19 downto 0);
             data : inout std_logic_vector (31 downto 0);
 
@@ -91,19 +91,16 @@ architecture StateMachine of Top is
         port (
             clk : in std_logic;
             halt : in boolean;
-
             serialOk : buffer std_logic;
             serialGo : buffer std_logic;
             serialRecvData : in std_logic_vector(7 downto 0);
             serialSendData : out std_logic_vector(7 downto 0);
             serialRecved : in std_logic;
             serialSent : in std_logic;
-
-            sramLoad : out std_logic;
-            sramStore : out std_logic;
+            sramLoad : out boolean;
+            sramStore : out boolean;
             sramAddr : out sram_addr;
-            sramStoreLine : out value_t;
-            sramLoadLine : in value_t);
+            sramData : inout value_t);
     end component;
 
     signal clk, iclk : std_logic;
@@ -116,8 +113,8 @@ architecture StateMachine of Top is
     signal sendData : std_logic_vector(7 downto 0);
     signal waitData : std_logic_vector(7 downto 0);
 
-    signal load : std_logic;
-    signal store : std_logic;
+    signal load : boolean;
+    signal store : boolean;
     signal addr : sram_addr := (others => '0');
     signal dataLine : value_t;
 
@@ -180,7 +177,7 @@ begin
         sramLoad => load,
         sramStore => store,
         sramAddr => addr,
-        sramDataLine => dataLine);
+        sramData => dataLine);
 
     every_clock_do : process(clk)
     begin

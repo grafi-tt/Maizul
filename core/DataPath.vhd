@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use work.types.all;
 
 entity DataPath is
@@ -14,10 +15,10 @@ entity DataPath is
         serialRecved : in std_logic;
         serialSent : in std_logic;
 
-        sramLoad : out std_logic;
-        sramStore : out std_logic;
+        sramLoad : out boolean;
+        sramStore : out boolean;
         sramAddr : out sram_addr;
-        sramDataLine : inout value_t);
+        sramData : inout value_t);
 end DataPath;
 
 architecture DataPathImp of DataPath is
@@ -36,34 +37,24 @@ architecture DataPathImp of DataPath is
     component RegSet is
         port (
             clk : in std_logic;
-            blocking : in boolean;
-
-            tagS : in std_logic_vector(4 downto 0);
-            tagT : in std_logic_vector(4 downto 0);
-            tagD : in std_logic_vector(4 downto 0);
-
-            delayD : in schedule_t;
-            writer : in std_logic;
-
+            tagS : in tag_t;
             valS : out value_t;
+            tagT : in tag_t;
             valT : out value_t;
-
-            scheduleS : out schedule_t;
-            scheduleT : out schedule_t;
-
-            writeLineA : in value_t;
-            writeLineB : in value_t);
+            tagW : in tag_t;
+            lineW : in value_t;
+            tagM : in tag_t;
+            modeM : in std_logic;
+            lineM : inout value_t);
     end component;
 
     component ALU is
         port (
             clk : in std_logic;
-            enable : in boolean;
             code : in std_logic_vector(3 downto 0);
             tagD : in tag_t;
             valA : in value_t;
             valB : in value_t;
-            emitEnable : out boolean;
             emitTag : out tag_t;
             emitVal : out value_t);
     end component;
@@ -71,43 +62,37 @@ architecture DataPathImp of DataPath is
     component Branch is
         port (
             clk : in std_logic;
-
-            enable : in boolean;
             code : in std_logic_vector(3 downto 0);
-
-            opA : in value_t;
-            opB : in value_t;
-            addr : in blkram_addr;
-
-            outLine : out value_t;
-            PCLine : out blkram_addr;
+            tagL : in tag_t;
+            valA : in value_t;
+            valB : in value_t;
+            link : in blkram_addr;
+            target : in blkram_addr;
+            emitTag : out tag_t;
+            emitLink : out blkram_addr;
+            emitTarget : out blkram_addr;
             result : out boolean);
     end component;
 
     component IO is
         port (
             clk : in std_logic;
-
-            enable : in boolean;
             code : in std_logic;
-
             serialOk : buffer std_logic;
             serialGo : buffer std_logic;
             serialRecvData : in std_logic_vector(7 downto 0);
             serialSendData : out std_logic_vector(7 downto 0);
             serialRecved : in std_logic;
             serialSent : in std_logic;
-
             putVal : in value_t;
-            getLine : out value_t;
+            getTag : out tag_t;
+            getVal : out value_t;
             blocking : out boolean);
     end component;
 
     signal fetched : instruction_t;
     signal pc : blkram_addr;
     signal fetchedPC : blkram_addr;
-    signal jump : boolean;
-    signal jumpAddr : blkram_addr;
     signal PCLine : blkram_addr;
 
     signal instruction : instruction_t;
@@ -121,33 +106,46 @@ architecture DataPathImp of DataPath is
     signal tagZ : tag_t;
     signal imm : std_logic_vector(15 downto 0);
 
+    signal valX : value_t;
+    signal valRegX : value_t;
     signal valY : value_t;
     signal valRegY : value_t;
-    signal valZ : value_t;
-    signal valRegZ : value_t;
 
-    signal enableA : boolean;
-    signal enableF : boolean;
-    signal enableM : boolean;
-    signal enableB : boolean;
-    signal enableIO : boolean;
+    signal tagW : tag_t;
+    signal valW : value_t;
 
-    signal pipeTagA : tag_t;
-    signal pipeEnableA : boolean;
+    signal codeA : std_logic_vector(3 downto 0);
+    signal tagD : tag_t;
+    signal valBI : value_t;
     signal emitTagA : tag_t;
     signal emitValA : value_t;
 
+    signal codeB : std_logic_vector(3 downto 0);
+    signal tagL : tag_t;
+    signal valA : value_t;
+    signal valB : value_t;
     signal target : blkram_addr;
-    signal disp : sram_addr;
+    signal emitTagB : tag_t;
+    signal emitValB : blkram_addr;
+    signal jump : boolean;
 
+    signal load2, load1 : boolean;
+    signal load : boolean;
+    signal modeM : std_logic;
+    signal tagM : tag_t;
+    signal tagM1, tagM2, tagM3 : tag_t;
+    signal pipeValMtmp : value_t;
+    signal pipeValM : value_t;
+    signal emitValMtmp : value_t;
+    signal emitValM : value_t;
+
+    signal emitTagIO : tag_t;
+    signal emitValIO : value_t;
+
+    signal stallJ2 : boolean;
+    signal stallJ1 : boolean := false;
+    signal stallX : boolean;
     signal stallY : boolean;
-    signal fowardY : boolean;
-
-    signal aluLine : value_t;
-    signal branchLine : value_t;
-    signal ioLine : value_t;
-    signal memLine : value_t;
-    signal unifiedLine : value_t;
 
     signal stall : boolean;
     signal blocking : boolean;
@@ -155,23 +153,21 @@ architecture DataPathImp of DataPath is
 begin
     reg_set_map : RegSet port map (
         clk => clk,
-        tagS => tagY,
-        valS => valY,
-        tagT => tagZ,
-        valT => valRegZ,
+        tagS => tagX,
+        valS => valX,
+        tagT => tagY,
+        valT => valRegY,
         tagW => tagW,
         lineW => valW,
-        tagM => emitTagM,
+        tagM => tagM,
         modeM => modeM,
-        lineM => lineM);
-    tagW <= emitTagA when emitEnableA else
-            emitTagB when emitEnableB else
-            emitTagIO when emitEnableIO else
+        lineM => sramData);
+    tagW <= emitTagA or emitTagB or emitTagIO;
+    valW <= emitValA when emitTagA /= "00000" else
+            value_t(x"0000" & emitValB) when emitTagB /= "00000" else
+            emitValIO when emitTagIO /= "00000" else
             (others => '0');
-    valW <= emitValA when emitEnableA else
-            emitValB when emitEnableB else
-            emitValIO when emitEnableIO else
-            (others => '0');
+    modeM <= '0' when load else '1';
 
     fetch_map : Fetch port map (
         clk => clk,
@@ -183,34 +179,42 @@ begin
 
     alu_map : ALU port map (
         clk => clk,
-        enable => enableA,
         code => codeA,
-        tagD => tagX,
-        valA => valY,
-        valB => valZ,
-        emitEnable => emitEnableA;
-        emitTag => emitTagA;
+        tagD => tagD,
+        valA => valX,
+        valB => valBI,
+        emitTag => emitTagA,
         emitVal => emitValA);
-    enableA <= (opH = "00" or (opH = "01" and opLL = "000")) and (not stall);
-    codeA <= instruction(29 downto 26) when op00 else
-             instruction(3 downto 0);
+    tagD <= "00000" when stall else
+            tagZ when opH = "00" else
+            tagY when (opH = "01" and opL(3 downto 1) = "000") else
+            "00000";
+    valBI <= value_t(resize(signed(imm), 32)) when opH = "00" else valY;
+    codeA <= opL when opH = "00" else instruction(3 downto 0);
 
     branch_map : Branch port map (
         clk => clk,
-        enable => branchEnable,
-        code => opL,
-        opA => valA,
-        opB => valB,
-        target => jumpAddr,
-        PCLine => PCLine,
+        code => codeB,
+        tagL => tagL,
+        valA => valA,
+        valB => valB,
+        link => pc,
+        target => target,
+        emitTag => emitTagB,
+        emitLink => emitValB,
+        emitTarget => PCLine,
         result => jump);
-    enableB <= (opH = "11" or (opH = "01" and opLL = "001")) and (not stall);
-    target <= blkram_addr(imm);
+    codeB <= opL when opH = "11" else
+             "0000" when (opH = "01" and opL(3 downto 1) = "001") else -- always true
+             "0001"; -- always false
+    tagL <= "00000" when opH = "11" else tagX;
+    valA <= valX when opH = "11" else (others => '0');
+    valB <= valY when opH = "11" else (others => '0');
+    target <= blkram_addr(imm) when opH = "11" else blkram_addr(imm or valX(15 downto 0));
 
-    io_map : IO port map(
+    io_map : IO port map (
         clk => clk,
-        enable => ioEnable,
-        code => instruction(5),
+        code => imm(0),
         serialOk => serialOk,
         serialGo => serialGo,
         serialRecvData => serialRecvData,
@@ -218,9 +222,14 @@ begin
         serialRecved => serialRecved,
         serialSent => serialSent,
         putVal => valA,
-        getLine => ioLine,
+        getTag => emitTagIO,
+        getVal => emitValIO,
         blocking => blocking);
-    enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
+    --enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
+
+    sramData <= (others => 'Z') when load else emitValM;
+
+    stallJ2 <= jump;
 
     everyClock : process(clk)
     begin
@@ -230,11 +239,12 @@ begin
                 pc <= fetchedPC;
             end if;
 
-            sramAddr <= sram_addr(unsigned(base) + unsigned(disp));
-            sramLoad <= (not mode) and enable;
-            sramStore <= mode and enable;
+            sramAddr <= sram_addr(unsigned(valX(19 downto 0)) + unsigned("0000" & imm));
+            sramLoad <= opH = "10" and opL(0) = '0';
+            sramStore <= opH = "10" and opL(0) = '1';
 
-            load1 <= sramLoad;
+            load2 <= opH = "10" and opL(0) = '0';
+            load1 <= load2;
             load <= load1;
 
             tagM2 <= tagM3;
@@ -244,47 +254,46 @@ begin
             pipeValMTmp <= valX;
             emitValMTmp <= pipeValM;
 
+            stallJ1 <= stallJ2;
+
         end if;
     end process;
 
-    sramDataLine <= (others => 'Z') when load == '1' else emitValM;
-
     opH <= instruction(31 downto 30);
     opL <= instruction(29 downto 26);
-    opLL <= instruction(28 downto 26);
-
-    isFP <= opcode(3) = '1';
 
     tagX <= tag_t(instruction(25 downto 21));
     tagY <= tag_t(instruction(20 downto 16));
-    tagZ <= tag_t(instruction(15 downto 10));
-    imm <= tag_t(instruction(15 downto 0));
+    tagZ <= tag_t(instruction(15 downto 11));
+    imm <= instruction(15 downto 0);
 
     -- TODO: eliminate copy-and-paste
+    valX <= (others => '0') when tagX = "00000" else
+            sramData when tagX = tagM and load else
+            emitValA when tagX = emitTagA else
+            valRegX;
+
     valY <= (others => '0') when tagY = "00000" else
-            sramDataLine when tagY = tagM and load = '1' else
-            valAlu when tagY = tagAlu else
+            sramData when tagY = tagM and load else
+            emitValA when tagY = emitTagA else
             valRegY;
 
-    valZ <= x"0000" & imm when opcode(0 downto 1) /= "01" or opcode(3 downto 4) /= "00" else
-            (others => '0') when tagZ = "00000" else
-            sramDataLine when tagZ = tagM and load = '1' else
-            valAlu when tagZ = tagAlu else
-            valRegZ;
-
     pipeValM <= (others => '0') when tagM2 = "00000" else
-                sramDataLine when tagM2 = tagM and load = '1' else
-                valAlu when tagM2 = tagAlu else
-                valRegY;
+                sramData when tagM2 = tagM and load else
+                emitValA when tagM2 = emitTagA else
+                pipeValMtmp;
 
     emitValM <= (others => '0') when tagM1 = "00000" else
-                sramDataLine when tagM1 = tagM and load = '1' else
-                valAlu when tagM1 = tagAlu else
-                valRegY;
+                sramData when tagM1 = tagM and load else
+                emitValA when tagM1 = emitTagA else
+                emitValMtmp;
 
-    stall <= halt or
-             blocking or
-             scheduleA(0) /= '0' or
-             ((not noTagB) and scheduleB(0) /= '1');
+    stallX <= tagX /= "00000" and (tagX = tagM2 or tagX = tagM1);
+    stallY <= tagY /= "00000" and (tagY = tagM2 or tagY = tagM1) and
+              ( (opH = "01" and opL(1) = '0') or
+                (opH = "10" and opL(0) = '0') or
+                (opH = "11"));
+
+    stall <= stallX or stallY or blocking or stallJ1 or stallJ2;
 
 end DataPathImp;

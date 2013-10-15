@@ -6,7 +6,6 @@ use work.types.all;
 entity RegSet is
     port (
         clk : in std_logic;
-        blocking : in boolean;
         tagS : in tag_t;
         valS : out value_t;
         tagT : in tag_t;
@@ -14,7 +13,7 @@ entity RegSet is
         tagW : in tag_t;
         lineW : in value_t;
         tagM : in tag_t;
-        modeM : in boolean;
+        modeM : in std_logic;
         lineM : inout value_t);
 end RegSet;
 
@@ -27,18 +26,16 @@ architecture Multiplexer of RegSet is
             enableW : in boolean;
             lineW : in value_t;
             enableM : in boolean;
-            modeM : in boolean;
+            modeM : in std_logic;
             lineM : inout value_t);
     end component;
 
     type value_set_t is array(31 downto 0) of value_t;
     signal valSet : value_set_t;
 
-    type enable_w_set is array(31 downto 1) of boolean;
-    signal enableWSet : enable_w_set;
-
-    type enable_m_set is array(31 downto 1) of boolean;
-    signal enableWSet : enable_w_set;
+    type enable_set_t is array(31 downto 1) of boolean;
+    signal enableWSet : enable_set_t;
+    signal enableMSet : enable_set_t;
 
 begin
     valSet(0) <= (others => '0');
@@ -47,17 +44,17 @@ begin
         reg_port : Reg port map (
             clk => clk,
             val => valSet(i),
-            enableW => enableWSet(i);
+            enableW => enableWSet(i),
             lineW => lineW,
-            enableM => enableMSet(i);
-            modeM => modeM;
+            enableM => enableMSet(i),
+            modeM => modeM,
             lineM => lineM);
 
         enableWSet(i) <= to_integer(unsigned(tagW)) = i;
         enableMSet(i) <= to_integer(unsigned(tagM)) = i;
     end generate reg_set_gen;
 
-    valS <= valueSet(to_integer(unsigned(tagS)));
-    valT <= valueSet(to_integer(unsigned(tagT)));
+    valS <= valSet(to_integer(unsigned(tagS)));
+    valT <= valSet(to_integer(unsigned(tagT)));
 
 end Multiplexer;
