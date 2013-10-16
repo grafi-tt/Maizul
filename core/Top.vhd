@@ -31,8 +31,7 @@ entity Top is
         XZBE : out std_logic_vector(3 downto 0));
 end Top;
 
--- TODO separate hardware connection and statemachine into diferrent architectures
-architecture StateMachine of Top is
+architecture Initialize of Top is
     component U232CRecv is
         generic (
             -- 9600bps
@@ -167,7 +166,6 @@ begin
 
     data_path_map : DataPath port map (
         clk => clk,
-        halt => halt,
         serialOk => ok,
         serialGo => go,
         serialRecvData => recvData,
@@ -178,71 +176,4 @@ begin
         sramStore => store,
         sramAddr => addr,
         sramData => dataLine);
-
-    every_clock_do : process(clk)
-    begin
-        if (rising_edge(clk)) then
-            case state is
-                when Hai => -- waiting signal
-                    if (recved = '1' and ok = '0') then
-                        ok <= '1';
-                        case haiState is
-                            when 3 =>
-                                null;
-                            when 2 =>
-                                waitData <= x"48";
-                            when 1 =>
-                                waitData <= x"61";
-                            when 0 =>
-                                waitData <= x"69";
-                        end case;
-                    end if;
-
-                    if (recved = '0' and ok = '1') then
-                        ok <= '0';
-                        if haiState = 3 then
-                            haiState <= 2;
-                        elsif waitData /= recvData then
-                            haiState <= 3;
-                        elsif haiState = 0 then
-                            haiState <= 3;
-                            state <= Run;
-                            halt <= false;
-                        else
-                            haiState <= haiState - 1;
-                        end if;
-                    end if;
-
-                when Run => -- CPU running
-                    if halt = false then
-                        state <= Bye;
-                    end if;
-
-                when Bye => -- telling bye
-                    if sent = '1' and go = '0' then
-                        case byeState is
-                            when 3 =>
-                                go <= '1';
-                                sendData <= x"42";
-                                byeState <= 2;
-                            when 2 =>
-                                go <= '1';
-                                sendData <= x"79";
-                                byeState <= 1;
-                            when 1 =>
-                                go <= '1';
-                                sendData <= x"65";
-                                byeState <= 0;
-                            when 0 =>
-                                state <= Hai;
-                                byeState <= 3;
-                        end case;
-                    end if;
-
-                    if sent = '0' and go = '1' then
-                        go <= '0';
-                    end if;
-            end case;
-        end if;
-    end process;
-end StateMachine;
+end Initialize;
