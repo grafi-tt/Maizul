@@ -81,7 +81,7 @@ begin
     end process;
 
     serialSendData <= buf(31 downto 24);
+    emitVal <= buf;
     blocking <= state /= Sleep;
-    getLine <= buf;
 
 end Implementation;
