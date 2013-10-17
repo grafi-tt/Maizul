@@ -13,7 +13,6 @@ entity RegSet is
         tagW : in tag_t;
         lineW : in value_t;
         tagM : in tag_t;
-        modeM : in std_logic;
         lineM : inout value_t);
 end RegSet;
 
@@ -26,7 +25,6 @@ architecture Multiplexer of RegSet is
             enableW : in boolean;
             lineW : in value_t;
             enableM : in boolean;
-            modeM : in std_logic;
             lineM : inout value_t);
     end component;
 
@@ -47,7 +45,6 @@ begin
             enableW => enableWSet(i),
             lineW => lineW,
             enableM => enableMSet(i),
-            modeM => modeM,
             lineM => lineM);
 
         enableWSet(i) <= to_integer(unsigned(tagW)) = i;

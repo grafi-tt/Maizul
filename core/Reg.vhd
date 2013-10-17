@@ -9,7 +9,6 @@ entity Reg is
         enableW : in boolean;
         lineW : in value_t;
         enableM : in boolean;
-        modeM : in std_logic;
         lineM : inout value_t);
 end Reg;
 
@@ -21,11 +20,7 @@ begin
             if enableW then
                 val <= lineW;
             elsif enableM then
-                if modeM = '0' then
-                    val <= lineM;
-                else
-                    lineM <= val;
-                end if;
+                val <= lineM;
             end if;
         end if;
     end process;

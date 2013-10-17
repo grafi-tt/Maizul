@@ -44,7 +44,6 @@ architecture DataPathImp of DataPath is
             tagW : in tag_t;
             lineW : in value_t;
             tagM : in tag_t;
-            modeM : in std_logic;
             lineM : inout value_t);
     end component;
 
@@ -132,13 +131,11 @@ architecture DataPathImp of DataPath is
 
     signal load2, load1 : boolean;
     signal load : boolean;
-    signal modeM : std_logic;
     signal tagM : tag_t;
     signal tagM1, tagM2, tagM3 : tag_t;
-    signal pipeValMtmp : value_t;
-    signal pipeValM : value_t;
-    signal emitValMtmp : value_t;
-    signal emitValM : value_t;
+    signal valM : value_t;
+    signal pipeValMTmp ,emitValMTmp : value_t;
+    signal pipeValM ,emitValM : value_t;
 
     signal emitTagIO : tag_t;
     signal emitValIO : value_t;
@@ -161,14 +158,12 @@ begin
         tagW => tagW,
         lineW => valW,
         tagM => tagM,
-        modeM => modeM,
         lineM => sramData);
     tagW <= emitTagA or emitTagB or emitTagIO;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
             emitValIO when emitTagIO /= "00000" else
             (others => '0');
-    modeM <= '0' when load else '1';
 
     fetch_map : Fetch port map (
         clk => clk,
@@ -229,7 +224,7 @@ begin
         blocking => blocking);
     --enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
 
-    sramData <= (others => 'Z') when load else emitValM;
+    sramData <= (others => 'Z') when load else valM;
 
     stallJ2 <= jump;
 
@@ -249,12 +244,13 @@ begin
             load1 <= load2;
             load <= load1;
 
-            tagM2 <= tagM3;
+            tagM2 <= tagY;
             tagM1 <= tagM2;
             tagM <= tagM1;
 
             pipeValMTmp <= valX;
             emitValMTmp <= pipeValM;
+            valM <= emitValM;
 
             stallJ1 <= stallJ2;
 
@@ -283,12 +279,12 @@ begin
     pipeValM <= (others => '0') when tagM2 = "00000" else
                 sramData when tagM2 = tagM and load else
                 emitValA when tagM2 = emitTagA else
-                pipeValMtmp;
+                pipeValMTmp;
 
     emitValM <= (others => '0') when tagM1 = "00000" else
                 sramData when tagM1 = tagM and load else
                 emitValA when tagM1 = emitTagA else
-                emitValMtmp;
+                emitValMTmp;
 
     stallX <= tagX /= "00000" and (tagX = tagM2 or tagX = tagM1);
     stallY <= tagY /= "00000" and (tagY = tagM2 or tagY = tagM1) and
