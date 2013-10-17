@@ -24,7 +24,7 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
         <td colspan="5">01100</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Fd</td><td colspan="5">_</td><td colspan="2">sign</td><td colspan="4">FPUCode</td>
     </tr>
     <tr><td><b>J</b>ump</td>
-        <td colspan="5">0101</td><td colspan="2">hint</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
+        <td colspan="4">0101</td><td colspan="2">hint</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
     </tr>
     <tr><td><b>R</b>egister-<b>S</b>pecial</td>
         <td colspan="5">01001</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
