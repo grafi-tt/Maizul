@@ -6,7 +6,6 @@ use work.types.all;
 entity ALU is
     port (
         clk : in std_logic;
-        enable : in boolean;
         code : in std_logic_vector(3 downto 0);
         tagD : in tag_t;
         valA : in value_t;
@@ -34,10 +33,10 @@ architecture Implementation of ALU is
     signal sraD  : value_t;
 
     signal catD : value_t;
-    signal mulD : std_logic_vector(64 downto 0);
+    signal mulD : std_logic_vector(63 downto 0);
 
-    signal zeroPad : std_logic_vector(31 downto 1) := (others => '0');
     signal result : value_t;
+    constant zeroPad : std_logic_vector(31 downto 1) := (others => '0');
 
 begin
     every_clock_do : process(clk)

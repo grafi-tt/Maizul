@@ -108,18 +108,11 @@ architecture Initialize of Top is
     signal recved, sent : std_logic;
     signal recvData : std_logic_vector(7 downto 0);
     signal sendData : std_logic_vector(7 downto 0);
-    signal waitData : std_logic_vector(7 downto 0);
 
     signal load : boolean;
     signal store : boolean;
     signal addr : sram_addr := (others => '0');
     signal dataLine : value_t;
-
-    type state_t is (Hai, Run, Bye);
-    signal state : state_t := Hai;
-
-    signal haiState : integer range 3 downto 0 := 3;
-    signal byeState : integer range 3 downto 0 := 3;
 
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);

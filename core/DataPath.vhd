@@ -6,7 +6,6 @@ use work.types.all;
 entity DataPath is
     port (
         clk : in std_logic;
-        halt : in boolean;
 
         serialOk : buffer std_logic;
         serialGo : buffer std_logic;
@@ -76,6 +75,7 @@ architecture DataPathImp of DataPath is
     component IO is
         port (
             clk : in std_logic;
+            enable : in boolean;
             code : in std_logic;
             serialOk : buffer std_logic;
             serialGo : buffer std_logic;
@@ -90,7 +90,7 @@ architecture DataPathImp of DataPath is
             blocking : out boolean);
     end component;
 
-    signal fetched : instruction_t;
+    signal fetchedInst : instruction_t;
     signal pc : blkram_addr;
     signal fetchedPC : blkram_addr;
     signal PCLine : blkram_addr;
@@ -99,7 +99,6 @@ architecture DataPathImp of DataPath is
 
     signal opH : std_logic_vector(1 downto 0);
     signal opL : std_logic_vector(3 downto 0);
-    signal opLL : std_logic_vector(2 downto 0);
 
     signal tagX : tag_t;
     signal tagY : tag_t;
@@ -137,6 +136,7 @@ architecture DataPathImp of DataPath is
     signal pipeValMTmp ,emitValMTmp : value_t;
     signal pipeValM ,emitValM : value_t;
 
+    signal enableIO : boolean;
     signal emitTagIO : tag_t;
     signal emitValIO : value_t;
 
@@ -152,7 +152,7 @@ begin
     reg_set_map : RegSet port map (
         clk => clk,
         tagS => tagX,
-        valS => valX,
+        valS => valRegX,
         tagT => tagY,
         valT => valRegY,
         tagW => tagW,
@@ -170,8 +170,8 @@ begin
         stall => stall,
         jump => jump,
         jumpAddr => PCLine,
-        pc => pc,
-        instruction => fetched);
+        pc => fetchedPC,
+        instruction => fetchedInst);
 
     alu_map : ALU port map (
         clk => clk,
@@ -203,13 +203,14 @@ begin
     codeB <= opL when opH = "11" else
              "0000" when (opH = "01" and opL(3 downto 1) = "001") else -- always true
              "0001"; -- always false
-    tagL <= "00000" when opH = "11" else tagX;
+    tagL <= "00000" when opH = "11" else tagY;
     valA <= valX when opH = "11" else (others => '0');
     valB <= valY when opH = "11" else (others => '0');
     target <= blkram_addr(imm) when opH = "11" else blkram_addr(imm or valX(15 downto 0));
 
     io_map : IO port map (
         clk => clk,
+        enable => enableIO,
         code => imm(0),
         serialOk => serialOk,
         serialGo => serialGo,
@@ -222,7 +223,7 @@ begin
         emitTag => emitTagIO,
         emitVal => emitValIO,
         blocking => blocking);
-    --enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
+    enableIO <= opH = "01" and (opL = "0100" or opL = "1101");
 
     sramData <= (others => 'Z') when load else valM;
 
@@ -232,7 +233,7 @@ begin
     begin
         if rising_edge(clk) then
             if not stall then
-                instruction <= fetched;
+                instruction <= fetchedInst;
                 pc <= fetchedPC;
             end if;
 
