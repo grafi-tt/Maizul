@@ -227,24 +227,24 @@ static void brf(inst_t code, uint32_t target, float a, float b) {
 	}
 }
 
-static void rrsp(inst_t func, inst_t tagA, uint32_t b) {
+static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 	switch (func) {
 		case 0:
-			assert(b == 0);
+			assert(y == 0);
 			for (int i = 0; i < 4; i++) {
-				b = b << 8;
-				b &= (unsigned char) getchar();
+				y = y << 8;
+				y &= (unsigned char) getchar();
 			}
-			set_gpr(tagA, b);
+			set_gpr(tagX, y);
 			return issue();
 		case 1:
-			assert(tagA == 0);
+			assert(tagX == 0);
 			if (FLG_IO_PRINTF) {
-				printf("%u\n", b);
+				printf("%u\n", y);
 			} else {
 				for (int i = 0; i < 4; i++) {
-					putchar((unsigned char) (b >> 24));
-					b = b << 8;
+					putchar((unsigned char) (y >> 24));
+					y = y << 8;
 				}
 			}
 			return issue();
@@ -254,33 +254,33 @@ static void rrsp(inst_t func, inst_t tagA, uint32_t b) {
 	}
 }
 
-static void rfsp(inst_t func, inst_t tagA, float b) {
+static void rfsp(inst_t func, inst_t tagX, float y) {
 	assert(false);
 	return issue();
 }
 
-static void frsp(inst_t func, inst_t tagA, uint32_t b) {
+static void frsp(inst_t func, inst_t tagX, uint32_t y) {
 	assert(false);
 	return issue();
 }
 
-static void ffsp(inst_t func, inst_t tagA, float b) {
+static void ffsp(inst_t func, inst_t tagX, float y) {
 	switch (func) {
 		uint32_t tmp;
 		int i;
 		case 0:
-			assert(b == 0.0);
+			assert(y == 0.0);
 			for (i = 0; i < 4; i++) {
 				tmp = tmp << 8;
 				tmp &= (unsigned char) getchar();
 			}
-			set_fpr(tagA, int_as_float((int32_t) tmp));
+			set_fpr(tagX, int_as_float((int32_t) tmp));
 			return issue();
 		case 1:
-			assert(tagA == 0);
-			tmp = float_as_int(b);
+			assert(tagX == 0);
+			tmp = float_as_int(y);
 			if (FLG_IO_PRINTF) {
-				printf("%f\n", b);
+				printf("%f\n", y);
 			} else {
 				for (i = 0; i < 4; i++) {
 					putchar((char) tmp >> 24);
@@ -299,61 +299,62 @@ static void issue() {
 	if (FLG_COUNT_INST) inst_count++;
 	inst_t inst = INST_MEM[PC++];
 
-	inst_t tagA = bits(inst, 25, 21);
-	inst_t tagB = bits(inst, 20, 16);
-	inst_t tagC = bits(inst, 15, 11);
+	inst_t tagX = bits(inst, 25, 21);
+	inst_t tagY = bits(inst, 20, 16);
+	inst_t tagZ = bits(inst, 15, 11);
 	uint16_t imm = bits(inst, 15, 0);
 
 	switch (bits(inst, 31, 30)) {
 	case 0b00:
-		return alu(bits(inst, 29, 26), tagA, GPR[tagB], (uint32_t) (int32_t) (int16_t) imm);
+		return alu(bits(inst, 29, 26), tagY, GPR[tagX], (uint32_t) (int32_t) (int16_t) imm);
 	case 0b01:
 		switch (bits(inst, 29, 26)) {
 			case 0b0000:
-				return alu(bits(inst, 3, 0), tagA, GPR[tagB], GPR[tagC]);
+				assert(bits(inst, 10, 4) == 0);
+				return alu(bits(inst, 3, 0), tagZ, GPR[tagX], GPR[tagY]);
 			case 0b0001:
-				return aluf(bits(inst, 3, 0), tagA, FPR[tagB], FPR[tagC]);
-			case 0b0010:
-				assert(imm == 0);
-				set_gpr(tagA, PC << 2);
-				PC = GPR[tagB] >> 2 & (INST_ADDR - 1);
-				return issue();
-			case 0b0011:
-				assert(tagB == 0);
-				set_gpr(tagA, PC << 2);
-				PC = imm;
-				return issue();
+				assert(bits(inst, 10, 4) == 0);
+				return aluf(bits(inst, 3, 0), tagZ, FPR[tagX], FPR[tagY]);
 			case 0b1000:
-				return fpur(bits(inst, 3, 0), bits(inst, 5, 4), tagA, GPR[tagB], GPR[tagC]);
+				assert(bits(inst, 10, 6) == 0);
+				return fpur(bits(inst, 3, 0), bits(inst, 5, 4), tagZ, GPR[tagX], GPR[tagY]);
 			case 0b1001:
-				return fpu(bits(inst, 3, 0), bits(inst, 5, 4), tagA, FPR[tagB], FPR[tagC]);
+				assert(bits(inst, 10, 6) == 0);
+				return fpu(bits(inst, 3, 0), bits(inst, 5, 4), tagZ, FPR[tagX], FPR[tagY]);
 			case 0b0100:
-				return rrsp(imm, tagA, GPR[tagB]);
 			case 0b0101:
-				return rfsp(imm, tagA, FPR[tagB]);
-			case 0b1100:
-				return frsp(imm, tagA, GPR[tagB]);
-			case 0b1101:
-				return ffsp(imm, tagA, GPR[tagB]);
+			case 0b0110:
+				assert(imm == 0);
+				set_gpr(tagY, PC << 2);
+				PC = (((GPR[tagX] >> 2) & (INST_ADDR - 1)) | imm);
+				return issue();
+			case 0b0010:
+				return rrsp(imm, tagY, GPR[tagX]);
+			case 0b0011:
+				return rfsp(imm, tagY, FPR[tagX]);
+			case 0b1010:
+				return frsp(imm, tagY, GPR[tagX]);
+			case 0b1011:
+				return ffsp(imm, tagY, FPR[tagX]);
 			default:
 				assert(false);
 				return issue();
 		}
 	case 0b10:
 		;
-		uint32_t addr = ((GPR[tagB] >> 2) + ((int32_t) (int16_t) imm)) & (DATA_ADDR - 1);
+		uint32_t addr = ((GPR[tagX] >> 2) + ((int32_t) (int16_t) imm)) & (DATA_ADDR - 1);
 		switch (bits(inst, 29, 26)) {
 			case 0b0000:
-				set_gpr(tagA, DATA_MEM[addr]);
+				set_gpr(tagY, DATA_MEM[addr]);
 				return issue();
 			case 0b0001:
-				DATA_MEM[addr] = GPR[tagA];
+				DATA_MEM[addr] = GPR[tagY];
 				return issue();
 			case 0b1000:
-				set_fpr(tagA, int_as_float((int32_t) DATA_MEM[addr]));
+				set_fpr(tagY, int_as_float((int32_t) DATA_MEM[addr]));
 				return issue();
 			case 0b1001:
-				DATA_MEM[addr] = (uint32_t) float_as_int(FPR[tagA]);
+				DATA_MEM[addr] = (uint32_t) float_as_int(FPR[tagY]);
 				return issue();
 			default:
 				assert(false);
@@ -362,9 +363,9 @@ static void issue() {
 	case 0b11:
 		switch (bits(inst, 29, 29)) {
 			case 0b0:
-				return brr(bits(inst, 29, 26), imm, GPR[tagA], GPR[tagB]);
+				return brr(bits(inst, 29, 26), imm, GPR[tagX], GPR[tagY]);
 			case 0b1:
-				return brf(bits(inst, 29, 26), imm, FPR[tagA], FPR[tagB]);
+				return brf(bits(inst, 29, 26), imm, FPR[tagX], FPR[tagY]);
 		}
 	}
 }
