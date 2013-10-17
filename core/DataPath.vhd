@@ -84,9 +84,10 @@ architecture DataPathImp of DataPath is
             serialSendData : out std_logic_vector(7 downto 0);
             serialRecved : in std_logic;
             serialSent : in std_logic;
+            getTag : in tag_t;
             putVal : in value_t;
-            getTag : out tag_t;
-            getVal : out value_t;
+            emitTag : out tag_t;
+            emitVal : out value_t;
             blocking : out boolean);
     end component;
 
@@ -221,9 +222,10 @@ begin
         serialSendData => serialSendData,
         serialRecved => serialRecved,
         serialSent => serialSent,
-        putVal => valA,
-        getTag => emitTagIO,
-        getVal => emitValIO,
+        getTag => tagY,
+        putVal => valX,
+        emitTag => emitTagIO,
+        emitVal => emitValIO,
         blocking => blocking);
     --enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
 
