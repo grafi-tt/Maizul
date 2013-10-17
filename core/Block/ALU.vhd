@@ -10,13 +10,15 @@ entity ALU is
         tagD : in tag_t;
         valA : in value_t;
         valB : in value_t;
-        emitTag : out tag_t;
+        emitTag : out tag_t := (others => '0');
         emitVal : out value_t);
 end ALU;
 
 architecture Implementation of ALU is
-    signal s : value_t;
-    signal t : value_t;
+    signal codeInternal : std_logic_vector(3 downto 0) := "0000";
+
+    signal s : value_t := (others => '0');
+    signal t : value_t := (others => '0');
 
     signal addD : value_t;
     signal subD : value_t;
@@ -42,6 +44,7 @@ begin
     every_clock_do : process(clk)
     begin
         if rising_edge(clk) then
+            codeInternal <= code;
             emitTag <= tagD;
             s <= valA;
             t <= valB;
@@ -65,7 +68,7 @@ begin
     catD <= t(15 downto 0) & s(15 downto 0);
     mulD <= std_logic_vector((unsigned(t) * unsigned(s)));
 
-    with code select
+    with codeInternal select
         emitVal <= addD when "0000",
                    subD when "0001",
                    zeroPad & eqD when "0010",

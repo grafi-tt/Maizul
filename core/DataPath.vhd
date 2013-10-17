@@ -91,11 +91,11 @@ architecture DataPathImp of DataPath is
     end component;
 
     signal fetchedInst : instruction_t;
-    signal pc : blkram_addr;
+    signal pc : blkram_addr := (others => '0');
     signal fetchedPC : blkram_addr;
     signal PCLine : blkram_addr;
 
-    signal instruction : instruction_t;
+    signal instruction : instruction_t := (others => '0');
 
     signal opH : std_logic_vector(1 downto 0);
     signal opL : std_logic_vector(3 downto 0);
@@ -131,7 +131,7 @@ architecture DataPathImp of DataPath is
     signal load2, load1 : boolean;
     signal load : boolean;
     signal tagM : tag_t;
-    signal tagM1, tagM2, tagM3 : tag_t;
+    signal tagM1, tagM2 : tag_t;
     signal valM : value_t;
     signal pipeValMTmp ,emitValMTmp : value_t;
     signal pipeValM ,emitValM : value_t;
@@ -182,8 +182,8 @@ begin
         emitTag => emitTagA,
         emitVal => emitValA);
     tagD <= "00000" when stall else
-            tagZ when opH = "00" else
-            tagY when (opH = "01" and opL(3 downto 1) = "000") else
+            tagY when opH = "00" else
+            tagZ when (opH = "01" and opL(3 downto 1) = "000") else
             "00000";
     valBI <= value_t(resize(signed(imm), 32)) when opH = "00" else valY;
     codeA <= opL when opH = "00" else instruction(3 downto 0);
@@ -201,7 +201,7 @@ begin
         emitTarget => PCLine,
         result => jump);
     codeB <= opL when opH = "11" else
-             "0000" when (opH = "01" and opL(3 downto 1) = "001") else -- always true
+             "0000" when (opH = "01" and opL(3 downto 2) = "01") else -- always true
              "0001"; -- always false
     tagL <= "00000" when opH = "11" else tagY;
     valA <= valX when opH = "11" else (others => '0');
@@ -223,7 +223,7 @@ begin
         emitTag => emitTagIO,
         emitVal => emitValIO,
         blocking => blocking);
-    enableIO <= opH = "01" and (opL = "0100" or opL = "1101");
+    enableIO <= opH = "01" and (opL = "0010" or opL = "1011");
 
     sramData <= (others => 'Z') when load else valM;
 
@@ -238,14 +238,21 @@ begin
             end if;
 
             sramAddr <= sram_addr(unsigned(valX(19 downto 0)) + unsigned("0000" & imm));
-            sramLoad <= opH = "10" and opL(0) = '0';
-            sramStore <= opH = "10" and opL(0) = '1';
 
-            load2 <= opH = "10" and opL(0) = '0';
+            if opH = "10" then
+                tagM2 <= tagY;
+                load2 <= opL(0) = '0';
+                sramLoad <= opL(0) = '0';
+                sramStore <=opL(0) = '1';
+            else
+                tagM2 <= "00000";
+                load2 <= false;
+                sramLoad <= false;
+                sramStore <= false;
+            end if;
+
             load1 <= load2;
             load <= load1;
-
-            tagM2 <= tagY;
             tagM1 <= tagM2;
             tagM <= tagM1;
 
@@ -289,9 +296,7 @@ begin
 
     stallX <= tagX /= "00000" and (tagX = tagM2 or tagX = tagM1);
     stallY <= tagY /= "00000" and (tagY = tagM2 or tagY = tagM1) and
-              ( (opH = "01" and opL(1) = '0') or
-                (opH = "10" and opL(0) = '0') or
-                (opH = "11"));
+              ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
 
     stall <= stallX or stallY or blocking or stallJ1 or stallJ2;
 

@@ -7,8 +7,8 @@ entity IO is
         clk : in std_logic;
         enable : in boolean;
         code : in std_logic;
-        serialOk : buffer std_logic;
-        serialGo : buffer std_logic;
+        serialOk : buffer std_logic := '0';
+        serialGo : buffer std_logic := '0';
         serialRecvData : in std_logic_vector(7 downto 0);
         serialSendData : out std_logic_vector(7 downto 0);
         serialRecved : in std_logic;
@@ -59,12 +59,12 @@ begin
                     end if;
 
                 when Send =>
-                    if serialSent = '0' and serialGo = '1' then
-                        serialGo <= '0';
-                    end if;
-
                     if serialSent = '1' and serialGo = '0' then
                         serialGo <= '1';
+                    end if;
+
+                    if serialSent = '0' and serialGo = '1' then
+                        serialGo <= '0';
                         buf <= buf(23 downto 0) & x"00";
                         if byteState = 0 then
                             byteState <= 3;

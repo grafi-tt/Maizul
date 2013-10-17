@@ -12,15 +12,17 @@ entity Branch is
         valB : in value_t;
         link : in blkram_addr;
         target : in blkram_addr;
-        emitTag : out tag_t;
-        emitLink : out blkram_addr;
-        emitTarget : out blkram_addr;
-        result : out boolean);
+        emitTag : out tag_t := (others => '0');
+        emitLink : out blkram_addr := (others => '0');
+        emitTarget : out blkram_addr := (others => '0');
+        result : out boolean := false);
 end Branch;
 
 architecture BranchImp of Branch is
-    signal a : value_t;
-    signal b : value_t;
+    signal codeInternal : std_logic_vector(2 downto 0) := "001";
+
+    signal a : value_t := (others => '0');
+    signal b : value_t := (others => '0');
 
     signal rEq : boolean;
     signal sLt : boolean;
@@ -32,12 +34,12 @@ architecture BranchImp of Branch is
     signal zBTmp : boolean;
 
     constant z31 : std_logic_vector(30 downto 0) := (others => '0');
-    signal effCode : std_logic_vector(2 downto 0);
 
 begin
     every_clock_do : process(clk)
     begin
         if rising_edge(clk) then
+            codeInternal <= code(3) & code(1 downto 0); -- eliminating redundant bit
             emitTag <= tagL;
             a <= valA;
             b <= valB;
@@ -46,8 +48,7 @@ begin
         end if;
     end process;
 
-    effCode <= code(3) & code(1 downto 0); -- eliminate redundant bit
-    with effCode select
+    with codeInternal select
         result <= rEq when "000",
                   not rEq when "001",
                   sLt when "010",

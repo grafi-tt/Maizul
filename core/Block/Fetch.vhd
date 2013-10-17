@@ -16,9 +16,16 @@ entity Fetch is
 end Fetch;
 
 architecture Implementation of Fetch is
-    signal pcInternal : blkram_addr;
-    signal pcInc : blkram_addr;
-    signal pcOld : blkram_addr;
+    component BlkRAM is
+        port (
+            clk : in std_logic;
+            addr : in blkram_addr;
+            instruction : out instruction_t);
+    end component;
+
+    signal pcInternal : blkram_addr := (others => '0');
+    signal pcInc : blkram_addr := (others => '0');
+    signal pcOld : blkram_addr := (others => '0');
 
 begin
     everyClock : process(clk)
@@ -33,6 +40,10 @@ begin
                   jumpAddr when jump else
                   pcInc;
     pc <= pcInc;
-    instruction <= (others => '0'); -- TODO connect to block ram!!
+
+    blkram_map : BlkRAM port map (
+        clk => clk,
+        addr => pcInternal,
+        instruction => instruction);
 
 end Implementation;

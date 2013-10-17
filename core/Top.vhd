@@ -103,8 +103,7 @@ architecture Initialize of Top is
 
     signal clk, iclk : std_logic;
 
-    signal ok : std_logic := '0';
-    signal go : std_logic := '0';
+    signal ok, go : std_logic;
     signal recved, sent : std_logic;
     signal recvData : std_logic_vector(7 downto 0);
     signal sendData : std_logic_vector(7 downto 0);

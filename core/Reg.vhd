@@ -5,7 +5,7 @@ use work.types.all;
 entity Reg is
     port (
         clk : in std_logic;
-        val : buffer value_t;
+        val : buffer value_t := (others => '0');
         enableW : in boolean;
         lineW : in value_t;
         enableM : in boolean;
