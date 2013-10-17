@@ -30,14 +30,13 @@ begin
     every_clock_do : process(clk)
     begin
         if (rising_edge(clk)) then
-            emitTag <= getTag;
-
             if enable then
                 if code = '0' then
                     state <= Recv;
                 else
                     state <= Send;
                 end if;
+                emitTag <= getTag;
                 buf <= putVal;
             end if;
 
