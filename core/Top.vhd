@@ -89,7 +89,6 @@ architecture Initialize of Top is
     component DataPath is
         port (
             clk : in std_logic;
-            halt : in boolean;
             serialOk : buffer std_logic;
             serialGo : buffer std_logic;
             serialRecvData : in std_logic_vector(7 downto 0);
@@ -103,25 +102,17 @@ architecture Initialize of Top is
     end component;
 
     signal clk, iclk : std_logic;
-    signal halt : boolean := true;
 
     signal ok : std_logic := '0';
     signal go : std_logic := '0';
     signal recved, sent : std_logic;
     signal recvData : std_logic_vector(7 downto 0);
     signal sendData : std_logic_vector(7 downto 0);
-    signal waitData : std_logic_vector(7 downto 0);
 
     signal load : boolean;
     signal store : boolean;
     signal addr : sram_addr := (others => '0');
     signal dataLine : value_t;
-
-    type state_t is (Hai, Run, Bye);
-    signal state : state_t := Hai;
-
-    signal haiState : integer range 3 downto 0 := 3;
-    signal byeState : integer range 3 downto 0 := 3;
 
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);

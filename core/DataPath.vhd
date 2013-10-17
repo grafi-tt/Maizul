@@ -6,7 +6,6 @@ use work.types.all;
 entity DataPath is
     port (
         clk : in std_logic;
-        halt : in boolean;
 
         serialOk : buffer std_logic;
         serialGo : buffer std_logic;
@@ -44,7 +43,6 @@ architecture DataPathImp of DataPath is
             tagW : in tag_t;
             lineW : in value_t;
             tagM : in tag_t;
-            modeM : in std_logic;
             lineM : inout value_t);
     end component;
 
@@ -77,6 +75,7 @@ architecture DataPathImp of DataPath is
     component IO is
         port (
             clk : in std_logic;
+            enable : in boolean;
             code : in std_logic;
             serialOk : buffer std_logic;
             serialGo : buffer std_logic;
@@ -84,13 +83,14 @@ architecture DataPathImp of DataPath is
             serialSendData : out std_logic_vector(7 downto 0);
             serialRecved : in std_logic;
             serialSent : in std_logic;
+            getTag : in tag_t;
             putVal : in value_t;
-            getTag : out tag_t;
-            getVal : out value_t;
+            emitTag : out tag_t;
+            emitVal : out value_t;
             blocking : out boolean);
     end component;
 
-    signal fetched : instruction_t;
+    signal fetchedInst : instruction_t;
     signal pc : blkram_addr;
     signal fetchedPC : blkram_addr;
     signal PCLine : blkram_addr;
@@ -99,7 +99,6 @@ architecture DataPathImp of DataPath is
 
     signal opH : std_logic_vector(1 downto 0);
     signal opL : std_logic_vector(3 downto 0);
-    signal opLL : std_logic_vector(2 downto 0);
 
     signal tagX : tag_t;
     signal tagY : tag_t;
@@ -131,14 +130,13 @@ architecture DataPathImp of DataPath is
 
     signal load2, load1 : boolean;
     signal load : boolean;
-    signal modeM : std_logic;
     signal tagM : tag_t;
     signal tagM1, tagM2, tagM3 : tag_t;
-    signal pipeValMtmp : value_t;
-    signal pipeValM : value_t;
-    signal emitValMtmp : value_t;
-    signal emitValM : value_t;
+    signal valM : value_t;
+    signal pipeValMTmp ,emitValMTmp : value_t;
+    signal pipeValM ,emitValM : value_t;
 
+    signal enableIO : boolean;
     signal emitTagIO : tag_t;
     signal emitValIO : value_t;
 
@@ -154,28 +152,26 @@ begin
     reg_set_map : RegSet port map (
         clk => clk,
         tagS => tagX,
-        valS => valX,
+        valS => valRegX,
         tagT => tagY,
         valT => valRegY,
         tagW => tagW,
         lineW => valW,
         tagM => tagM,
-        modeM => modeM,
         lineM => sramData);
     tagW <= emitTagA or emitTagB or emitTagIO;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
             emitValIO when emitTagIO /= "00000" else
             (others => '0');
-    modeM <= '0' when load else '1';
 
     fetch_map : Fetch port map (
         clk => clk,
         stall => stall,
         jump => jump,
         jumpAddr => PCLine,
-        pc => pc,
-        instruction => fetched);
+        pc => fetchedPC,
+        instruction => fetchedInst);
 
     alu_map : ALU port map (
         clk => clk,
@@ -207,13 +203,14 @@ begin
     codeB <= opL when opH = "11" else
              "0000" when (opH = "01" and opL(3 downto 1) = "001") else -- always true
              "0001"; -- always false
-    tagL <= "00000" when opH = "11" else tagX;
+    tagL <= "00000" when opH = "11" else tagY;
     valA <= valX when opH = "11" else (others => '0');
     valB <= valY when opH = "11" else (others => '0');
     target <= blkram_addr(imm) when opH = "11" else blkram_addr(imm or valX(15 downto 0));
 
     io_map : IO port map (
         clk => clk,
+        enable => enableIO,
         code => imm(0),
         serialOk => serialOk,
         serialGo => serialGo,
@@ -221,13 +218,14 @@ begin
         serialSendData => serialSendData,
         serialRecved => serialRecved,
         serialSent => serialSent,
-        putVal => valA,
-        getTag => emitTagIO,
-        getVal => emitValIO,
+        getTag => tagY,
+        putVal => valX,
+        emitTag => emitTagIO,
+        emitVal => emitValIO,
         blocking => blocking);
-    --enableIO <= (opH = "01" and (opL = "0100" or opL = "1101")) and (not stall);
+    enableIO <= opH = "01" and (opL = "0100" or opL = "1101");
 
-    sramData <= (others => 'Z') when load else emitValM;
+    sramData <= (others => 'Z') when load else valM;
 
     stallJ2 <= jump;
 
@@ -235,7 +233,7 @@ begin
     begin
         if rising_edge(clk) then
             if not stall then
-                instruction <= fetched;
+                instruction <= fetchedInst;
                 pc <= fetchedPC;
             end if;
 
@@ -247,12 +245,13 @@ begin
             load1 <= load2;
             load <= load1;
 
-            tagM2 <= tagM3;
+            tagM2 <= tagY;
             tagM1 <= tagM2;
             tagM <= tagM1;
 
             pipeValMTmp <= valX;
             emitValMTmp <= pipeValM;
+            valM <= emitValM;
 
             stallJ1 <= stallJ2;
 
@@ -281,12 +280,12 @@ begin
     pipeValM <= (others => '0') when tagM2 = "00000" else
                 sramData when tagM2 = tagM and load else
                 emitValA when tagM2 = emitTagA else
-                pipeValMtmp;
+                pipeValMTmp;
 
     emitValM <= (others => '0') when tagM1 = "00000" else
                 sramData when tagM1 = tagM and load else
                 emitValA when tagM1 = emitTagA else
-                emitValMtmp;
+                emitValMTmp;
 
     stallX <= tagX /= "00000" and (tagX = tagM2 or tagX = tagM1);
     stallY <= tagY /= "00000" and (tagY = tagM2 or tagY = tagM1) and

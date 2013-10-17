@@ -28,24 +28,13 @@ entity SRAM is
 end SRAM;
 
 architecture ZBTControl of SRAM is
-    signal load1 : boolean := false;
-    signal load2 : boolean := false;
-
 begin
-    everyClock : process(clk)
-    begin
-        if rising_edge(clk) then
-            load1 <= load;
-            load2 <= load1;
-        end if;
-    end process;
-
     clkPin1 <= clk;
     clkPin2 <= clk;
     addrPin <= addr;
     xStorePin <= '1' when load else '0';
     xMaskPin <= "0000" when (load or store) else "1111";
-    data <= dataPin;
+    dataPin <= data;
 
     xEnablePin1 <= '0';
     enablePin2 <= '1';

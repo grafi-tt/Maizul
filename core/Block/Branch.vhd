@@ -23,7 +23,6 @@ architecture BranchImp of Branch is
     signal b : value_t;
 
     signal rEq : boolean;
-    signal uLt : boolean;
     signal sLt : boolean;
     signal fEq : boolean;
     signal fLt : boolean;
@@ -42,7 +41,6 @@ begin
             emitTag <= tagL;
             a <= valA;
             b <= valB;
-            emitTag <= tagL;
             emitLink <= link;
             emitTarget <= target;
         end if;

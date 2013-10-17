@@ -15,8 +15,8 @@ architecture PseudoConnection of TestBench is
     signal clk : std_logic;
 
     constant BLOCK_CYCLE : integer := 1023;
-    file stdin : text open read_mode is "testbench.in"
-    file stdout : text open write_mode is "testbench.in"
+    file stdin : text open read_mode is "testbench.in";
+    file stdout : text open write_mode is "testbench.out";
     signal li, lo : line;
     signal recvBuf, sendBuf : std_logic_vector(7 downto 0);
     signal recvCnt, sendCnt : integer := BLOCK_CYCLE;
@@ -55,7 +55,7 @@ begin
                     readline(li, stdin);
                     recved <= '1';
                 else
-                    recvCnt = recvCnt - 1;
+                    recvCnt <= recvCnt - 1;
                 end if;
             end if;
 
@@ -71,7 +71,7 @@ begin
                     writeline(lo, stdout);
                     sent <= '1';
                 else
-                    blkcnt = blkcnt - 1;
+                    blkcnt <= blkcnt - 1;
                 end if;
             end if;
 
@@ -85,7 +85,7 @@ begin
                 pseudoRam(integer(addr)) <= data;
             end if;
         end if;
-    end if;
+    end process;
 
     data_path_map : DataPath port map (
         clk => clk,
