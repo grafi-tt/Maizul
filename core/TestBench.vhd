@@ -41,9 +41,12 @@ architecture PseudoConnection of TestBench is
 
     type ram_t is array(0 to 1023) of value_t;
     signal pseudoRam : ram_t := (others => (others => '0'));
-    signal load1, store1 : boolean := false;
     signal load, store : boolean;
+    signal load1, store1 : boolean := false;
+    signal load2, store2 : boolean := false;
     signal addr : sram_addr := (others => '0');
+    signal addr1 : sram_addr := (others => '0');
+    signal addr2 : sram_addr := (others => '0');
     signal data : value_t;
 
 begin
@@ -97,15 +100,21 @@ begin
 
             assert(not (load and store)) report "store and load is specified same type" severity failure;
             load1 <= load;
+            load2 <= load1;
             store1 <= store;
-            if load1 then
-                data <= pseudoRam(to_integer(unsigned(addr)));
+            store2 <= store1;
+            addr1 <= addr;
+            addr2 <= addr1;
+            if store2 then
+                pseudoRam(to_integer(unsigned(addr2))) <= data;
             end if;
-            if store1 then
-                pseudoRam(to_integer(unsigned(addr))) <= data;
+            if load1 then
+                if store2 and 
+                data <= pseudoRam(to_integer(unsigned(addr2))));
             end if;
         end if;
     end process;
+
 
     data_path_map : DataPath port map (
         clk => clk,

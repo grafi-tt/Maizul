@@ -140,11 +140,12 @@ architecture DataPathImp of DataPath is
     signal emitTagIO : tag_t;
     signal emitValIO : value_t;
 
-    signal stallJ2 : boolean;
-    signal stallJ1 : boolean := false;
+    signal ignoreJ2 : boolean;
+    signal ignoreJ1 : boolean := false;
     signal stallX : boolean;
     signal stallY : boolean;
 
+    signal fetchStall : boolean;
     signal stall : boolean;
     signal ignore : boolean;
     signal blocking : boolean;
@@ -168,11 +169,12 @@ begin
 
     fetch_map : Fetch port map (
         clk => clk,
-        stall => stall and (not ignore),
+        stall => fetchStall,
         jump => jump,
         jumpAddr => PCLine,
         pc => fetchedPC,
         instruction => fetchedInst);
+    fetchStall <= stall and (not ignore);
 
     alu_map : ALU port map (
         clk => clk,
@@ -232,12 +234,12 @@ begin
 
     sramData <= (others => 'Z') when load else valM;
 
-    stallJ2 <= jump;
+    ignoreJ2 <= jump;
 
     everyClock : process(clk)
     begin
         if rising_edge(clk) then
-            if ignore or (not stall) then
+            if not fetchStall then
                 instruction <= fetchedInst;
                 pc <= fetchedPC;
             end if;
@@ -265,7 +267,7 @@ begin
             emitValMTmp <= pipeValM;
             valM <= emitValM;
 
-            stallJ1 <= stallJ2;
+            ignoreJ1 <= ignoreJ2;
 
         end if;
     end process;
@@ -304,6 +306,6 @@ begin
               ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
 
     stall <= stallX or stallY or blocking;
-    ignore <= stallJ1 or stallJ2;
+    ignore <= ignoreJ1 or ignoreJ2;
 
 end DataPathImp;
