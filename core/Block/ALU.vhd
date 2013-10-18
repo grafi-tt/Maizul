@@ -37,7 +37,6 @@ architecture Implementation of ALU is
     signal catD : value_t;
     signal mulD : std_logic_vector(63 downto 0);
 
-    signal result : value_t;
     constant zeroPad : std_logic_vector(31 downto 1) := (others => '0');
 
 begin
