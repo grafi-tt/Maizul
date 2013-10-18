@@ -13,6 +13,4 @@ package types is
         unsigned(15 downto 0);
     subtype sram_addr is
         unsigned(19 downto 0);
-    subtype schedule_t is
-        std_logic_vector(7 downto 0);
 end;

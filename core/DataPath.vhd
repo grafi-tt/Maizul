@@ -16,7 +16,7 @@ entity DataPath is
 
         sramLoad : out boolean;
         sramStore : out boolean;
-        sramAddr : out sram_addr := (others => '0');
+        sramAddr : out sram_addr;
         sramData : inout value_t);
 end DataPath;
 
@@ -109,6 +109,7 @@ architecture DataPathImp of DataPath is
     signal valRegX : value_t;
     signal valY : value_t;
     signal valRegY : value_t;
+    signal immSigned : value_t;
 
     signal tagW : tag_t;
     signal valW : value_t;
@@ -128,9 +129,11 @@ architecture DataPathImp of DataPath is
     signal emitValB : blkram_addr;
     signal jump : boolean;
 
+    signal emitBase, emitDisp : value_t := (others => '0');
     signal load2, load1 : boolean;
     signal load : boolean;
     signal tagM : tag_t := (others => '0');
+    signal tagMld : tag_t;
     signal tagM1, tagM2 : tag_t := (others => '0');
     signal valM : value_t := (others => '0');
     signal pipeValMTmp ,emitValMTmp : value_t := (others => '0');
@@ -159,13 +162,14 @@ begin
         valT => valRegY,
         tagW => tagW,
         lineW => valW,
-        tagM => tagM,
+        tagM => tagMld,
         lineM => sramData);
     tagW <= emitTagA or emitTagB or emitTagIO;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
             emitValIO when emitTagIO /= "00000" else
             (others => '0');
+    tagMld <= tagM when load else "00000";
 
     fetch_map : Fetch port map (
         clk => clk,
@@ -188,7 +192,7 @@ begin
             tagY when opH = "00" else
             tagZ when (opH = "01" and opL(3 downto 1) = "000") else
             "00000";
-    valBI <= value_t(resize(signed(imm), 32)) when opH = "00" else valY;
+    valBI <= immSigned when opH = "00" else valY;
     codeA <= opL when opH = "00" else instruction(3 downto 0);
 
     branch_map : Branch port map (
@@ -214,6 +218,7 @@ begin
     valB <= valY when opH = "11" and (not stall) and (not ignore) else
             (others => '0');
     target <= blkram_addr(imm) when opH = "11" else blkram_addr(imm or valX(15 downto 0));
+    immSigned <= value_t(resize(signed(imm), 32));
 
     io_map : IO port map (
         clk => clk,
@@ -232,6 +237,7 @@ begin
         blocking => blocking);
     enableIO <= opH = "01" and (opL = "0010" or opL = "1011") and (not stall) and (not ignore);
 
+    sramAddr <= sram_addr(unsigned(emitBase(19 downto 0)) + unsigned(emitDisp(19 downto 0)));
     sramData <= (others => 'Z') when load else valM;
 
     ignoreJ2 <= jump;
@@ -244,13 +250,11 @@ begin
                 pc <= fetchedPC;
             end if;
 
-            sramAddr <= sram_addr(unsigned(valX(19 downto 0)) + unsigned("0000" & imm));
-
             if opH = "10" and (not stall) and (not ignore) then
                 tagM2 <= tagY;
                 load2 <= opL(0) = '0';
                 sramLoad <= opL(0) = '0';
-                sramStore <=opL(0) = '1';
+                sramStore <= opL(0) = '1';
             else
                 tagM2 <= "00000";
                 load2 <= false;
@@ -258,12 +262,15 @@ begin
                 sramStore <= false;
             end if;
 
+            emitBase <= "00" & valX(31 downto 2);
+            emitDisp <= immSigned;
+
             load1 <= load2;
             load <= load1;
             tagM1 <= tagM2;
             tagM <= tagM1;
 
-            pipeValMTmp <= valX;
+            pipeValMTmp <= valY;
             emitValMTmp <= pipeValM;
             valM <= emitValM;
 
@@ -280,7 +287,6 @@ begin
     tagZ <= tag_t(instruction(15 downto 11));
     imm <= instruction(15 downto 0);
 
-    -- TODO: eliminate copy-and-paste
     valX <= (others => '0') when tagX = "00000" else
             sramData when tagX = tagM and load else
             emitValA when tagX = emitTagA else
@@ -293,16 +299,16 @@ begin
 
     pipeValM <= (others => '0') when tagM2 = "00000" else
                 sramData when tagM2 = tagM and load else
-                emitValA when tagM2 = emitTagA else
                 pipeValMTmp;
 
     emitValM <= (others => '0') when tagM1 = "00000" else
                 sramData when tagM1 = tagM and load else
-                emitValA when tagM1 = emitTagA else
                 emitValMTmp;
 
-    stallX <= tagX /= "00000" and (tagX = tagM2 or tagX = tagM1);
-    stallY <= tagY /= "00000" and (tagY = tagM2 or tagY = tagM1) and
+    stallX <= tagX /= "00000" and
+              ((tagX = tagM2 and load2) or (tagX = tagM1 and load1)) ;
+    stallY <= tagY /= "00000" and
+              ((tagY = tagM2 and load2) or (tagY = tagM1 and load1)) and
               ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
 
     stall <= stallX or stallY or blocking;

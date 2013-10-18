@@ -9,7 +9,7 @@ entity Reg is
         enableW : in boolean;
         lineW : in value_t;
         enableM : in boolean;
-        lineM : inout value_t);
+        lineM : in value_t);
 end Reg;
 
 architecture Implementation of Reg is

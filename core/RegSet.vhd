@@ -13,7 +13,7 @@ entity RegSet is
         tagW : in tag_t;
         lineW : in value_t;
         tagM : in tag_t;
-        lineM : inout value_t);
+        lineM : in value_t);
 end RegSet;
 
 -- TODO : use generic for schedule length
@@ -25,7 +25,7 @@ architecture Multiplexer of RegSet is
             enableW : in boolean;
             lineW : in value_t;
             enableM : in boolean;
-            lineM : inout value_t);
+            lineM : in value_t);
     end component;
 
     type value_set_t is array(31 downto 0) of value_t;

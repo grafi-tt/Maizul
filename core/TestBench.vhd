@@ -34,20 +34,28 @@ architecture PseudoConnection of TestBench is
 
     constant BLOCK_CYCLE : integer := 31;
     signal recvCnt, sendCnt : integer := BLOCK_CYCLE;
+
+    constant PSEUDORAM_WIDTH : natural := 10;
+    constant PSEUDORAM_LENGTH : natural := 1024;
+
     signal ok, go : std_logic;
     signal recvData, sendData : std_logic_vector(7 downto 0) := (others => '0');
     signal recved : std_logic := '0';
     signal sent : std_logic := '1';
 
-    type ram_t is array(0 to 1023) of value_t;
+    type ram_t is array(0 to PSEUDORAM_LENGTH-1) of value_t;
     signal pseudoRam : ram_t := (others => (others => '0'));
     signal load, store : boolean;
     signal load1, store1 : boolean := false;
     signal load2, store2 : boolean := false;
-    signal addr : sram_addr := (others => '0');
+    signal addr : sram_addr;
     signal addr1 : sram_addr := (others => '0');
     signal addr2 : sram_addr := (others => '0');
-    signal data : value_t;
+    signal addr3 : sram_addr := (others => '0');
+    signal data : value_t := (others => '0');
+
+    signal forwardBuf : value_t := (others => '0');
+    constant allZ : value_t := (others => 'Z');
 
 begin
     clkGen : process
@@ -56,7 +64,7 @@ begin
         wait for CLK_TIME / 2;
         clk <= '1';
         wait for CLK_TIME / 2;
-    end process clkGen;
+    end process;
 
     everyClock : process(clk)
         file stdin : text open read_mode is "testbench.in";
@@ -98,23 +106,21 @@ begin
                 end if;
             end if;
 
-            assert(not (load and store)) report "store and load is specified same type" severity failure;
             load1 <= load;
             load2 <= load1;
             store1 <= store;
             store2 <= store1;
             addr1 <= addr;
             addr2 <= addr1;
+
             if store2 then
-                pseudoRam(to_integer(unsigned(addr2))) <= data;
-            end if;
-            if load1 then
-                if store2 and 
-                data <= pseudoRam(to_integer(unsigned(addr2))));
+                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= data;
             end if;
         end if;
     end process;
 
+    data <= pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) when load2 else
+            (others => 'Z');
 
     data_path_map : DataPath port map (
         clk => clk,
