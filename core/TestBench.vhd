@@ -40,7 +40,7 @@ architecture PseudoConnection of TestBench is
     signal sent : std_logic := '1';
 
     type ram_t is array(0 to 1023) of value_t;
-    signal pseudoRam : ram_t;
+    signal pseudoRam : ram_t := (others => (others => '0'));
     signal load1, store1 : boolean := false;
     signal load, store : boolean;
     signal addr : sram_addr := (others => '0');

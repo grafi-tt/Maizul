@@ -15,8 +15,8 @@ entity IO is
         serialSent : in std_logic;
         getTag : in tag_t;
         putVal : in value_t;
-        emitTag : out tag_t;
-        emitVal : out value_t;
+        emitTag : out tag_t := (others => '0');
+        emitVal : out value_t := (others => '0');
         blocking : out boolean);
 end IO;
 

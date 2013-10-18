@@ -16,7 +16,7 @@ entity DataPath is
 
         sramLoad : out boolean;
         sramStore : out boolean;
-        sramAddr : out sram_addr;
+        sramAddr : out sram_addr := (others => '0');
         sramData : inout value_t);
 end DataPath;
 
@@ -130,10 +130,10 @@ architecture DataPathImp of DataPath is
 
     signal load2, load1 : boolean;
     signal load : boolean;
-    signal tagM : tag_t;
-    signal tagM1, tagM2 : tag_t;
-    signal valM : value_t;
-    signal pipeValMTmp ,emitValMTmp : value_t;
+    signal tagM : tag_t := (others => '0');
+    signal tagM1, tagM2 : tag_t := (others => '0');
+    signal valM : value_t := (others => '0');
+    signal pipeValMTmp ,emitValMTmp : value_t := (others => '0');
     signal pipeValM ,emitValM : value_t;
 
     signal enableIO : boolean;
@@ -146,6 +146,7 @@ architecture DataPathImp of DataPath is
     signal stallY : boolean;
 
     signal stall : boolean;
+    signal ignore : boolean;
     signal blocking : boolean;
 
 begin
@@ -167,7 +168,7 @@ begin
 
     fetch_map : Fetch port map (
         clk => clk,
-        stall => stall,
+        stall => stall and (not ignore),
         jump => jump,
         jumpAddr => PCLine,
         pc => fetchedPC,
@@ -181,7 +182,7 @@ begin
         valB => valBI,
         emitTag => emitTagA,
         emitVal => emitValA);
-    tagD <= "00000" when stall else
+    tagD <= "00000" when (stall or ignore) else
             tagY when opH = "00" else
             tagZ when (opH = "01" and opL(3 downto 1) = "000") else
             "00000";
@@ -200,12 +201,16 @@ begin
         emitLink => emitValB,
         emitTarget => PCLine,
         result => jump);
-    codeB <= opL when opH = "11" else
+    codeB <= "0001" when stall or ignore else -- always false
+             opL when opH = "11" else
              "0000" when (opH = "01" and opL(3 downto 2) = "01") else -- always true
              "0001"; -- always false
-    tagL <= "00000" when opH = "11" else tagY;
-    valA <= valX when opH = "11" else (others => '0');
-    valB <= valY when opH = "11" else (others => '0');
+    tagL <= tagY when (opH = "01" and opL(3 downto 2) = "01") and (not stall) and (not ignore) else
+            "00000";
+    valA <= valX when opH = "11" and (not stall) and (not ignore) else
+            (others => '0');
+    valB <= valY when opH = "11" and (not stall) and (not ignore) else
+            (others => '0');
     target <= blkram_addr(imm) when opH = "11" else blkram_addr(imm or valX(15 downto 0));
 
     io_map : IO port map (
@@ -223,7 +228,7 @@ begin
         emitTag => emitTagIO,
         emitVal => emitValIO,
         blocking => blocking);
-    enableIO <= opH = "01" and (opL = "0010" or opL = "1011");
+    enableIO <= opH = "01" and (opL = "0010" or opL = "1011") and (not stall) and (not ignore);
 
     sramData <= (others => 'Z') when load else valM;
 
@@ -232,14 +237,14 @@ begin
     everyClock : process(clk)
     begin
         if rising_edge(clk) then
-            if not stall then
+            if ignore or (not stall) then
                 instruction <= fetchedInst;
                 pc <= fetchedPC;
             end if;
 
             sramAddr <= sram_addr(unsigned(valX(19 downto 0)) + unsigned("0000" & imm));
 
-            if opH = "10" then
+            if opH = "10" and (not stall) and (not ignore) then
                 tagM2 <= tagY;
                 load2 <= opL(0) = '0';
                 sramLoad <= opL(0) = '0';
@@ -298,6 +303,7 @@ begin
     stallY <= tagY /= "00000" and (tagY = tagM2 or tagY = tagM1) and
               ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
 
-    stall <= stallX or stallY or blocking or stallJ1 or stallJ2;
+    stall <= stallX or stallY or blocking;
+    ignore <= stallJ1 or stallJ2;
 
 end DataPathImp;
