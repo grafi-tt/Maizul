@@ -35,7 +35,7 @@ architecture Implementation of ALU is
     signal sraD  : value_t;
 
     signal catD : value_t;
-    signal mulD : std_logic_vector(63 downto 0);
+    signal mulD : value_t;
 
     constant zeroPad : std_logic_vector(31 downto 1) := (others => '0');
 
@@ -65,7 +65,7 @@ begin
     sraD <= std_logic_vector(shift_right(signed(s), to_integer(unsigned(s(4 downto 0)))));
 
     catD <= t(15 downto 0) & s(15 downto 0);
-    mulD <= std_logic_vector((unsigned(t) * unsigned(s)));
+    mulD <= value_t((unsigned(t(15 downto 0)) * unsigned(s(15 downto 0))));
 
     with codeInternal select
         emitVal <= addD when "0000",
@@ -79,7 +79,7 @@ begin
                    srlD when "1000",
                    sraD when "1001",
                    catD when "1010",
-                   mulD(31 downto 0) when "1011",
+                   mulD when "1011",
                    -- TODO floating point related
                    (others => '0') when others;
 
