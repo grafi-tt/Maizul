@@ -55,7 +55,6 @@ architecture PseudoConnection of TestBench is
     signal data : value_t := (others => '0');
 
     signal forwardBuf : value_t := (others => '0');
-    constant allZ : value_t := (others => 'Z');
 
 begin
     clkGen : process
