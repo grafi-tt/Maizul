@@ -14,10 +14,9 @@ entity DataPath is
         serialRecved : in std_logic;
         serialSent : in std_logic;
 
-        sramStore : out boolean := false;
+        sramLoad : out boolean := true;
         sramAddr : out sram_addr := (others => '0');
-        sramLoadData : in value_t;
-        sramStoreData : out value_t := (others => '0'));
+        sramData : inout value_t := (others => '0'));
 end DataPath;
 
 architecture DataPathImp of DataPath is
@@ -90,6 +89,11 @@ architecture DataPathImp of DataPath is
             blocking : out boolean);
     end component;
 
+    attribute IOB : string;
+    attribute IOB of sramLoad : signal is "TRUE";
+    attribute IOB of sramAddr : signal is "TRUE";
+    attribute IOB of sramData : signal is "TRUE";
+
     signal fetchedInst : instruction_t;
     signal pc : blkram_addr := (others => '0');
     signal fetchedPC : blkram_addr;
@@ -130,9 +134,9 @@ architecture DataPathImp of DataPath is
     signal jump : boolean;
 
     signal emitBase, emitDisp : sram_addr := (others => '0');
-    signal load0, load1, load2, load3, load4 : boolean := true;
-    signal tagM0, tagM1, tagM2, tagM3, tagM4 : tag_t := (others => '0');
-    signal valM0, valM1, valM2, valM4 : value_t := (others => '0');
+    signal load0, load1, load2, load3, load4, load5 : boolean := true;
+    signal tagM0, tagM1, tagM2, tagM3, tagM4, tagM5 : tag_t := (others => '0');
+    signal valM0, valM1, valM2, valM4, valM5 : value_t := (others => '0');
     signal tagMld : tag_t;
 
     signal enableIO : boolean;
@@ -159,13 +163,13 @@ begin
         tagW => tagW,
         lineW => valW,
         tagM => tagMld,
-        lineM => valM4);
+        lineM => valM5);
     tagW <= emitTagA or emitTagB or emitTagIO;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
             emitValIO when emitTagIO /= "00000" else
             (others => '0');
-    tagMld <= tagM4 when load4 else "00000";
+    tagMld <= tagM5 when load5 else "00000";
 
     fetch_map : Fetch port map (
         clk => clk,
@@ -261,7 +265,7 @@ begin
             load1 <= load0;
             tagM1 <= tagM0;
             valM1 <= valM0;
-            sramStore <= not load0;
+            sramLoad <= load0;
             sramAddr <= sram_addr(unsigned(emitBase) + unsigned(emitDisp));
 
             -- phase 2
@@ -272,15 +276,24 @@ begin
             -- phase 3
             load3 <= load2;
             tagM3 <= tagM2;
-            if not load2 then
-                sramStoreData <= valM2;
+            if load2 then
+                sramData <= (others => 'Z');
+            else
+                sramData <= valM2;
             end if;
 
             -- phase 4
             load4 <= load3;
             tagM4 <= tagM3;
             if load3 then
-                valM4 <= sramLoadData;
+                valM4 <= sramData;
+            end if;
+
+            -- phase 5
+            load5 <= load4;
+            tagM5 <= tagM4;
+            if load4 then
+                valM5 <= valM4;
             end if;
 
         end if;
@@ -295,12 +308,12 @@ begin
     imm <= instruction(15 downto 0);
 
     valX <= (others => '0') when tagX = "00000" else
-            valM4 when tagX = tagM4 and load4 else
+            valM5 when tagX = tagM5 and load5 else
             emitValA when tagX = emitTagA else
             valRegX;
 
     valY <= (others => '0') when tagY = "00000" else
-            valM4 when tagY = tagM4 and load4 else
+            valM5 when tagY = tagM5 and load5 else
             emitValA when tagY = emitTagA else
             valRegY;
 
@@ -308,12 +321,14 @@ begin
               ( (tagX = tagM0 and load0) or
                 (tagX = tagM1 and load1) or
                 (tagX = tagM2 and load2) or
-                (tagX = tagM3 and load3));
+                (tagX = tagM3 and load3) or
+                (tagX = tagM4 and load4));
     stallY <= tagY /= "00000" and
               ( (tagX = tagM0 and load0) or
                 (tagX = tagM1 and load1) or
                 (tagX = tagM2 and load2) or
-                (tagX = tagM3 and load3)) and
+                (tagX = tagM3 and load3) or
+                (tagX = tagM4 and load4)) and
               ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
 
     stall <= stallX or stallY or blocking;

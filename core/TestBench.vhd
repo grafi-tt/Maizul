@@ -23,10 +23,9 @@ architecture PseudoConnection of TestBench is
             serialRecved : in std_logic;
             serialSent : in std_logic;
 
-            sramStore : out boolean;
+            sramLoad : out boolean;
             sramAddr : out sram_addr;
-            sramLoadData : in value_t;
-            sramStoreData : out value_t);
+            sramData : inout value_t);
     end component;
 
     constant CLK_TIME : time := 15 ns;
@@ -45,15 +44,11 @@ architecture PseudoConnection of TestBench is
 
     type ram_t is array(0 to PSEUDORAM_LENGTH-1) of value_t;
     signal pseudoRam : ram_t := (others => (others => '0'));
-    signal load, store : boolean;
-    signal load1, store1 : boolean := false;
-    signal load2, store2 : boolean := false;
+    signal load : boolean;
+    signal load1, load2 : boolean := true;
     signal addr : sram_addr;
-    signal addr1 : sram_addr := (others => '0');
-    signal addr2 : sram_addr := (others => '0');
-    signal addr3 : sram_addr := (others => '0');
-    signal loadData : value_t := (others => '0');
-    signal storeData : value_t;
+    signal addr1, addr2 : sram_addr := (others => '0');
+    signal data : value_t := (others => '0');
 
     signal forwardBuf : value_t := (others => '0');
 
@@ -106,22 +101,24 @@ begin
                 end if;
             end if;
 
+            -- phase 1
             load1 <= load;
-            load2 <= load1;
-            store1 <= store;
-            store2 <= store1;
             addr1 <= addr;
-            addr2 <= addr1;
 
-            if not store1 then
-                if store2 and addr1 = addr2 then
-                    loadData <= storeData;
-                else
-                    loadData <= pseudoRam(to_integer(unsigned(addr1(PSEUDORAM_WIDTH-1 downto 0))));
+            -- phase 2
+            addr2 <= addr1;
+            load2 <= load1;
+            if load1 then
+                if not (addr1 = addr2 and (not load2)) then
+                    data <= pseudoRam(to_integer(unsigned(addr1(PSEUDORAM_WIDTH-1 downto 0))));
                 end if;
+            else
+                data <= (others => 'Z');
             end if;
-            if store2 then
-                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= storeData;
+
+            -- phase 3
+            if not load2 then
+                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= data;
             end if;
         end if;
     end process;
@@ -134,8 +131,7 @@ begin
         serialSendData => sendData,
         serialRecved => recved,
         serialSent => sent,
-        sramStore => store,
+        sramLoad => load,
         sramAddr => addr,
-        sramLoadData => loadData,
-        sramStoreData => storeData);
+        sramData => data);
 end PseudoConnection;

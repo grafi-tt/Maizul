@@ -63,10 +63,9 @@ architecture Initialize of Top is
     component SRAM is
         port (
             clk : in std_logic;
-            store : in boolean;
+            load : in boolean;
             addr : in std_logic_vector (19 downto 0);
-            loadData : out std_logic_vector(31 downto 0);
-            storeData : in std_logic_vector(31 downto 0);
+            data : inout std_logic_vector (31 downto 0);
 
             clkPin1 : out std_logic;
             clkPin2 : out std_logic;
@@ -95,10 +94,9 @@ architecture Initialize of Top is
             serialSendData : out std_logic_vector(7 downto 0);
             serialRecved : in std_logic;
             serialSent : in std_logic;
-            sramStore : out boolean;
+            sramLoad : out boolean;
             sramAddr : out sram_addr;
-            sramLoadData : in value_t;
-            sramStoreData : out value_t);
+            sramData : inout value_t);
     end component;
 
     signal clk, iclk : std_logic;
@@ -108,10 +106,9 @@ architecture Initialize of Top is
     signal recvData : std_logic_vector(7 downto 0);
     signal sendData : std_logic_vector(7 downto 0);
 
-    signal store : boolean;
+    signal load : boolean;
     signal addr : sram_addr := (others => '0');
-    signal loadDataLine : value_t;
-    signal storeDataLine : value_t;
+    signal dataLine : value_t;
 
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);
@@ -133,10 +130,9 @@ begin
 
     sram_map : SRAM port map (
         clk => clk,
-        store => store,
+        load => load,
         addr => std_logic_vector(addr),
-        loadData => loadDataLine,
-        storeData => storeDataLine,
+        data => dataLine,
 
         clkPin1 => ZCLKMA(0),
         clkPin2 => ZCLKMA(1),
@@ -162,8 +158,7 @@ begin
         serialSendData => sendData,
         serialRecved => recved,
         serialSent => sent,
-        sramStore => store,
+        sramLoad => load,
         sramAddr => addr,
-        sramLoadData => loadDataLine,
-        sramStoreData => storeDataLine);
+        sramData => dataLine);
 end Initialize;
