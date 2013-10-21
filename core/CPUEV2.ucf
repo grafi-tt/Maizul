@@ -499,6 +499,23 @@ NET RS_RX		   IOSTANDARD = LVTTL;
 NET "MCLK1" TNM_NET = "SYS_CLK";
 TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 14.52 ns HIGH 50 %;
 
+# from Data Sheet
+# TODO consider delay of board (nearly 0.5ns?)
+# NET "ZA[*]" OFFSET = OUT 1.0 ns BEFORE "MCLK1";
+# NET "ZD[*]" OFFSET = OUT 1.0 ns BEFORE "MCLK1";
+# NET "XWA"   OFFSET = OUT 1.0 ns BEFORE "MCLK1";
+# NET "ZD[*]" OFFSET = IN  1.0 ns VALID 4.8ns BEFORE "MCLK1";
+
+# NET "ZA[*]" OFFSET = OUT 1.0 ns BEFORE "MCLK1";
+# NET "ZD[*]" OFFSET = OUT 1.0 ns BEFORE "MCLK1";
+# NET "XWA"   OFFSET = OUT 1.0 ns BEFORE "MCLK1";
+# NET "ZD[*]" OFFSET = IN  0.5 ns VALID 4.3ns BEFORE "MCLK1";
+#
+NET "ZA[*]" OFFSET = OUT 8.5 ns AFTER "MCLK1";
+NET "ZD[*]" OFFSET = OUT 8.5 ns AFTER "MCLK1";
+NET "XWA"   OFFSET = OUT 8.5 ns AFTER "MCLK1";
+NET "ZD[*]" OFFSET = IN 6 ns VALID 7.5ns BEFORE "MCLK1";
+
 ###############################################################################
 # Define multicycle paths - these paths may take longer because additional
 # time allowed for logic to settle in calibration/initialization FSM

@@ -14,10 +14,10 @@ entity DataPath is
         serialRecved : in std_logic;
         serialSent : in std_logic;
 
-        sramLoad : out boolean;
-        sramStore : out boolean;
-        sramAddr : out sram_addr;
-        sramData : inout value_t);
+        sramStore : out boolean := false;
+        sramAddr : out sram_addr := (others => '0');
+        sramLoadData : in value_t;
+        sramStoreData : out value_t := (others => '0'));
 end DataPath;
 
 architecture DataPathImp of DataPath is
@@ -129,15 +129,11 @@ architecture DataPathImp of DataPath is
     signal emitValB : blkram_addr;
     signal jump : boolean;
 
-    signal emitBase, emitDisp : value_t := (others => '0');
-    signal load2, load1 : boolean;
-    signal load : boolean;
-    signal tagM : tag_t := (others => '0');
+    signal emitBase, emitDisp : sram_addr := (others => '0');
+    signal load0, load1, load2, load3, load4 : boolean := true;
+    signal tagM0, tagM1, tagM2, tagM3, tagM4 : tag_t := (others => '0');
+    signal valM0, valM1, valM2, valM4 : value_t := (others => '0');
     signal tagMld : tag_t;
-    signal tagM1, tagM2 : tag_t := (others => '0');
-    signal valM : value_t := (others => '0');
-    signal pipeValMTmp ,emitValMTmp : value_t := (others => '0');
-    signal pipeValM ,emitValM : value_t;
 
     signal enableIO : boolean;
     signal emitTagIO : tag_t;
@@ -163,13 +159,13 @@ begin
         tagW => tagW,
         lineW => valW,
         tagM => tagMld,
-        lineM => sramData);
+        lineM => valM4);
     tagW <= emitTagA or emitTagB or emitTagIO;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
             emitValIO when emitTagIO /= "00000" else
             (others => '0');
-    tagMld <= tagM when load else "00000";
+    tagMld <= tagM4 when load4 else "00000";
 
     fetch_map : Fetch port map (
         clk => clk,
@@ -237,9 +233,6 @@ begin
         blocking => blocking);
     enableIO <= opH = "01" and (opL = "0010" or opL = "1011") and (not stall) and (not ignore);
 
-    sramAddr <= sram_addr(unsigned(emitBase(19 downto 0)) + unsigned(emitDisp(19 downto 0)));
-    sramData <= (others => 'Z') when load else valM;
-
     ignoreJ2 <= jump;
 
     everyClock : process(clk)
@@ -250,31 +243,45 @@ begin
                 pc <= fetchedPC;
             end if;
 
+            ignoreJ1 <= ignoreJ2;
+
+            -- phase 0
             if opH = "10" and (not stall) and (not ignore) then
-                tagM2 <= tagY;
-                load2 <= opL(0) = '0';
-                sramLoad <= opL(0) = '0';
-                sramStore <= opL(0) = '1';
+                load0 <= opL(0) = '0';
+                tagM0 <= tagY;
             else
-                tagM2 <= "00000";
-                load2 <= false;
-                sramLoad <= false;
-                sramStore <= false;
+                load0 <= true;
+                tagM0 <= "00000";
+            end if;
+            valM0 <= valY;
+            emitBase <= sram_addr(valX(19 downto 0));
+            emitDisp <= sram_addr(immSigned(19 downto 0));
+
+            -- phase 1
+            load1 <= load0;
+            tagM1 <= tagM0;
+            valM1 <= valM0;
+            sramStore <= not load0;
+            sramAddr <= sram_addr(unsigned(emitBase) + unsigned(emitDisp));
+
+            -- phase 2
+            load2 <= load1;
+            tagM2 <= tagM1;
+            valM2 <= valM1;
+
+            -- phase 3
+            load3 <= load2;
+            tagM3 <= tagM2;
+            if not load2 then
+                sramStoreData <= valM2;
             end if;
 
-            emitBase <= "00" & valX(31 downto 2);
-            emitDisp <= immSigned;
-
-            load1 <= load2;
-            load <= load1;
-            tagM1 <= tagM2;
-            tagM <= tagM1;
-
-            pipeValMTmp <= valY;
-            emitValMTmp <= pipeValM;
-            valM <= emitValM;
-
-            ignoreJ1 <= ignoreJ2;
+            -- phase 4
+            load4 <= load3;
+            tagM4 <= tagM3;
+            if load3 then
+                valM4 <= sramLoadData;
+            end if;
 
         end if;
     end process;
@@ -288,27 +295,25 @@ begin
     imm <= instruction(15 downto 0);
 
     valX <= (others => '0') when tagX = "00000" else
-            sramData when tagX = tagM and load else
+            valM4 when tagX = tagM4 and load4 else
             emitValA when tagX = emitTagA else
             valRegX;
 
     valY <= (others => '0') when tagY = "00000" else
-            sramData when tagY = tagM and load else
+            valM4 when tagY = tagM4 and load4 else
             emitValA when tagY = emitTagA else
             valRegY;
 
-    pipeValM <= (others => '0') when tagM2 = "00000" else
-                sramData when tagM2 = tagM and load else
-                pipeValMTmp;
-
-    emitValM <= (others => '0') when tagM1 = "00000" else
-                sramData when tagM1 = tagM and load else
-                emitValMTmp;
-
     stallX <= tagX /= "00000" and
-              ((tagX = tagM2 and load2) or (tagX = tagM1 and load1)) ;
+              ( (tagX = tagM0 and load0) or
+                (tagX = tagM1 and load1) or
+                (tagX = tagM2 and load2) or
+                (tagX = tagM3 and load3));
     stallY <= tagY /= "00000" and
-              ((tagY = tagM2 and load2) or (tagY = tagM1 and load1)) and
+              ( (tagX = tagM0 and load0) or
+                (tagX = tagM1 and load1) or
+                (tagX = tagM2 and load2) or
+                (tagX = tagM3 and load3)) and
               ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
 
     stall <= stallX or stallY or blocking;

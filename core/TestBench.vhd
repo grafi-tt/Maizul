@@ -23,10 +23,10 @@ architecture PseudoConnection of TestBench is
             serialRecved : in std_logic;
             serialSent : in std_logic;
 
-            sramLoad : out boolean;
             sramStore : out boolean;
             sramAddr : out sram_addr;
-            sramData : inout value_t);
+            sramLoadData : in value_t;
+            sramStoreData : out value_t);
     end component;
 
     constant CLK_TIME : time := 15 ns;
@@ -52,7 +52,8 @@ architecture PseudoConnection of TestBench is
     signal addr1 : sram_addr := (others => '0');
     signal addr2 : sram_addr := (others => '0');
     signal addr3 : sram_addr := (others => '0');
-    signal data : value_t := (others => '0');
+    signal loadData : value_t := (others => '0');
+    signal storeData : value_t;
 
     signal forwardBuf : value_t := (others => '0');
 
@@ -112,14 +113,18 @@ begin
             addr1 <= addr;
             addr2 <= addr1;
 
+            if not store1 then
+                if store2 and addr1 = addr2 then
+                    loadData <= storeData;
+                else
+                    loadData <= pseudoRam(to_integer(unsigned(addr1(PSEUDORAM_WIDTH-1 downto 0))));
+                end if;
+            end if;
             if store2 then
-                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= data;
+                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= storeData;
             end if;
         end if;
     end process;
-
-    data <= pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) when load2 else
-            (others => 'Z');
 
     data_path_map : DataPath port map (
         clk => clk,
@@ -129,8 +134,8 @@ begin
         serialSendData => sendData,
         serialRecved => recved,
         serialSent => sent,
-        sramLoad => load,
         sramStore => store,
         sramAddr => addr,
-        sramData => data);
+        sramLoadData => loadData,
+        sramStoreData => storeData);
 end PseudoConnection;
