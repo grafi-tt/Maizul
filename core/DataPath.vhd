@@ -150,6 +150,8 @@ architecture DataPathImp of DataPath is
 
     signal fetchStall : boolean;
     signal stall : boolean;
+    signal retry : boolean := false;
+    signal stallM : boolean;
     signal ignore : boolean;
     signal blocking : boolean;
 
@@ -250,20 +252,28 @@ begin
             ignoreJ1 <= ignoreJ2;
 
             -- phase 0
-            if opH = "10" and (not stall) and (not ignore) then
+            if retry then
+                retry <= false;
+            elsif opH = "10" and (not stall) and (not ignore) then
                 load0 <= opL(0) = '0';
                 tagM0 <= tagY;
+                retry <= true;
+                valM0 <= valY;
+                emitBase <= sram_addr(valX(19 downto 0));
+                emitDisp <= sram_addr(immSigned(19 downto 0));
             else
                 load0 <= true;
                 tagM0 <= "00000";
             end if;
-            valM0 <= valY;
-            emitBase <= sram_addr(valX(19 downto 0));
-            emitDisp <= sram_addr(immSigned(19 downto 0));
 
             -- phase 1
             load1 <= load0;
-            tagM1 <= tagM0;
+            if load0 and retry then
+                tagM1 <= "00000";
+            else
+                tagM1 <= tagM0;
+            end if;
+            --tagM1 <= tagM0;
             valM1 <= valM0;
             sramLoad <= load0;
             sramAddr <= sram_addr(unsigned(emitBase) + unsigned(emitDisp));
@@ -317,21 +327,23 @@ begin
             emitValA when tagY = emitTagA else
             valRegY;
 
-    stallX <= tagX /= "00000" and
-              ( (tagX = tagM0 and load0) or
-                (tagX = tagM1 and load1) or
-                (tagX = tagM2 and load2) or
-                (tagX = tagM3 and load3) or
-                (tagX = tagM4 and load4));
-    stallY <= tagY /= "00000" and
-              ( (tagX = tagM0 and load0) or
-                (tagX = tagM1 and load1) or
-                (tagX = tagM2 and load2) or
-                (tagX = tagM3 and load3) or
-                (tagX = tagM4 and load4)) and
-              ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
+    --stallX <= tagX /= "00000" and
+    --          ( (tagX = tagM0 and load0) or
+    --            (tagX = tagM1 and load1) or
+    --            (tagX = tagM2 and load2) or
+    --            (tagX = tagM3 and load3) or
+    --            (tagX = tagM4 and load4));
+    --stallY <= tagY /= "00000" and
+    --          ( (tagX = tagM0 and load0) or
+    --            (tagX = tagM1 and load1) or
+    --            (tagX = tagM2 and load2) or
+    --            (tagX = tagM3 and load3) or
+    --            (tagX = tagM4 and load4)) and
+    --          ((opH = "01" and opL(2 downto 1) = "00") or (opH = "11"));
+    stallM <= not ((tagM0 or tagM1 or tagM2 or tagM3 or tagM4) = "00000");
 
-    stall <= stallX or stallY or blocking;
+    --stall <= stallX or stallY or blocking;
+    stall <= stallM or blocking;
     ignore <= ignoreJ1 or ignoreJ2;
 
 end DataPathImp;
