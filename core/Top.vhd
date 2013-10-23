@@ -64,15 +64,15 @@ architecture Initialize of Top is
         port (
             clk : in std_logic;
             load : in boolean;
-            addr : in std_logic_vector (19 downto 0);
-            data : inout std_logic_vector (31 downto 0);
+            addr : in std_logic_vector(19 downto 0);
+            data : inout std_logic_vector(31 downto 0);
 
             clkPin1 : out std_logic;
             clkPin2 : out std_logic;
             xStorePin : out std_logic;
-            xMaskPin : out std_logic_vector (3 downto 0);
-            addrPin : out std_logic_vector (19 downto 0);
-            dataPin : inout std_logic_vector (31 downto 0);
+            xMaskPin : out std_logic_vector(3 downto 0);
+            addrPin : out std_logic_vector(19 downto 0);
+            dataPin : inout std_logic_vector(31 downto 0);
 
             xEnablePin1 : out std_logic;
             enablePin2 : out std_logic;
@@ -99,7 +99,7 @@ architecture Initialize of Top is
             sramData : inout value_t);
     end component;
 
-    signal clk, iclk : std_logic;
+    signal clk, clkio, iclk : std_logic;
 
     signal ok, go : std_logic;
     signal recved, sent : std_logic;
@@ -113,6 +113,7 @@ architecture Initialize of Top is
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);
     bg : BUFG port map (i => iclk, o => clk);
+    bg2 : BUFG port map (i => iclk, o => clkio);
 
     u232c_recv_map : U232CRecv port map (
         clk => clk,
@@ -129,7 +130,7 @@ begin
         sent => sent);
 
     sram_map : SRAM port map (
-        clk => clk,
+        clk => clkio,
         load => load,
         addr => std_logic_vector(addr),
         data => dataLine,
@@ -151,7 +152,7 @@ begin
         xFlowThruPin => XFT);
 
     data_path_map : DataPath port map (
-        clk => clk,
+        clk => clkio,
         serialOk => ok,
         serialGo => go,
         serialRecvData => recvData,
@@ -161,4 +162,5 @@ begin
         sramLoad => load,
         sramAddr => addr,
         sramData => dataLine);
+
 end Initialize;
