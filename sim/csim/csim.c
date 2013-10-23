@@ -325,8 +325,8 @@ static void issue() {
 			case 0b0101:
 			case 0b0110:
 				assert(imm == 0);
-				set_gpr(tagY, PC << 2);
-				PC = (((GPR[tagX] >> 2) & (INST_ADDR - 1)) | imm);
+				set_gpr(tagY, PC);
+				PC = ((GPR[tagX] & (INST_ADDR - 1)) | imm);
 				return issue();
 			case 0b0010:
 				return rrsp(imm, tagY, GPR[tagX]);
@@ -342,7 +342,7 @@ static void issue() {
 		}
 	case 0b10:
 		;
-		uint32_t addr = ((GPR[tagX] >> 2) + ((int32_t) (int16_t) imm)) & (DATA_ADDR - 1);
+		uint32_t addr = (GPR[tagX] + ((int32_t) (int16_t) imm)) & (DATA_ADDR - 1);
 		switch (bits(inst, 29, 26)) {
 			case 0b0000:
 				set_gpr(tagY, DATA_MEM[addr]);
