@@ -5,10 +5,11 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
 
 厳密な意味論は書いていないが，曖昧性なく読めるようには書くつもり．不明な点が有れば指摘して欲しい．
 
+## アドレッシングの注意
+レジスタに格納された値をSRAMのアドレスやBlockRAMのアドレスとして用いる際，以前は下2ビットを無視してバイト単位でアクセスするのと同じアドレッシングになるようにしていたが，結局は下の2ビットを無視せずに，32ビット単位（4バイト単位）のアドレスを格納する，*ワードアドレッシング*とすることにした．
 
 ## 大まかな仕様
 整数レジスタ，浮動小数点レジスタともに，32bitでそれぞれ32個．ビッグエンディアン．R0とF0はゼロ固定．命令は固定長32bit．
-
 
 ## 命令フォーマット
 <table>
@@ -168,7 +169,11 @@ ALUCode `1011`
 
 min-rtに必須ではないけど，これくらいは入れときたい．高速化目指したarchでは省くかも．
 
-    Rd := lower_32bit(Ra * Rbv) （符号付きとしての乗算でも符号無しとしての乗算でも結果は同じ）
+と思ってたが，32bit整数同士の乗算がものすごくクロックを落として高速化目指さなくてもボトルネックになりそうなので，16bit整数同士の乗算としておく．
+
+シミュレータでの実装は取りあえず適当（例えば必ず0を返す）とかでも良い．
+
+    Rd := lower_16bit(Ra) * lower_16bit(Rbv) （下16bitは符号付き整数として扱う予定）
 
 #### fmovr
 ALUCode `1100`
@@ -259,14 +264,14 @@ SRAMに対しては内部的には32bit単位のアドレスを用いてアク�
 #### ldq，fldq
 RMCode `000` / FMCode `000`
 
-    Rv := load_sram(Rb >> 2 & Displacement)
-    Fv := load_sram(Rb >> 2 & Displacement)
+    Rv := load_sram(Rb & Displacement)
+    Fv := load_sram(Rb & Displacement)
 
 #### stq，fstq
 RMCode `001` / FMCode `001`
 
-    store_sram(Rb >> 2 & Displacement, Rv)
-    store_sram(Fb >> 2 & Displacement, Rv)
+    store_sram(Rb & Displacement, Rv)
+    store_sram(Fb & Displacement, Rv)
 
 
 ### 条件分岐命令（RB，FB）
@@ -302,7 +307,7 @@ RBCode `011` / FBCode `011`
 
 #### jmp
 
-    (PC, Rl) := ((Rt >> 2) | Target, PC + 4)
+    (PC, Rl) := (Rt | Target, PC + 1)
 
 
 この一命令で，関数呼び出しおよびreturnも実現できる．Rl，Rtがそれぞれ，関数呼び出し時，関数リターン時のリンクレジスタになる．上の方に書いたが，適切にhintをつけないとコアでは低速になる．
