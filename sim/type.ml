@@ -1,30 +1,39 @@
 type nop = Nop 
+type label = string
+type reg = int
+type addr = int
+type imm8 = int
 
 
-type expr = 
-  | ELabel of string
-  | EAdd of int * int * int
-  | EAddi of int * int * int  
-  | ESub of int * int * int
-  | ESubi of int * int * int
-  | Eq of int * int * int 
-  | Eqi of int * int * int 
-  | ELess of int * int * int
-  | ELessi of int * int * int 
-  | ENor of int * int * int
-  | ENori of int * int * int
-  | EAnd of int * int * int 
-  | EAndi of int * int * int
-  | ENot of int * int 
-  | EOr of int * int * int
-  | EOri of int * int * int 
-  | ELd of int * int 
-  | ESt of int * int
-  | EBeq of int * int * string 
-  | EBne of int * int * string
-  | EBlt of int * int * string
-  | EJump of int
-  | EJumpl of string 
+
+type top = 
+  | Toplabel of label 
+  | Top of expr
+
+and expr = 
+  | EAdd of reg * reg * reg
+  | EAddi of reg * reg * imm8  
+  | ESub of reg * reg * reg
+  | ESubi of reg * reg * imm8
+  | Eq of reg * reg * reg 
+  | Eqi of reg * reg * imm8 
+  | ELess of reg * reg * reg
+  | ELessi of reg * reg * imm8 
+  | ENor of reg * reg * reg
+  | ENori of reg * reg * imm8
+  | EAnd of reg * reg * reg 
+  | EAndi of reg * reg * imm8
+  | ENot of reg * reg 
+  | EOr of reg * reg * reg
+  | EOri of reg * reg * imm8
+  | EXor of reg * reg * reg
+  | EXori of reg * reg * imm8 
+  | ELd of reg * addr * label
+  | ESt of reg * addr * label 
+  | EBeq of reg * reg * label
+  | EBne of reg * reg * label
+  | EBlt of reg * reg * label
+  | EJump of reg * reg * label 
   | Nop 
 
 exception No_type_error
