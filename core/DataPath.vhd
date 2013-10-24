@@ -89,11 +89,6 @@ architecture DataPathImp of DataPath is
             blocking : out boolean);
     end component;
 
-    attribute IOB : string;
-    attribute IOB of sramLoad : signal is "TRUE";
-    attribute IOB of sramAddr : signal is "TRUE";
-    attribute IOB of sramData : signal is "TRUE";
-
     signal fetchedInst : instruction_t;
     signal pc : blkram_addr := (others => '0');
     signal fetchedPC : blkram_addr;
@@ -134,9 +129,7 @@ architecture DataPathImp of DataPath is
     signal emitValB : blkram_addr;
     signal jump : boolean;
 
-    -- signal emitBase, emitDisp : std_logic_vector(19 downto 0) := (others => '0');
-    signal emitAddr : std_logic_vector(19 downto 0) := (others => '0');
-    signal addr0, addr1 : std_logic_vector(19 downto 0) := (others => '0');
+    signal emitAddr : sram_addr := (others => '0');
     signal load0, load1, load2, load3, load4 : boolean := true;
     signal tagM0, tagM1, tagM2, tagM3, tagM4 : tag_t := (others => '0');
     signal valM0, valM1, valM2, valM3, valM4 : value_t := (others => '0');
@@ -153,7 +146,6 @@ architecture DataPathImp of DataPath is
 
     signal fetchStall : boolean;
     signal stall : boolean;
-    signal retry : boolean := false;
     signal stallM : boolean;
     signal ignore : boolean;
     signal blocking : boolean;
@@ -256,41 +248,22 @@ begin
             ignoreJ1 <= ignoreJ2;
 
             -- phase 0
-            if retry then
-                retry <= false;
+            if opH = "10" and (not stall) and (not ignore) then
+                load0 <= opL(0) = '0';
+                tagM0 <= tagY;
             else
-                if opH = "10" and (not stall) and (not ignore) then
-                    if opL(0) = '0' then
-                        retry <= true;
-                    else
-                        retry <= false;
-                    end if;
-                    load0 <= opL(0) = '0';
-                    tagM0 <= tagY;
-                else
-                    load0 <= true;
-                    tagM0 <= "00000";
-                end if;
-                valM0 <= valY;
-                addr0 <= emitAddr;
-                -- emitBase <= valX(19 downto 0);
-                -- emitDisp <= "0000" & imm(15 downto 0);
-                -- emitDisp <= x"00001";
+                load0 <= true;
+                tagM0 <= "00000";
             end if;
+            valM0 <= valY;
+            emitAddr <= sram_addr(unsigned(valX(19 downto 0)) + unsigned(immSigned(19 downto 0)));
 
-            addr1 <= addr0;
             -- phase 1
             load1 <= load0;
-            if load0 and retry then
-                tagM1 <= "00000";
-            else
-                tagM1 <= tagM0;
-            end if;
-            --tagM1 <= tagM0;
+            tagM1 <= tagM0;
             valM1 <= valM0;
             sramLoad <= load0;
-            -- sramAddr <= std_logic_vector(unsigned(emitBase) + unsigned(emitDisp));
-            sramAddr <= sram_addr(addr1);
+            sramAddr <= emitAddr;
 
             -- phase 2
             load2 <= load1;
@@ -302,7 +275,7 @@ begin
             tagM3 <= tagM2;
             if load2 then
                 sramData <= (others => 'Z');
-                valM3 <= sramData;
+                -- valM3 <= sramData;
             else
                 sramData <= valM2;
             end if;
@@ -310,14 +283,13 @@ begin
             -- phase 4
             load4 <= load3;
             tagM4 <= tagM3;
-            valM4 <= valM3;
-            --if load3 then
-            --    valM4 <= sramData;
-            --end if;
+            -- valM4 <= valM3;
+            if load3 then
+                valM4 <= sramData;
+            end if;
 
         end if;
     end process;
-    emitAddr <= std_logic_vector(unsigned(valX(19 downto 0)) + unsigned(immSigned(19 downto 0)));
 
     opH <= instruction(31 downto 30);
     opL <= instruction(29 downto 26);
@@ -327,9 +299,7 @@ begin
     tagZ <= tag_t(instruction(15 downto 11));
     imm <= instruction(15 downto 0);
     -- immSigned <= value_t(resize(signed(imm), 32));
-    -- immSigned <= value_t(imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm(15)&imm);
-    immSigned <= value_t(x"0000"&imm);
-
+    immSigned <= value_t(x"0000" & imm);
 
     valX <= (others => '0') when tagX = "00000" else
             valM4 when tagX = tagM4 and load4 else
