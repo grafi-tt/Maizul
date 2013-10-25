@@ -1,5 +1,9 @@
 library ieee;
+library unisim;
 use ieee.std_logic_1164.all;
+use unisim.vcomponents.all;
+use work.types.all;
+
 
 entity Top is
     port (
@@ -27,8 +31,7 @@ entity Top is
         XZBE : out std_logic_vector(3 downto 0));
 end Top;
 
--- TODO separate hardware connection and statemachine into diferrent architectures
-architecture StateMachine of Top is
+architecture Initialize of Top is
     component U232CRecv is
         generic (
             -- 9600bps
@@ -60,18 +63,16 @@ architecture StateMachine of Top is
     component SRAM is
         port (
             clk : in std_logic;
-            load : in std_logic;
-            store : in std_logic;
-            addr : in std_logic_vector (19 downto 0);
-            storeData : in std_logic_vector (31 downto 0);
-            loadData : out std_logic_vector (31 downto 0);
+            load : in boolean;
+            addr : in std_logic_vector(19 downto 0);
+            data : inout std_logic_vector(31 downto 0);
 
             clkPin1 : out std_logic;
             clkPin2 : out std_logic;
             xStorePin : out std_logic;
-            xMaskPin : out std_logic_vector (3 downto 0);
-            addrPin : out std_logic_vector (19 downto 0);
-            dataPin : inout std_logic_vector (31 downto 0);
+            xMaskPin : out std_logic_vector(3 downto 0);
+            addrPin : out std_logic_vector(19 downto 0);
+            dataPin : inout std_logic_vector(31 downto 0);
 
             xEnablePin1 : out std_logic;
             enablePin2 : out std_logic;
@@ -84,37 +85,55 @@ architecture StateMachine of Top is
             xFlowThruPin : out std_logic);
     end component;
 
-    signal clk, iclk : std_logic;
-    signal halt : boolean;
+    component DataPath is
+        port (
+            clk : in std_logic;
+            serialOk : buffer std_logic;
+            serialGo : buffer std_logic;
+            serialRecvData : in std_logic_vector(7 downto 0);
+            serialSendData : out std_logic_vector(7 downto 0);
+            serialRecved : in std_logic;
+            serialSent : in std_logic;
+            sramLoad : out boolean;
+            sramAddr : out sram_addr;
+            sramData : inout value_t);
+    end component;
 
-    type state is (Hai, Run, Bye);
-    signal state : state;
+    signal clk, clkio, iclk : std_logic;
+
+    signal ok, go : std_logic;
+    signal recved, sent : std_logic;
+    signal recvData : std_logic_vector(7 downto 0);
+    signal sendData : std_logic_vector(7 downto 0);
+
+    signal load : boolean;
+    signal addr : sram_addr := (others => '0');
+    signal dataLine : value_t;
 
 begin
     ib : IBUFG port map (i => MCLK1, o => iclk);
     bg : BUFG port map (i => iclk, o => clk);
+    bg2 : BUFG port map (i => iclk, o => clkio);
 
-    recv : U232CRecv port map (
+    u232c_recv_map : U232CRecv port map (
         clk => clk,
         ok => ok,
         data => recvData,
         rxPin => RS_RX,
         recved => recved);
 
-    send : U232CSend port map (
+    u232c_send_map : U232CSend port map (
         clk => clk,
         go => go,
         data => sendData,
         txPin => RS_TX,
         sent => sent);
 
-    sram : SRAM port map (
-        clk => clk,
+    sram_map : SRAM port map (
+        clk => clkio,
         load => load,
-        store => store,
-        addr => addr,
-        storeData => storeLine,
-        loadData => loadLine,
+        addr => std_logic_vector(addr),
+        data => dataLine,
 
         clkPin1 => ZCLKMA(0),
         clkPin2 => ZCLKMA(1),
@@ -132,59 +151,16 @@ begin
         sleepPin => ZZA,
         xFlowThruPin => XFT);
 
-    every_clock_do : process(clk)
-    begin
-        if (rising_edge(clk)) then
-            case state is
-                when Hai => -- waiting signal
-                    if (recved = '1' and ok = '0') then
-                        ok <= '1';
-                        with haiState select
-                            waitData <= "0x48" when 2,
-                                        "0x61" when 1,
-                                        "0x69" when others;
-                        with haiState select
-                            haiState <= 1 when 2,
-                                        0 when 1,
-                                        2 when 0;
-                    end if;
+    data_path_map : DataPath port map (
+        clk => clkio,
+        serialOk => ok,
+        serialGo => go,
+        serialRecvData => recvData,
+        serialSendData => sendData,
+        serialRecved => recved,
+        serialSent => sent,
+        sramLoad => load,
+        sramAddr => addr,
+        sramData => dataLine);
 
-                    if (recved = '0' and ok = '1') then
-                        ok <= '0';
-                        if waitData /= recvData then
-                            haiState <= 2;
-                        elsif byeState = 0 then
-                            state <= 1;
-                            halt <= true;
-                        end if;
-                    end if;
-
-                when Run => -- CPU running
-                    if halt = false then
-                        state <= '0';
-                    end if;
-
-                when Bye => -- telling bye
-                    if sent = '1' and go = '0' then
-                        go <= '1';
-                        with byeState select
-                            sendData <= "0x42" when 2,
-                                        "0x79" when 1,
-                                        "0x65" when others;
-                        with byeState select
-                            byeState <= 1 when 2,
-                                        0 when 1,
-                                        2 when 0;
-
-                    end if;
-
-                    if sent = '0' and go = '1' then
-                        go <= '0';
-                        if byeState = 0 then
-                            state <= 2;
-                        end if;
-                    end if;
-            end case;
-        end if;
-    end process;
-end TopImp;
+end Initialize;

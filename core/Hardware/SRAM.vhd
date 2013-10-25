@@ -4,11 +4,9 @@ use ieee.std_logic_1164.all;
 entity SRAM is
     port (
         clk : in std_logic;
-        load : in std_logic;
-        store : in std_logic;
+        load : in boolean;
         addr : in std_logic_vector(19 downto 0);
-        storeData : in std_logic_vector(31 downto 0);
-        loadData : out std_logic_vector(31 downto 0);
+        data : inout std_logic_vector(31 downto 0);
 
         clkPin1 : out std_logic;
         clkPin2 : out std_logic;
@@ -29,25 +27,13 @@ entity SRAM is
 end SRAM;
 
 architecture ZBTControl of SRAM is
-    signal load1 : std_logic := '0';
-    signal load2 : std_logic := '0';
 begin
-    everyClock : process(clk)
-    begin
-        if rising_edge(clk) then
-            load1 <= load;
-            load2 <= load1;
-        end if;
-    end process;
-
     clkPin1 <= clk;
     clkPin2 <= clk;
     addrPin <= addr;
-    xStorePin <= load;
-    xMaskPin <= "0000" when (load or store) = '1' else "1111";
-    dataPin <= (others => 'Z') when load2 = '1' else storeData;
-    loadData <= dataPin;
-
+    xStorePin <= '1' when load else '0';
+    xMaskPin <= "0000";
+    dataPin <= data;
     xEnablePin1 <= '0';
     enablePin2 <= '1';
     xEnablePin3 <= '0';
@@ -57,4 +43,5 @@ begin
     xLinearOrderPin <= '1';
     sleepPin <= '0';
     xFlowThruPin <= '1';
-end ZBTImp;
+
+end ZBTControl;

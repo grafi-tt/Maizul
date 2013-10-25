@@ -1,72 +1,57 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
-library cpuex;
-use cpuex.types.all;
+use work.types.all;
 
 entity RegSet is
     port (
         clk : in std_logic;
-
-        tagS : in std_logic_vector(4 downto 0);
-        tagT : in std_logic_vector(4 downto 0);
-        tagD : in std_logic_vector(4 downto 0);
-
-        delayD : in schedule;
-
-        valS : out value;
-        valT : out value;
-
-        scheduleS : out schedule;
-        scheduleT : out schedule;
-        scheduleD : out schedule;
-
-        writtenLine : in value;
-        storeLine : out value);
+        tagS : in tag_t;
+        valS : out value_t;
+        tagT : in tag_t;
+        valT : out value_t;
+        tagW : in tag_t;
+        lineW : in value_t;
+        tagM : in tag_t;
+        lineM : in value_t);
 end RegSet;
 
--- TODO : fix hardcording of numbers of register (using generic or constant)
+-- TODO : use generic for schedule length
 architecture Multiplexer of RegSet is
     component Reg is
         port (
             clk : in std_logic;
-
-            delayEnable : in std_logic;
-            delay : in schedule;
-
-            value : buffer value;
-            schedule : buffer schedule;
-
-            writtenLine : in value;
-            storeLine : out value);
+            val : buffer value_t;
+            enableW : in boolean;
+            lineW : in value_t;
+            enableM : in boolean;
+            lineM : in value_t);
     end component;
 
-    type scheduleSet is array(31 downto 0) of schedule;
-    signal scheduleSet : scheduleSet;
+    type value_set_t is array(31 downto 0) of value_t;
+    signal valSet : value_set_t;
 
-    type valueSet is array(31 downto 0) of value;
-    signal valueSet : valueSet;
-
-    signal delayEnableSet : std_logic_vector(31 downto 0);
+    type enable_set_t is array(31 downto 1) of boolean;
+    signal enableWSet : enable_set_t;
+    signal enableMSet : enable_set_t;
 
 begin
-    regSet: for i in 0 to 31 generate
-        reg : Reg port map (
+    valSet(0) <= (others => '0');
+
+    reg_set_gen : for i in 31 downto 1 generate
+        reg_port : Reg port map (
             clk => clk,
-            delayEnable => delayEnableSet(i),
-            value => valueSet(i),
-            schedule => scheduleSet(i),
-            writtenLine => writtenLine,
-            storeLine => storeLine);
+            val => valSet(i),
+            enableW => enableWSet(i),
+            lineW => lineW,
+            enableM => enableMSet(i),
+            lineM => lineM);
 
-        delayEnableSet(i) <= '1' when to_integer(unsigned(tagD)) = i else '0';
-    end generate regSet;
+        enableWSet(i) <= to_integer(unsigned(tagW)) = i;
+        enableMSet(i) <= to_integer(unsigned(tagM)) = i;
+    end generate reg_set_gen;
 
-    valS <= valueSet(to_integer(unsigned(tagS)));
-    valT <= valueSet(to_integer(unsigned(tagT)));
+    valS <= valSet(to_integer(unsigned(tagS)));
+    valT <= valSet(to_integer(unsigned(tagT)));
 
-    scheduleS <= scheduleSet(to_integer(unsigned(tagS)));
-    scheduleT <= scheduleSet(to_integer(unsigned(tagT)));
-    scheduleD <= scheduleSet(to_integer(unsigned(tagD)));
-end Implementation;
+end Multiplexer;
