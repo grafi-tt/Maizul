@@ -22,8 +22,8 @@ rule token = parse
   | "eqi"       { EQI } 
   | "lt"        { LESS } 
   | "lti"       { LESSI }
-  | "nor"       { NOR } 
-  | "nori"      { NORI } 
+  | "xor"       { XOR } 
+  | "xori"      { XORI } 
   | "and"       { AND } 
   | "andi"      { ANDI } 
   | "not"       { NOT } 
