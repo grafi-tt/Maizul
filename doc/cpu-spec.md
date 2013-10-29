@@ -1,506 +1,355 @@
 # CPU実験　コアアーキテクチャ
 清水駿介
 
-基本的にはDEC Alpha．比較や論理演算周りは，Alphaは直交性が高く美しいもののCPU実験で使うには無駄が多そうだったのでむしろMIPSに近づけた．厳密な意味論は書いていないが，曖昧性なく読めるようには書くつもり．不明な点が有れば指摘して欲しい．
+DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちらの原型も留めていない．
 
+厳密な意味論は書いていないが，曖昧性なく読めるようには書くつもり．不明な点が有れば指摘して欲しい．
 
-## TODO
-*   opcodeの決定．
-
+## アドレッシングの注意
+レジスタに格納された値をSRAMのアドレスやBlockRAMのアドレスとして用いる際，以前は下2ビットを無視してバイト単位でアクセスするのと同じアドレッシングになるようにしていたが，結局は下の2ビットを無視せずに，32ビット単位（4バイト単位）のアドレスを格納する，*ワードアドレッシング*とすることにした．
 
 ## 大まかな仕様
-整数レジスタ，浮動小数点レジスタともに，32bitでそれぞれ32個．ビッグエンディアン．R0はゼロ固定で，R31はリンクレジスタとして用いる．命令は固定長32bit．
-
+整数レジスタ，浮動小数点レジスタともに，32bitでそれぞれ32個．ビッグエンディアン．R0とF0はゼロ固定．命令は固定長32bit．
 
 ## 命令フォーマット
 <table>
-    <tr><th>Type</th>
+    <tr><th>Instruction Type</th>
         <th>31</th><th>30</th><th>29</th><th>28</th><th>27</th><th>26</th><th>25</th><th>24</th><th>23</th><th>22</th><th>21</th><th>20</th><th>19</th><th>18</th><th>17</th><th>16</th><th>15</th><th>14</th><th>13</th><th>12</th><th>11</th><th>10</th><th>9</th><th>8</th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
     </tr>
-    <tr><td>RO</td>
-        <td colspan="6">OpCode</td><td colspan="5">Rs</td><td colspan="5">Rt</td><td colspan="3">Unused</td><td colspan="1">0</td><td colspan="7">Function</td><td colspan="5">Rd</td>
+    <tr><td><b>I</b>mmediate-<b>O</b>peration</td>
+        <td colspan="2">00</td><td colspan="4">ALUCode</td><td colspan="5">Ra</td><td colspan="5">Rd</td><td colspan="16">Immediate</td>
     </tr>
-    <tr><td>IO</td>
-        <td colspan="6">OpCode</td><td colspan="5">Rs</td><td colspan="8">Immediate</td><td colspan="1">1</td><td colspan="7">Function</td><td colspan="5">Rd</td>
+    <tr><td><b>R</b>egister-<b>O</b>peration</td>
+        <td colspan="5">01000</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Rd</td><td colspan="7">_</td><td colspan="4">ALUCode</td>
+    <tr><td><b>F</b>loat-<b>O</b>peration</td>
+        <td colspan="5">01100</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Fd</td><td colspan="5">_</td><td colspan="2">sign</td><td colspan="4">FPUCode</td>
     </tr>
-    <tr><td>FO</td>
-        <td colspan="6">OpCode</td><td colspan="5">Fs</td><td colspan="5">Ft</td><td colspan="3">Unused</td><td colspan="1">0</td><td colspan="7">Function</td><td colspan="5">Fd</td>
+    <tr><td><b>J</b>ump</td>
+        <td colspan="4">0101</td><td colspan="2">hint</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
     </tr>
-    <tr><td>RM</td>
-        <td colspan="6">OpCode</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Displacement</td>
+    <tr><td><b>R</b>egister-<b>S</b>pecial</td>
+        <td colspan="5">01001</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
     </tr>
-    <tr><td>FM</td>
-        <td colspan="6">OpCode</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Displacement</td>
+    <tr><td><b>F</b>loat-<b>S</b>pecial</td>
+        <td colspan="5">01101</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Fy</td><td colspan="16">Function</td>
     </tr>
-    <tr><td>RJ</td>
-        <td colspan="6">OpCode</td><td colspan="1">0</td><td colspan="9">Function</td><td colspan="11">Unused</td><td colspan="5">R</td>
+    <tr><td><b>R</b>egisiter-<b>M</b>emory</td>
+        <td colspan="3">100</td><td colspan="3">RMCode</td><td colspan="5">Rm</td><td colspan="5">Rv</td><td colspan="16">Displacement</td>
     </tr>
-    <tr><td>DJ</td>
-        <td colspan="6">OpCode</td><td colspan="1">1</td><td colspan="9">Function</td><td colspan="16">Displacement</td>
+    <tr><td><b>F</b>loat-<b>M</b>emory</td>
+        <td colspan="3">101</td><td colspan="3">FMCode</td><td colspan="5">Rm</td><td colspan="5">Fv</td><td colspan="16">Displacement</td>
+    </tr>
+    <tr><td><b>R</b>egisiter-<b>B</b>ranch</td>
+        <td colspan="3">110</td><td colspan="3">RBCode</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Target</td>
+    </tr>
+    <tr><td><b>F</b>loat-<b>B</b>ranch</td>
+        <td colspan="3">111</td><td colspan="3">FBCode</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Target</td>
     </tr>
 </table>
 
 <!--
-  31 30 29 28 27 26 25 24 23 22 21 20 19 28 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
-RO [     OpCode     ][     Rs      ][     Rt      ][Unused ][0][     Function      ][     Rd      ]
-IO [     OpCode     ][     Rs      ][      Immediate       ][1][     Function      ][     Rd      ]
-FO [     OpCode     ][     Fs      ][     Ft      ][Unused ][0][     Function      ][     Fd      ]
-RM [     OpCode     ][     Ra      ][     Rb      ][                 Displacement                 ]
-FM [     OpCode     ][     Fa      ][     Fb      ][                 Displacement                 ]
-RJ [     OpCode     ][0][        Function         ][            Unused             ][      R      ]
-DJ [     OpCode     ][1][        Function         ][                 Displacement                 ]
+   31 30 29 28 27 26 25 24 23 22 21 20 19 28 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
+IO [ 00 ][ ALUcode  ][     Ra      ][     Rd      ][                  Immediate                   ]
+RO [    01000    ][t][    Ra/Fa    ][    Rb/Fb    ][     Rd      ][         _         ][ ALUCode  ]
+FO [    01100    ][t][    Ra/Fa    ][    Rb/Fb    ][     Fd      ][      _      ][sgn ][ FPUCode  ]
+J  [    0101  ][hint][     Rt      ][     Rl      ][                    Target                    ]
+RS [    01001    ][t][    Rx/Fx    ][     Ry      ][                   Function                   ]
+FS [    01101    ][t][    Rx/Fx    ][     Fy      ][                   Function                   ]
+RM [  100  ][RMCode ][     Rm      ][     Rv      ][                 Displacement                 ]
+FM [  101  ][FMCode ][     Rm      ][     Fv      ][                 Displacement                 ]
+RB [  110  ][RBCode ][     Ra      ][     Rb      ][                    Target                    ]
+FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target                    ]
 -->
 
-Unusedには必ず0を入れるようにする．
+### type
+入力オペランドが整数か浮動小数点数かを示す．
 
-別記無い場合は，Rsが入力の左側，ImmediateもしくはRtが入力の右側，Rdが結果．左右というのは各命令に対応する二項演算子を考えた時にどっちに来るかということである（引き算やシフト演算などでは左右の区別が必要）．基本的にImmediateに対しては符号拡張しない．
-
-Displacementは，メモリアドレス（のオフセット）として用いる値で，32bit単位のアクセスしか不要なので，byte単位でのアドレスから下2bitを端折った上で使う．
-
-一つのレジスタしか入力として取らない命令は即値を受け取ることにする（12番目のbitを1）．即値として用いる値は何でも良いはずだが，一応必ず0ということにしておく．
-
-## ニーモニックの記法
-### データサイズ
 <dl>
-    <dt>*u*ni byte</dt>
-        <dd>1byte(8bit)</dd>
-    <dt>*d*ouble byte</dt>
-        <dd>2byte(16bit)</dd>
-    <dt>*q*uad byte</dt>
-        <dd>4byte(32bit)</dd>
-    <dt>*o*cto byte</dt>
-        <dd>8byte(64bit)</dd>
+    <dt>type = 0</dt>
+        <dd>Ra，Rb，Ryを使用</dd>
+    <dt>type = 1</dt>
+        <dd>Fa，Fb，Fyを使用</dd>
 </dl>
 
-### 符号
+### sign
+浮動小数点の演算結果の符号の操作．
+
 <dl>
-    <dt>*u*nsigned</dt>
-        <dd>符号無し</dd>
-    <dt>*s*igned</dt>
-        <dd>符号付き</dd>
+    <dt>sign = 00</dt>
+        <dd>ε 変化なし</dd>
+    <dt>sign = 01</dt>
+        <dd>negate 反転</dd>
+    <dt>sign = 10</dt>
+        <dd>plus 正（abs）</dd>
+    <dt>sign = 11</dt>
+        <dd>minus 負</dd>
+</dl>
+
+### hint
+jmp命令実行時の分岐予測の方向を示す．まだコアの側で実装していないが，ある程度の高速化には必須だと思うので必ず適切にセットすること．
+
+<dl>
+    <dt>hint = 00</dt>
+        <dd>命令中の即値にジャンプすると予測．単なるジャンプのときに用いる．</dd>
+    <dt>hint = 01</dt>
+        <dd>命令中の即値にジャンプすると予測しつつ，リンクレジスタとして用いるレジスタに格納する値を，内部的なスタックにプッシュ．関数呼び出しのときに用いる．</dd>
+    <dt>hint = 10</dt>
+        <dd>スタックをポップして得られるアドレスにジャンプすると予測．関数からのリターンのときに用いる．</dd>
+    <dt>hint = 11</dt>
+        <dd>今のところ未定義．Alphaではコルーチンを実現するような怪しい挙動が定まっていたが，それを実装するメリットも無さそうだし，コンパイラ班と相談ということで．</dd>
 </dl>
 
 
 ## 命令一覧
 
-### 算術命令（RO，IO）
-#### addqu，addqui
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+### ALU（RO，IO）
 
-32bit符号無し整数同士の加算．下位bitは変化せず，オーバーフローは無視するため，符号付き整数の演算に使っても正しい結果を出す．
+    Rbv := Rb                     when optype == RO
+    Rbv := sign_extend(Immediate) when optype == IO
 
-#### subqu，subqui
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+とする．
 
-32bit符号無し整数同士の減算．下位bitは変化せず，アンダーフローは無視するため，符号付き整数の演算に使っても正しい結果を出す．
+#### add，addi
+ALUCode `0000`
 
-#### mulqul，mulquli
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
+    Rd := Ra + Rbv （演算結果の溢れは無視）
 
-32bit符号無し整数同士の乗算．下32bitを格納．符号bitによって下位32bitは変化しないため，符号付き整数の演算に使っても正しい結果を出す．
+#### sub，subi
+ALUCode `0001`
 
-#### mulquh，mulquhi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
+    Rd := Ra - Rbv （演算結果の溢れは無視）
 
-符号無し32bit整数同士の乗算．上32bitを格納．
+#### eq，eqi
+ALUCode `0010`
 
-#### mulqsh
-<dl>
-    <dt>実装箇所</dt>
-        <dd>ライブラリ or アセンブラ</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
+    Rd := Ra == Rbv
 
-符号付き32bit整数同士の乗算．上32bitを格納．Alphaのドキュメントに記載の数式参照
+#### lt，lti
+ALUCode `0011`
 
-#### div
-<dl>
-    <dt>実装箇所</dt>
-        <dd>ライブラリ</dd>
-    <dt>実装優先度</dt>
-        <dd>最低</dd>
-</dl>
-
-除算．詳細未定．
-
-
-### ビット演算（RO，IO）
-#### not，noti
-<dl>
-    <dt>実装箇所</dt>
-        <dd>アセンブラ</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
-
-    nor R0 Rs Rd / nori R0 imm Rd
-
-全てのbitを反転．MinCamlのnotの実装に利用．
-
-#### nor，nori
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
-
-ビットごとのNOR．notの実装のために用いる．
+    Rd := Ra < Rbv （符号付き整数として比較）
 
 #### and，andi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
+ALUCode `0100`
 
-ビットごとのAND．
+    Rd := Ra & Rbv
 
 #### or，ori
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
+ALUCode `0101`
 
-ビットごとのOR．
+    Rd := Ra | Rbv
 
 #### xor，xori
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
+ALUCode `0110`
 
-ビットごとのXOR．
+    Rd := Ra ^ Rbv
 
-#### lsftq，lsftqi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
+#### sll，slli
+ALUCode `0111`
 
-32bit整数に対する左シフト．RtもしくはImmediateは，unsignedとして扱う，つまり単に下6bitだけを用いる．
+    Rd := Ra << lower_5bit(Rbv)
 
-#### rsftqu，rsftqui
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
+#### srl，srli
+ALUCode `1000`
 
-32bit整数に対する右論理シフト．シフト量は必ず正で，RtもしくはImmediateの下位5bitだけを用いる．
+    Rd := Ra >> lower_5bit(Rbv) (ただし論理シフト)
 
-#### rsftqs，rsftqsi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>余興</dd>
-</dl>
+#### sra，srai
+ALUCode `1001`
 
-32bit整数に対する右算術シフト．シフト量は必ず正で，RtもしくはImmediateの下位5bitだけを用いる．
+    Rd := Ra >> lower_5bit(Rbv) (ただし算術シフト)
 
-#### rotq，rotqi
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>最低</dd>
-</dl>
+#### cat，cati
+ALUCode `1010`
 
-32bit整数に対する左循環シフト．シフト量としてRtもしくはImmediateの下位5bitを用いる．循環シフトは32を法として合同な動作をするので，これで正にも負にもシフトできていると言える．
+   Rd := lower_16bit(Ra) | (lower_16bit(Rbv) << 16)
 
-#### clzq
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>最低</dd>
-</dl>
+#### mul，muli
+ALUCode `1011`
 
-一入力．Leading Zeroを数える．
+min-rtに必須ではないけど，これくらいは入れときたい．高速化目指したarchでは省くかも．
 
-#### cppq
-<dl>
-    <dt>実装箇所</dt><dd>コア</dd>
-    <dt>実装優先度</dt><dd>最低</dd>
-</dl>
+と思ってたが，32bit整数同士の乗算がものすごくクロックを落として高速化目指さなくてもボトルネックになりそうなので，16bit整数同士の乗算としておく．
 
-一入力．popcount．
+シミュレータでの実装は取りあえず適当（例えば必ず0を返す）とかでも良い．
 
-#### mez，mezi
-<dl>
-    <dt>実装箇所</dt><dd>コア</dd>
-    <dt>実装優先度</dt><dd>最低</dd>
-</dl>
+    Rd := lower_16bit(Ra) * lower_16bit(Rbv) （下16bitは符号付き整数として扱う予定）
 
-Rsが0に等しいなら，RdをRtあるいはImmediateで置き換える．
+#### fmovr
+ALUCode `1100`
 
-#### mnz，mnzi
-<dl>
-    <dt>実装箇所</dt><dd>コア</dd>
-    <dt>実装優先度</dt><dd>最低</dd>
-</dl>
+    Rd := Fa
 
-Rsが0に等しくないなら，RdをRtあるいはImmediateで置き換える．
+#### ftor
+ALUCode `1101`
 
+1クロックで回るなら実装したい．
 
-### 浮動小数点演算（FO）
-浮動小数点演算の結果の符号をFunctionに埋め込んだ2bitで指定できるようにする．
+    Rd := ftoi(Fa)
 
-fmov以外に関しては，「変化なし」のみ必須．
+#### feq
+ALUCode `1110`
 
-<dl>
-    <dt>00</dt>
-        <dd>変化なし</dd>
-    <dt>01</dt>
-        <dd>反転</dd>
-    <dt>10</dt>
-        <dd>正（abs）</dd>
-    <dt>11</dt>
-        <dd>負</dd>
-</dl>
+    Rd := Fa = Fb
 
+#### flt
+ALUCode `1111`
+
+    Rd := Fa < Fb
+
+### FPU（FO）
 #### fadd，faddn，faddp，faddm
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+FPUCode `0000`
 
-ウッfaddだ．仕様はFPU班と相談．
+    Fd := Fa + Fb
 
-#### fsub，fsubn，fsubp，fsubm
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+#### fsub，fsubn，fsubp，fdubm
+FPUCode `0001`
 
-ほぼfadd．
+    Fd := Fa - Fb
+
+faddと同様．
 
 #### fmul，fmuln，fmulp，fmulm
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+FPUCode `0010`
+
+    Fd := Fa * Fb
+
+仕様はFPU班と相談．
+
+#### finv，finvn，finvp，finvm
+FPUCode `0011`
+
+    Fd := 1 / Fa （Fbは0レジスタに固定）
+
+仕様はFPU班と相談．
+
+#### fsqr，fsqrn，fsqrp，fsqrm
+FPUCode `0100`
+
+    Fd := √ Fa （Fbは0レジスタに固定）
 
 仕様はFPU班と相談．
 
 #### fmov，fmovn，fmovp，fmovm
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+FPUCode `0101`
 
-コア班が実装．fmovnはfneg，fmovpはfabs．
+    Fd := Fa（Fbは0レジスタに固定）
 
-#### finv
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+コア班が実装．
 
-FPU班に任せる．
+#### rmovf，rmovfn，rmovfp，rmovfm
+FPUCode `0110`
 
-#### fsqrt
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア or ライブラリ</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+    Fd := Ra（Rbは0レジスタに固定）
 
-FPU班に任せる．
+コア班が実装．
+
+#### rtof，rtofn，rtofp，rtofm
+FPUCode `0111`
+
+    Fd := itof(Fa)
+
+FPU班が変換ルーチンを実装（ソフトウェア実装も可？）
 
 #### fsinなど
-<dl>
-    <dt>実装箇所</dt>
-        <dd>ライブラリ</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+FPUCode `1???`
 
-FPU班に任せる．
+もしハードウェア化するなら
 
 
-### メモリアクセス命令（RM）
-最低限の命令のみ．即値のロード・ストアに対応するには命令フォーマットの変更が必要になりそう．
+### メモリアクセス命令（RM，FM）
+SRAMに対しては内部的には32bit単位のアドレスを用いてアクセスする．
 
-#### ldq
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+#### ldq，fldq
+RMCode `000` / FMCode `000`
 
-Rbの下2bitをクリアした上で，Displacementを2bit左にシフトして足しあわせてアドレスを計算．
+    Rv := load_sram(Rb & Displacement)
+    Fv := load_sram(Rb & Displacement)
 
-RaにアドレスをもとにSRAMから取得した値をロード．
+#### stq，fstq
+RMCode `001` / FMCode `001`
 
-#### stq
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
-
-Rbの下2bitをクリアした上で，Displacementを2bit左にシフトして足しあわせてアドレスを計算．
-
-Raの値をSRAM上のアドレスが指す位置にストア．
+    store_sram(Rb & Displacement, Rv)
+    store_sram(Fb & Displacement, Rv)
 
 
-### 条件分岐命令（RM）
-条件分岐命令によるレジスタ内のアドレスへのジャンプは，ユースケースが無さそうな割に実装するなら考えることがあまりに多いので，サポートしない．
+### 条件分岐命令（RB，FB）
+条件分岐命令によるレジスタ内のアドレスへのジャンプは，ユースケースが無さそうなので今のところ未サポートとしておく．
 
-#### beq
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+#### beq，fbeq
+RBCode `000` / FBCode `000`
 
-Ra = Rb ならジャンプ
+    PC := Target if Ra = Rb
+    PC := Target if Fa = Fb
 
-#### bne
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
+#### bne，fbne
+RBCode `001` / FBCode `001`
 
-Ra ≠ Rb ならジャンプ
+    PC := Target if Ra ≠ Rb
+    PC := Target if Fa ≠ Fb
 
-#### blt
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+#### blt，fblt
+RBCode `010` / FBCode `010`
 
-Ra < Rb ならジャンプ
+    PC := Target if Ra < Rb （符号付き整数として比較）
+    PC := Target if Fa < Fb
 
-#### blte
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
+#### bgte，fbgte
+RBCode `011` / FBCode `011`
 
-Ra ≦ Rb ならジャンプ
-
-#### bfeq
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
-
-Fa = Fb ならジャンプ
-
-#### bfne
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
-
-Fa ≠Fb ならジャンプ
-
-#### bflt
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
-
-Fa < Fb ならジャンプ
-
-#### bflte
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>高速化</dd>
-</dl>
-
-Fa ≦Fb ならジャンプ
+    PC := Target if Ra ≧ Rb
+    PC := Target if Fa ≧ Fb
 
 
-### 無条件分岐命令（RJ，DJ）
-#### jr，jd
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+### 無条件ジャンプ命令（J）
+一命令のみ．
 
-R/Displacementにジャンプ．
+#### jmp
 
-#### jlr，jld
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+    (PC, Rl) := (Rt | Target, PC + 1)
 
-R/Displacementにジャンプ．このとき，PCをリンクレジスタ（R31）にセット．
 
-#### ret
-<dl>
-    <dt>実装箇所</dt>
-        <dd>コア</dd>
-    <dt>実装優先度</dt>
-        <dd>必須</dd>
-</dl>
+この一命令で，関数呼び出しおよびreturnも実現できる．Rl，Rtがそれぞれ，関数呼び出し時，関数リターン時のリンクレジスタになる．上の方に書いたが，適切にhintをつけないとコアでは低速になる．
 
-0入力の命令．リンクレジスタ（R31）にジャンプ．命令フォーマットはDJとし，Displacementは取りあえず必ず0とする．
+RtとTargetをorするという挙動だが，実際にはどちらか片方だけを用いてもう片方を0に固定する使い方を主に想定している．
 
-jrを使ってアセンブラで実装することも可能だが，後々の高速化の可能性のために別命令にする．
+
+### 特殊命令（RS，FS）
+Functionを広く取ったが，現状シリアル通信のみ．
+
+#### get
+Function `0000000000000000` / RS / type = 0
+
+RxをR0に固定
+
+要するに `01001000000xxxxx0000000000000000`で，xxxxxに入力された値を書き込むレジスタの番号を指定．
+
+標準出力なりシリアル通信なりから入力を受け取ってRyの値とする．単なるバイト列として，ビッグエンディアンなので最上位から順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### fget
+Function `0000000000000000` / FS / type = 1
+
+FxをF0に固定
+
+要するに `01101100000xxxxx0000000000000000`で，xxxxxに入力された値を書き込むレジスタの番号を指定．
+
+標準出力なりシリアル通信なりから入力を受け取ってFyの値とする．単なるバイト列として，ビッグエンディアンなので最上位から順に入力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### put
+Function `0000000000000001` / RS / type = 0
+
+RyをR0に固定
+
+要するに `010010xxxxx000000000000000000001`で，xxxxxに出力する値を読み込むレジスタの番号を指定．
+
+Rxの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位から順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
+
+#### fput
+Function `0000000000000001` / FS / type = 1
+
+FyをF0に固定
+
+要するに `011011xxxxx000000000000000000001`で，xxxxxに出力する値を読み込むレジスタの番号を指定．
+
+Fxの値を標準出力なりシリアル通信なりに出力する．単なるバイト列として，ビッグエンディアンなので最上位から順に出力を行う．コアで実行する際にはこの命令はブロックする（割り込みは未サポート）．
