@@ -28,8 +28,8 @@ and expr =
   | EOri of reg * reg * imm8
   | EXor of reg * reg * reg
   | EXori of reg * reg * imm8 
-  | ELd of reg * addr * label
-  | ESt of reg * addr * label 
+  | ELd of reg * addr * imm8
+  | ESt of reg * addr * imm8 
   | EBeq of reg * reg * label
   | EBne of reg * reg * label
   | EBlt of reg * reg * label

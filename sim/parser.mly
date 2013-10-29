@@ -46,8 +46,8 @@ expr:
   | XORI NUM NUM NUM { EXori ($2, $3, $4) }  
   | OR NUM NUM NUM { EOr ($2, $3, $4) } 
   | ORI NUM NUM IMMI { EOri ($2, $3, $4) } 
-  | LD NUM NUM LABEL { ELd ($2,$3,$4) } 
-  | ST NUM NUM LABEL { ESt ($2,$3,$4) } 
+  | LD NUM NUM IMMI { ELd ($2,$3,$4) } 
+  | ST NUM NUM IMMI { ESt ($2,$3,$4) } 
   | BEQ NUM NUM LABEL { EBeq ($2, $3, $4) } 
   | BNE NUM NUM LABEL { EBne ($2, $3, $4) }
   | BLT NUM NUM LABEL { EBlt ($2, $3, $4) } 

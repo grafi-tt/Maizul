@@ -40,9 +40,9 @@ let change env = function
   | EXori (x,y,z) -> 
     (6 lsl 26) lor (x lsl 21) lor (y lsl 16) lor z
   | ELd (x,y,z) -> 
-    (32 lsl 26) lor (x lsl 21) lor (y lsl 16) lor (M.find z env)
+    (32 lsl 26) lor (x lsl 21) lor (y lsl 16) lor z
   | ESt (x,y,z) ->
-    (33 lsl 26) lor (x lsl 21) lor (y lsl 16) lor (M.find z env)
+    (33 lsl 26) lor (x lsl 21) lor (y lsl 16) lor z
   | EBeq (x,y,z) -> 
     (48 lsl 26) lor (x lsl 21) lor (y lsl 16) lor ((M.find z env) lsl 11) 
   | EBne (x,y,z) -> 
