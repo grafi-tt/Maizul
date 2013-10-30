@@ -8,7 +8,7 @@ module M =
       let compare = Pervasives.compare
     end )
     
-let count = ref (-1)
+let count = ref 0
 
 let change env = function 
   | EAdd (x,y,z) -> 
@@ -52,13 +52,13 @@ let change env = function
   | EJump (x,y,z) -> 
     (20 lsl 26) lor (x lsl 21) lor (y lsl 16) lor (M.find z env)  
 
-let rec g env top_expr = 
-  match top_expr with
-  | (Toplabel label) :: xs -> 
-    if M.mem label env then g env xs
-    else incr count ; let new_env = M.add label (!count) env in g new_env xs  
-  | (Top expr) :: xs -> print_binary(change env expr) ; g env xs  
-  | [] -> ()
+let rec g env top_expr index =
+  try 
+    match top_expr.(!index) with
+      | Toplabel label  -> incr index ;
+	if M.mem label env then g env top_expr index
+	else let new_env = M.add label (!index) env in g new_env top_expr index 
+      | Top expr  -> change env expr ; g env top_expr index  
+  with invalid_argumentwith -> exit 0 
     
-    
-let f top = (g M.empty top) 
+let f top = (g M.empty top count) 
