@@ -1,4 +1,0 @@
-SOURCES = lexer.mll parser.mly type.ml top.ml print.ml asen.ml asenMain.ml
-RESULT = myasen
-
--include OCamlMakefile

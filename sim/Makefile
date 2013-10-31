@@ -1,9 +1,9 @@
-.PHONY: all clean asen
+.PHONY: all clean asm
 
-all: asen
+all: asm
 
-asen:
-	$(MAKE) -f Makefile.asen
+asm:
+	$(MAKE) -f Makefile.asm
 
 clean:
-	$(MAKE) -f Makefile.asen clean
+	$(MAKE) -f Makefile.asm clean
