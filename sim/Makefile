@@ -1,4 +1,9 @@
-SOURCES = type.ml parser.mly lexer.mll print.ml asen.ml contents.ml top.ml 
-RESULT = myinter
+.PHONY: all clean asen
 
--include OCamlMakefile
+all: asen
+
+asen:
+	$(MAKE) -f Makefile.asen
+
+clean:
+	$(MAKE) -f Makefile.asen clean

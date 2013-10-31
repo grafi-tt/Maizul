@@ -27,4 +27,4 @@ let rec print l =
     | [] -> ()
     | x :: xs -> print_int x; print xs
 
-let print_binary number = (print (make_32(bin number)))
+let print_binary number = (print (make_32 (bin number)); print_newline())

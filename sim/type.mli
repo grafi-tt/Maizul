@@ -1,4 +1,4 @@
-module M = Map.Make(String)
+module M : Map.S with type key = string
 
 type label = string
 type reg = int

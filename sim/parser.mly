@@ -52,6 +52,5 @@ expr:
   | BNE NUM NUM LABEL { EBne ($2, $3, $4) }
   | BLT NUM NUM LABEL { EBlt ($2, $3, $4) } 
   | J NUM NUM LABEL{ EJump ($2, $3, $4) } 
-  | NOP   { Nop } 
 ;
 

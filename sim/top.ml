@@ -1,29 +1,25 @@
 open Type
 
-let count = ref (-1)
-
 let channel =
-  if Array.length Sys.argv < 2 then stdin
+  if Array.length Sys.argv < 2
+  then stdin
   else open_in Sys.argv.(1)
-;;
-let lexbuf = Lexing.from_channel channel
-;;
 
+let lexbuf = Lexing.from_channel channel
 
 
 (*命令をarrayにして環境とともに返す関数*)
-let get_list lex =
-  let rec loop (top,env) index =
+let get_top _ =
+  let rec loop index env exprs =
     try
-      let result =
-	Parser.main Lexer.token lex in
-      match result with
-	| Toplabel (label) -> incr index ;
-	  let new_env = (label, (!index)) :: env in
-	  loop ((Toplabel (label))::top, new_env) index
-	| Top (expr) -> incr index ;
-	  loop ((Top (expr))::top, env) index
+      let result = Parser.main Lexer.token lexbuf in
+      begin
+          match result with
+            | Toplabel label -> loop (index + 1) ((label, index) :: env) exprs
+            | Top expr -> loop (index + 1) env (expr :: exprs)
+      end
     with
-	End_of_file -> (Array.of_list (List.rev top), env)
-  in loop ([],[]) count
-in get_list lexbuf
+      End_of_file -> (
+          List.fold_left (fun env (label, expr) -> M.add label expr env) M.empty env,
+          Array.of_list (List.rev exprs))
+  in loop 0 [] []
