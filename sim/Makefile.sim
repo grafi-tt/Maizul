@@ -1,0 +1,4 @@
+SOURCES = lexer.mll parser.mly type.ml top.ml eval.ml simMain.ml
+RESULT = mysim
+
+-include OCamlMakefile
