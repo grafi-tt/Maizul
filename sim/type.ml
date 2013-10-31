@@ -3,32 +3,48 @@ module M = Map.Make(String)
 type label = string
 type reg = int
 type addr = int
-type imm8 = int
+type imm = int
+type regimm = Reg of reg | Imm of imm
+type sign = Straight | Negate | Plus | Minus
 
 type expr =
-  | EAdd of reg * reg * reg
-  | EAddi of reg * reg * imm8
-  | ESub of reg * reg * reg
-  | ESubi of reg * reg * imm8
-  | Eq of reg * reg * reg
-  | Eqi of reg * reg * imm8
-  | ELess of reg * reg * reg
-  | ELessi of reg * reg * imm8
-  | ENor of reg * reg * reg
-  | ENori of reg * reg * imm8
-  | EAnd of reg * reg * reg
-  | EAndi of reg * reg * imm8
-  | ENot of reg * reg
-  | EOr of reg * reg * reg
-  | EOri of reg * reg * imm8
-  | EXor of reg * reg * reg
-  | EXori of reg * reg * imm8
-  | ELd of reg * addr * imm8
-  | ESt of reg * addr * imm8
-  | EBeq of reg * reg * label
-  | EBne of reg * reg * label
-  | EBlt of reg * reg * label
-  | EJump of reg * reg * label
+  | Add of reg * reg * regimm
+  | Sub of reg * reg * regimm
+  | Eq of reg * reg * regimm
+  | Lt of reg * reg * regimm
+  | And of reg * reg * regimm
+  | Or of reg * reg * regimm
+  | Xor of reg * reg * regimm
+  | Sll of reg * reg * regimm
+  | Srl of reg * reg * regimm
+  | Sra of reg * reg * regimm
+  | Mul of reg * reg * regimm
+  | Cat of reg * reg * regimm
+  | Fmovr of reg * reg
+  | Ftor of reg * reg
+  | Feq of reg * reg * reg
+  | Flt of reg * reg * reg
+  | Fadd of reg * reg * reg * sign
+  | Fsub of reg * reg * reg * sign
+  | Fmul of reg * reg * reg * sign
+  | Finv of reg * reg * sign
+  | Fsqr of reg * reg * sign
+  | Fmov of reg * reg * sign
+  | Rmovf of reg * reg * sign
+  | Rtof of reg * reg * sign
+  | Ld of reg * addr * imm
+  | St of reg * addr * imm
+  | Fld of reg * addr * imm
+  | Fst of reg * addr * imm
+  | Beq of reg * reg * label
+  | Bne of reg * reg * label
+  | Blt of reg * reg * label
+  | Bgte of reg * reg * label
+  | Fbeq of reg * reg * label
+  | Fbne of reg * reg * label
+  | Fblt of reg * reg * label
+  | Fbgte of reg * reg * label
+  | Jmp of reg * reg * label
 
 type top =
   | Toplabel of label

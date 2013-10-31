@@ -14,29 +14,43 @@ rule token = parse
   | ":"         { COL }
   | ";;"        { EOL }
   | digit* as x { NUM (int_of_string x) }
-  | "addqu"     { ADDQU }
-  | "addqui"    { ADDQUI }
-  | "subqu"     { SUBQU }
-  | "subqui"    { SUBQUI }
+  | "add"       { ADD }
+  | "addi"      { ADDI }
+  | "sub"       { SUB }
+  | "subi"      { SUBI }
   | "eq"        { EQ }
   | "eqi"       { EQI }
-  | "lt"        { LESS }
-  | "lti"       { LESSI }
-  | "xor"       { XOR }
-  | "xori"      { XORI }
+  | "lt"        { LT }
+  | "lti"       { LTI }
   | "and"       { AND }
   | "andi"      { ANDI }
-  | "not"       { NOT }
   | "or"        { OR }
   | "ori"       { ORI }
+  | "xor"       { XOR }
+  | "xori"      { XORI }
+  | "sll"       { SLL }
+  | "slli"      { SLLI }
+  | "srl"       { SRL }
+  | "srli"      { SRLI }
+  | "sra"       { SRA }
+  | "srai"      { SRAI }
+  | "cat"       { CAT }
+  | "cati"      { CATI }
+  | "mul"       { MUL }
+  | "muli"      { MULI }
+  | "fmovr"     { FMOVR }
+  | "ftor"      { FTOR }
+  | "feq"       { FEQ }
+  | "flt"       { FLT }
   | "ld"        { LD }
   | "st"        { ST }
+  | "fld"       { FLD }
+  | "fst"       { FST }
   | "beq"       { BEQ }
   | "bne"       { BNE }
   | "blt"       { BLT }
-  | "j"         { J }
-  | "jl"        { JL }
-  | "nop"       { NOP }
+  | "bgte"      { BGTE }
+  | "jmp"       { JMP }
   | capital moji * as l  { LABEL l }
   | eof         { raise End_of_file }
   | "/*"        { comment lexbuf ; token lexbuf }
