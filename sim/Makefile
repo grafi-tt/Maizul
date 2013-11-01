@@ -1,4 +1,4 @@
-.PHONY: all clean asm
+.PHONY: all clean asm sim
 
 all: asm sim
 
