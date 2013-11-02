@@ -6,14 +6,14 @@ let natural = ['1' - '9']
 let digit = ['0' - '9']
 let minimoji = ['a' - 'z']
 let capital = ['A' - 'Z']
-let moji = ['a' - 'z' 'A' - 'Z' '0' - '9']
+let moji = ['a' - 'z' 'A' - 'Z' '0' - '9' '_']
 
 rule token = parse
   | [' ' '\t' '\n']* { token lexbuf }
-  | ","         { COMM }
-  | ":"         { COL }
   | ";;"        { EOL }
+  | (moji+ as l) ':' { LABEL l }
   | digit* as x { NUM (int_of_string x) }
+  | "setl"      { SETL }
   | "add"       { ADD }
   | "addi"      { ADDI }
   | "sub"       { SUB }
@@ -49,9 +49,12 @@ rule token = parse
   | "beq"       { BEQ }
   | "bne"       { BNE }
   | "blt"       { BLT }
-  | "bgte"      { BGTE }
+  | "bgt"       { BGT }
+  | "fbeq"      { FBEQ }
+  | "fbne"      { FBNE }
+  | "fblt"      { FBLT }
+  | "fbgt"      { FBGT }
   | "jmp"       { JMP }
-  | capital moji * as l  { LABEL l }
   | eof         { raise End_of_file }
   | "/*"        { comment lexbuf ; token lexbuf }
   | _           { failwith "Unrecognized Character" }

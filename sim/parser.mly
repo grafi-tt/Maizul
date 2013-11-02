@@ -2,9 +2,10 @@
   open Type
 %}
 
-%token EOL COMM COL
-%token EQ EQI LT LTI
+%token EOL
+%token SETL
 %token ADD ADDI SUB SUBI
+%token EQ EQI LT LTI
 %token AND ANDI OR ORI XOR XORI
 %token SLL SLLI SRL SRLI SRA SRAI
 %token CAT CATI MUL MULI
@@ -13,7 +14,7 @@
 %token FINV FINVN FINVP FINVM FSQR FSQRN FSQRP FSQRM FMOV FMOVN FMOVP FMOVM
 %token RMOVF RMOVFN RMOVFP RMOVFM RTOF RTOFN RTOFP RTOFM
 %token LD ST FLD FST
-%token BEQ BNE BLT BGTE FBEQ FBNE FBLT FBGTE
+%token BEQ BNE BLT BGT FBEQ FBNE FBLT FBGT
 %token JMP
 %token <int> NUM
 %token <string> LABEL
@@ -26,10 +27,11 @@
 main: top EOL { $1 }
 
 top:
-  | LABEL COL     { Toplabel $1 }
-  | expr          { Top $1 }
+  | LABEL { Toplabel $1 }
+  | expr  { Top $1 }
 
 expr:
+  | SETL  NUM LABEL { Setl ($2, $3) }
   | ADD   NUM NUM NUM { Add ($2, $3, Reg $4) }
   | ADDI  NUM NUM NUM { Add ($2, $3, Imm $4) }
   | SUB   NUM NUM NUM { Sub ($2, $3, Reg $4) }
@@ -89,5 +91,9 @@ expr:
   | BEQ   NUM NUM LABEL { Beq  ($2, $3, $4) }
   | BNE   NUM NUM LABEL { Bne  ($2, $3, $4) }
   | BLT   NUM NUM LABEL { Blt  ($2, $3, $4) }
-  | BGTE  NUM NUM LABEL { Bgte ($2, $3, $4) }
+  | BGT   NUM NUM LABEL { Bgt  ($2, $3, $4) }
+  | FBEQ  NUM NUM LABEL { Fbeq ($2, $3, $4) }
+  | FBNE  NUM NUM LABEL { Fbne ($2, $3, $4) }
+  | FBLT  NUM NUM LABEL { Fblt ($2, $3, $4) }
+  | FBGT  NUM NUM LABEL { Fbgt ($2, $3, $4) }
   | JMP   NUM NUM LABEL { Jmp  ($2, $3, $4) }

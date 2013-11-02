@@ -11,6 +11,7 @@ let change_generic opcode x y imm = (opcode lsl 26) lor (x lsl 21) lor (y lsl 16
 
 (* TODO: FPU op *)
 let change env = function
+  | Setl (d, label) -> change_generic 0b000101 0 d (M.find label env)
   | Add (d, a, b) -> change_alu 0b0000 d a b
   | Sub (d, a, b) -> change_alu 0b0001 d a b
   | Eq  (d, a, b) -> change_alu 0b0010 d a b
@@ -31,14 +32,14 @@ let change env = function
   | St  (v, m, d) -> change_generic 0b100001 m v d
   | Fld (v, m, d) -> change_generic 0b101000 m v d
   | Fst (v, m, d) -> change_generic 0b101001 m v d
-  | Beq   (a, b, label) -> change_generic 0b110000 a b (M.find label env)
-  | Bne   (a, b, label) -> change_generic 0b110001 a b (M.find label env)
-  | Blt   (a, b, label) -> change_generic 0b110010 a b (M.find label env)
-  | Bgte  (a, b, label) -> change_generic 0b110011 a b (M.find label env)
-  | Fbeq  (a, b, label) -> change_generic 0b111000 a b (M.find label env)
-  | Fbne  (a, b, label) -> change_generic 0b111001 a b (M.find label env)
-  | Fblt  (a, b, label) -> change_generic 0b111010 a b (M.find label env)
-  | Fbgte (a, b, label) -> change_generic 0b111011 a b (M.find label env)
-  | Jmp   (l, t, label) -> change_generic 0b010100 t l (M.find label env)
+  | Beq  (a, b, label) -> change_generic 0b110000 a b (M.find label env)
+  | Bne  (a, b, label) -> change_generic 0b110001 a b (M.find label env)
+  | Blt  (a, b, label) -> change_generic 0b110010 a b (M.find label env)
+  | Bgt  (a, b, label) -> change_generic 0b110011 a b (M.find label env)
+  | Fbeq (a, b, label) -> change_generic 0b111000 a b (M.find label env)
+  | Fbne (a, b, label) -> change_generic 0b111001 a b (M.find label env)
+  | Fblt (a, b, label) -> change_generic 0b111010 a b (M.find label env)
+  | Fbgt (a, b, label) -> change_generic 0b111011 a b (M.find label env)
+  | Jmp  (l, t, label) -> change_generic 0b010100 t l (M.find label env)
 
 let compile env exprs = Array.map (change env) exprs
