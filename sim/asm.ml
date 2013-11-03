@@ -64,8 +64,8 @@ let change env menv = function
   | Finv (d, a, sign) -> change_fpu 0b0011 d a (`FReg 0) sign
   | Fsqr (d, a, sign) -> change_fpu 0b0100 d a (`FReg 0) sign
   | Fmov (d, a, sign) -> change_fpu 0b0101 d a (`FReg 0) sign
-  | Rmovf (d, a, sign) -> change_fpu 0b0110 d a (`FReg 0) sign
-  | Rtof  (d, a, sign) -> change_fpu 0b0111 d a (`FReg 0) sign
+  | Rmovf (d, a, sign) -> change_fpu 0b0110 d a (`Reg 0) sign
+  | Rtof  (d, a, sign) -> change_fpu 0b0111 d a (`Reg 0) sign
   | Beq  (a, b, label) -> change_generic env menv 0b110000 a b label
   | Bne  (a, b, label) -> change_generic env menv 0b110001 a b label
   | Blt  (a, b, label) -> change_generic env menv 0b110010 a b label
