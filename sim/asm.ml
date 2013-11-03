@@ -7,6 +7,14 @@ let change_alu alucode d a = function
 
 let change_aluf alucode d a b = (0b010001 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
 
+let change_fpu fpucode d a b t sign =
+  let funct = match sign with
+    | Straight -> 0b00
+    | Negate -> 0b01
+    | Plus -> 0b10
+    | Minus -> 0b11
+  in (0b01100 lsl 27) lor (t lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor (funct lsl 4) lor fpucode
+
 let change_generic opcode x y imm = (opcode lsl 26) lor (x lsl 21) lor (y lsl 16) lor imm
 
 (* TODO: FPU op *)
@@ -32,6 +40,14 @@ let change env = function
   | St  (v, m, d) -> change_generic 0b100001 m v d
   | Fld (v, m, d) -> change_generic 0b101000 m v d
   | Fst (v, m, d) -> change_generic 0b101001 m v d
+  | Fadd (d, a, b, sign) -> change_fpu 0b0000 d a b 1 sign
+  | Fsub (d, a, b, sign) -> change_fpu 0b0001 d a b 1 sign
+  | Fmul (d, a, b, sign) -> change_fpu 0b0010 d a b 1 sign
+  | Finv (d, a, sign) -> change_fpu 0b0011 d a 0 1 sign
+  | Fsqr (d, a, sign) -> change_fpu 0b0100 d a 0 1 sign
+  | Fmov (d, a, sign) -> change_fpu 0b0101 d a 0 1 sign
+  | Rmovf (d, a, sign) -> change_fpu 0b0110 d a 0 0 sign
+  | Rtof  (d, a, sign) -> change_fpu 0b0111 d a 0 0 sign
   | Beq  (a, b, label) -> change_generic 0b110000 a b (M.find label env)
   | Bne  (a, b, label) -> change_generic 0b110001 a b (M.find label env)
   | Blt  (a, b, label) -> change_generic 0b110010 a b (M.find label env)
@@ -41,5 +57,10 @@ let change env = function
   | Fblt (a, b, label) -> change_generic 0b111010 a b (M.find label env)
   | Fbgt (a, b, label) -> change_generic 0b111011 a b (M.find label env)
   | Jmp  (l, t, label) -> change_generic 0b010100 t l (M.find label env)
+  | Jmp  (l, t, label) -> change_generic 0b010100 t l (M.find label env)
+  | Get  (y) -> change_generic 0b010010 0 y 0b00
+  | Put  (x) -> change_generic 0b010010 x 0 0b01
+  | Getb (y) -> change_generic 0b010010 0 y 0b10
+  | Putb (x) -> change_generic 0b010010 x 0 0b11
 
 let compile env exprs = Array.map (change env) exprs

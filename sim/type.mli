@@ -46,6 +46,10 @@ type expr =
   | Fblt of reg * reg * label
   | Fbgt of reg * reg * label
   | Jmp of reg * reg * label
+  | Get of reg
+  | Put of reg
+  | Getb of reg
+  | Putb of reg
 
 type top =
   | Toplabel of label

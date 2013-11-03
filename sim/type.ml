@@ -48,6 +48,10 @@ type expr =
   | Fblt of reg * reg * label
   | Fbgt of reg * reg * label
   | Jmp of reg * reg * label
+  | Get of reg
+  | Put of reg
+  | Getb of reg
+  | Putb of reg
 
 type top =
   | Toplabel of label
@@ -128,6 +132,10 @@ let dump_expr = function
   | Fblt(x, y, z) -> sprintf "fblt\t%d\t%d\t%s;;\n" x y z
   | Fbgt(x, y, z) -> sprintf "fbgt\t%d\t%d\t%s;;\n" x y z
   | Jmp(x, y, z) -> sprintf "jmp\t%d\t%d\t%s;;\n" x y z
+  | Get(x) -> sprintf "get\t%d;;\n" x
+  | Put(x) -> sprintf "put\t%d;;\n" x
+  | Getb(x) -> sprintf "getb\t%d;;\n" x
+  | Putb(x) -> sprintf "putb\t%d;;\n" x
 
 let dump_label s = sprintf "%s:\n" s
 
