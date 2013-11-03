@@ -2,7 +2,8 @@
   open Type
 %}
 
-%token EOL
+%token DELIM
+%token TEXT_SECTION DATA_SECTION
 %token ADD ADDI SUB SUBI
 %token EQ EQI LT LTI
 %token AND ANDI OR ORI XOR XORI
@@ -15,6 +16,9 @@
 %token LD ST FLD FST
 %token BEQ BNE BLT BGT FBEQ FBNE FBLT FBGT
 %token JMP
+%token GET PUT GETB PUTB
+%token WORD
+%token <int> WORD_VAL
 %token <Type.opr> OPR
 %token <Type._label> LABEL
 
@@ -23,11 +27,12 @@
 
 %%
 
-main: top EOL { $1 }
-
-top:
+main:
   | LABEL { Toplabel $1 }
-  | expr  { Top $1 }
+  | expr DELIM { Top $1 }
+  | mem_expr DELIM { TopMem $1 }
+  | TEXT_SECTION { TopText }
+  | DATA_SECTION { TopText }
 
 expr:
   | ADD   OPR OPR OPR { Add (reg $2, reg $3, reg_imm $4) }
@@ -70,6 +75,14 @@ expr:
   | FMOVN OPR OPR     { Fmov (freg $2, freg $3, Negate) }
   | FMOVP OPR OPR     { Fmov (freg $2, freg $3, Plus) }
   | FMOVM OPR OPR     { Fmov (freg $2, freg $3, Minus) }
+  | RMOVF  OPR OPR    { Rmovf (freg $2, reg $3, Straight) }
+  | RMOVFN OPR OPR    { Rmovf (freg $2, reg $3, Negate) }
+  | RMOVFP OPR OPR    { Rmovf (freg $2, reg $3, Plus) }
+  | RMOVFM OPR OPR    { Rmovf (freg $2, reg $3, Minus) }
+  | RTOF   OPR OPR    { Rtof  (freg $2, reg $3, Straight) }
+  | RTOFN  OPR OPR    { Rtof  (freg $2, reg $3, Negate) }
+  | RTOFP  OPR OPR    { Rtof  (freg $2, reg $3, Plus) }
+  | RTOFM  OPR OPR    { Rtof  (freg $2, reg $3, Minus) }
   | LD    OPR OPR OPR { Ld  (reg $2, reg $3, data_imm $4) }
   | ST    OPR OPR OPR { St  (reg $2, reg $3, data_imm $4) }
   | FLD   OPR OPR OPR { Fld (freg $2, reg $3, data_imm $4) }
@@ -83,3 +96,10 @@ expr:
   | FBLT  OPR OPR OPR { Fblt (freg $2, freg $3, text_imm $4) }
   | FBGT  OPR OPR OPR { Fbgt (freg $2, freg $3, text_imm $4) }
   | JMP   OPR OPR OPR { Jmp  (reg $2, reg $3, text_imm $4) }
+  | PUT   OPR         { Put  (reg $2) }
+  | GET   OPR         { Get  (reg $2) }
+  | PUTB  OPR         { Putb (reg $2) }
+  | GETB  OPR         { Getb (reg $2) }
+
+mem_expr:
+  | WORD WORD_VAL { Word $2 }

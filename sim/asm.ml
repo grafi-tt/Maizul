@@ -3,12 +3,16 @@ open Print
 
 type some_reg = [`Reg of _reg | `FReg of _reg]
 
+let limit_16bit = function
+  | d when -32768 <= d && d < 32768 -> d land 0xFFFF
+  | _ -> raise (Invalid_argument "too large immediate")
+
 let change_alu env menv alucode (`Reg d) a b =
   match (a :> some_reg), (b :> opr) with
     | `Reg a, `Reg b -> (0b010000 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
-    | `Reg a, `Imm b -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor b
-    | `Reg a, (`TextLabel _ as b) -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (find_env b env)
-    | `Reg a, (`DataLabel _ as b) -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (find_mem_env b menv)
+    | `Reg a, `Imm b -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (limit_16bit b)
+    | `Reg a, (`TextLabel _ as b) -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (limit_16bit (find_env b env))
+    | `Reg a, (`DataLabel _ as b) -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (limit_16bit (find_mem_env b menv))
     | `FReg a, `FReg b -> (0b010001 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
     | _ -> raise (Invalid_argument "invalid source of alu")
 
@@ -30,7 +34,7 @@ let change_generic env menv opcode x y imm =
     | `TextLabel _ as l -> find_env l env
     | `DataLabel _ as l -> find_mem_env l menv
     | `Imm i -> i
-  in (opcode lsl 26) lor (x lsl 21) lor (y lsl 16) lor imm
+  in (opcode lsl 26) lor (x lsl 21) lor (y lsl 16) lor (limit_16bit imm)
 
 (* TODO: FPU op *)
 let change env menv = function

@@ -90,13 +90,13 @@ let dump_opr = function
   | `DataLabel label -> label ^ "@d"
 
 let dump_generic1 name a =
-  sprintf "\t%s;;\n" (dump_opr a)
+  sprintf "%s;\n" (dump_opr a)
 
 let dump_generic2 name a b =
-  sprintf "\t%s\t%s;;\n" (dump_opr a) (dump_opr b)
+  sprintf "%s\t%s;\n" (dump_opr a) (dump_opr b)
 
 let dump_generic3 name a b c =
-  sprintf "\t%s\t%s\t%s;;\n" (dump_opr a) (dump_opr b) (dump_opr c)
+  sprintf "%s\t%s\t%s;\n" (dump_opr a) (dump_opr b) (dump_opr c)
 
 let dump_text_mode = ".text\n"
 let dump_data_mode = ".data\n"
@@ -171,7 +171,7 @@ let dump_expr = function
   | Putb (x) -> dump_generic1 "putb" x
 
 let dump_mem_expr = function
-  | Word word -> string_of_int word
+  | Word word -> "w" ^ string_of_int word
 
 let construct_env = List.fold_left (fun env (l, i) -> M.add l i env) M.empty
 let construct_mem_env = List.fold_left (fun env (l, i) -> M.add l i env) M.empty
