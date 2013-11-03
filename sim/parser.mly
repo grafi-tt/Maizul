@@ -3,7 +3,6 @@
 %}
 
 %token EOL
-%token SETL
 %token ADD ADDI SUB SUBI
 %token EQ EQI LT LTI
 %token AND ANDI OR ORI XOR XORI
@@ -16,8 +15,8 @@
 %token LD ST FLD FST
 %token BEQ BNE BLT BGT FBEQ FBNE FBLT FBGT
 %token JMP
-%token <int> NUM
-%token <string> LABEL
+%token <Type.opr> OPR
+%token <Type._label> LABEL
 
 %start main
 %type <Type.top> main
@@ -31,69 +30,56 @@ top:
   | expr  { Top $1 }
 
 expr:
-  | SETL  NUM LABEL { Setl ($2, $3) }
-  | ADD   NUM NUM NUM { Add ($2, $3, Reg $4) }
-  | ADDI  NUM NUM NUM { Add ($2, $3, Imm $4) }
-  | SUB   NUM NUM NUM { Sub ($2, $3, Reg $4) }
-  | SUBI  NUM NUM NUM { Sub ($2, $3, Imm $4) }
-  | EQ    NUM NUM NUM { Eq  ($2, $3, Reg $4) }
-  | EQI   NUM NUM NUM { Eq  ($2, $3, Imm $4) }
-  | LT    NUM NUM NUM { Lt  ($2, $3, Reg $4) }
-  | LTI   NUM NUM NUM { Lt  ($2, $3, Imm $4) }
-  | AND   NUM NUM NUM { And ($2, $3, Reg $4) }
-  | ANDI  NUM NUM NUM { And ($2, $3, Imm $4) }
-  | OR    NUM NUM NUM { Or  ($2, $3, Reg $4) }
-  | ORI   NUM NUM NUM { Or  ($2, $3, Imm $4) }
-  | XOR   NUM NUM NUM { Xor ($2, $3, Reg $4) }
-  | XORI  NUM NUM NUM { Xor ($2, $3, Imm $4) }
-  | SLL   NUM NUM NUM { Sll ($2, $3, Reg $4) }
-  | SLLI  NUM NUM NUM { Sll ($2, $3, Imm $4) }
-  | SRL   NUM NUM NUM { Srl ($2, $3, Reg $4) }
-  | SRLI  NUM NUM NUM { Srl ($2, $3, Imm $4) }
-  | SRA   NUM NUM NUM { Sra ($2, $3, Reg $4) }
-  | SRAI  NUM NUM NUM { Sra ($2, $3, Imm $4) }
-  | CAT   NUM NUM NUM { Cat ($2, $3, Reg $4) }
-  | CATI  NUM NUM NUM { Cat ($2, $3, Imm $4) }
-  | MUL   NUM NUM NUM { Mul ($2, $3, Reg $4) }
-  | MULI  NUM NUM NUM { Mul ($2, $3, Imm $4) }
-  | FMOVR NUM NUM     { Fmovr ($2, $3) }
-  | FTOR  NUM NUM     { Ftor  ($2, $3) }
-  | FEQ   NUM NUM NUM { Feq   ($2, $3, $4) }
-  | FLT   NUM NUM NUM { Flt   ($2, $3, $4) }
-  | FADD  NUM NUM NUM { Fadd ($2, $3, $4, Straight) }
-  | FADDN NUM NUM NUM { Fadd ($2, $3, $4, Negate) }
-  | FADDP NUM NUM NUM { Fadd ($2, $3, $4, Plus) }
-  | FADDM NUM NUM NUM { Fadd ($2, $3, $4, Minus) }
-  | FSUB  NUM NUM NUM { Fsub ($2, $3, $4, Straight) }
-  | FSUBN NUM NUM NUM { Fsub ($2, $3, $4, Negate) }
-  | FSUBP NUM NUM NUM { Fsub ($2, $3, $4, Plus) }
-  | FSUBM NUM NUM NUM { Fsub ($2, $3, $4, Minus) }
-  | FMUL  NUM NUM NUM { Fmul ($2, $3, $4, Straight) }
-  | FMULN NUM NUM NUM { Fmul ($2, $3, $4, Negate) }
-  | FMULP NUM NUM NUM { Fmul ($2, $3, $4, Plus) }
-  | FMULM NUM NUM NUM { Fmul ($2, $3, $4, Minus) }
-  | FINV  NUM NUM     { Finv ($2, $3, Straight) }
-  | FINVN NUM NUM     { Finv ($2, $3, Negate) }
-  | FINVP NUM NUM     { Finv ($2, $3, Plus) }
-  | FINVM NUM NUM     { Finv ($2, $3, Minus) }
-  | FSQR  NUM NUM     { Fsqr ($2, $3, Straight) }
-  | FSQRN NUM NUM     { Fsqr ($2, $3, Negate) }
-  | FSQRP NUM NUM     { Fsqr ($2, $3, Plus) }
-  | FSQRM NUM NUM     { Fsqr ($2, $3, Minus) }
-  | FMOV  NUM NUM     { Fmov ($2, $3, Straight) }
-  | FMOVN NUM NUM     { Fmov ($2, $3, Negate) }
-  | FMOVP NUM NUM     { Fmov ($2, $3, Plus) }
-  | FMOVM NUM NUM     { Fmov ($2, $3, Minus) }
-  | LD    NUM NUM NUM { Ld  ($2, $3, $4) }
-  | ST    NUM NUM NUM { St  ($2, $3, $4) }
-  | FLD   NUM NUM NUM { Fld ($2, $3, $4) }
-  | FST   NUM NUM NUM { Fst ($2, $3, $4) }
-  | BEQ   NUM NUM LABEL { Beq  ($2, $3, $4) }
-  | BNE   NUM NUM LABEL { Bne  ($2, $3, $4) }
-  | BLT   NUM NUM LABEL { Blt  ($2, $3, $4) }
-  | BGT   NUM NUM LABEL { Bgt  ($2, $3, $4) }
-  | FBEQ  NUM NUM LABEL { Fbeq ($2, $3, $4) }
-  | FBNE  NUM NUM LABEL { Fbne ($2, $3, $4) }
-  | FBLT  NUM NUM LABEL { Fblt ($2, $3, $4) }
-  | FBGT  NUM NUM LABEL { Fbgt ($2, $3, $4) }
-  | JMP   NUM NUM LABEL { Jmp  ($2, $3, $4) }
+  | ADD   OPR OPR OPR { Add (reg $2, reg $3, reg_imm $4) }
+  | SUB   OPR OPR OPR { Sub (reg $2, reg $3, reg_imm $4) }
+  | EQ    OPR OPR OPR { Eq  (reg $2, reg $3, reg_imm $4) }
+  | LT    OPR OPR OPR { Lt  (reg $2, reg $3, reg_imm $4) }
+  | AND   OPR OPR OPR { And (reg $2, reg $3, reg_imm $4) }
+  | OR    OPR OPR OPR { Or  (reg $2, reg $3, reg_imm $4) }
+  | XOR   OPR OPR OPR { Xor (reg $2, reg $3, reg_imm $4) }
+  | SLL   OPR OPR OPR { Sll (reg $2, reg $3, reg_imm $4) }
+  | SRL   OPR OPR OPR { Srl (reg $2, reg $3, reg_imm $4) }
+  | SRA   OPR OPR OPR { Sra (reg $2, reg $3, reg_imm $4) }
+  | CAT   OPR OPR OPR { Cat (reg $2, reg $3, reg_imm $4) }
+  | MUL   OPR OPR OPR { Mul (reg $2, reg $3, reg_imm $4) }
+  | FMOVR OPR OPR     { Fmovr (reg $2, freg $3) }
+  | FTOR  OPR OPR     { Ftor  (reg $2, freg $3) }
+  | FEQ   OPR OPR OPR { Feq   (reg $2, freg $3, freg $4) }
+  | FLT   OPR OPR OPR { Flt   (reg $2, freg $3, freg $4) }
+  | FADD  OPR OPR OPR { Fadd (freg $2, freg $3, freg $4, Straight) }
+  | FADDN OPR OPR OPR { Fadd (freg $2, freg $3, freg $4, Negate) }
+  | FADDP OPR OPR OPR { Fadd (freg $2, freg $3, freg $4, Plus) }
+  | FADDM OPR OPR OPR { Fadd (freg $2, freg $3, freg $4, Minus) }
+  | FSUB  OPR OPR OPR { Fsub (freg $2, freg $3, freg $4, Straight) }
+  | FSUBN OPR OPR OPR { Fsub (freg $2, freg $3, freg $4, Negate) }
+  | FSUBP OPR OPR OPR { Fsub (freg $2, freg $3, freg $4, Plus) }
+  | FSUBM OPR OPR OPR { Fsub (freg $2, freg $3, freg $4, Minus) }
+  | FMUL  OPR OPR OPR { Fmul (freg $2, freg $3, freg $4, Straight) }
+  | FMULN OPR OPR OPR { Fmul (freg $2, freg $3, freg $4, Negate) }
+  | FMULP OPR OPR OPR { Fmul (freg $2, freg $3, freg $4, Plus) }
+  | FMULM OPR OPR OPR { Fmul (freg $2, freg $3, freg $4, Minus) }
+  | FINV  OPR OPR     { Finv (freg $2, freg $3, Straight) }
+  | FINVN OPR OPR     { Finv (freg $2, freg $3, Negate) }
+  | FINVP OPR OPR     { Finv (freg $2, freg $3, Plus) }
+  | FINVM OPR OPR     { Finv (freg $2, freg $3, Minus) }
+  | FSQR  OPR OPR     { Fsqr (freg $2, freg $3, Straight) }
+  | FSQRN OPR OPR     { Fsqr (freg $2, freg $3, Negate) }
+  | FSQRP OPR OPR     { Fsqr (freg $2, freg $3, Plus) }
+  | FSQRM OPR OPR     { Fsqr (freg $2, freg $3, Minus) }
+  | FMOV  OPR OPR     { Fmov (freg $2, freg $3, Straight) }
+  | FMOVN OPR OPR     { Fmov (freg $2, freg $3, Negate) }
+  | FMOVP OPR OPR     { Fmov (freg $2, freg $3, Plus) }
+  | FMOVM OPR OPR     { Fmov (freg $2, freg $3, Minus) }
+  | LD    OPR OPR OPR { Ld  (reg $2, reg $3, data_imm $4) }
+  | ST    OPR OPR OPR { St  (reg $2, reg $3, data_imm $4) }
+  | FLD   OPR OPR OPR { Fld (freg $2, reg $3, data_imm $4) }
+  | FST   OPR OPR OPR { Fst (freg $2, reg $3, data_imm $4) }
+  | BEQ   OPR OPR OPR { Beq  (reg $2, reg $3, text_imm $4) }
+  | BNE   OPR OPR OPR { Bne  (reg $2, reg $3, text_imm $4) }
+  | BLT   OPR OPR OPR { Blt  (reg $2, reg $3, text_imm $4) }
+  | BGT   OPR OPR OPR { Bgt  (reg $2, reg $3, text_imm $4) }
+  | FBEQ  OPR OPR OPR { Fbeq (freg $2, freg $3, text_imm $4) }
+  | FBNE  OPR OPR OPR { Fbne (freg $2, freg $3, text_imm $4) }
+  | FBLT  OPR OPR OPR { Fblt (freg $2, freg $3, text_imm $4) }
+  | FBGT  OPR OPR OPR { Fbgt (freg $2, freg $3, text_imm $4) }
+  | JMP   OPR OPR OPR { Jmp  (reg $2, reg $3, text_imm $4) }

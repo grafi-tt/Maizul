@@ -4,6 +4,7 @@
 
 let natural = ['1' - '9']
 let digit = ['0' - '9']
+let tag = ['1' '2']? ['0' - '9'] | '3' ['0' '1']
 let minimoji = ['a' - 'z']
 let capital = ['A' - 'Z']
 let moji = ['a' - 'z' 'A' - 'Z' '0' - '9' '_']
@@ -12,32 +13,22 @@ rule token = parse
   | [' ' '\t' '\n']* { token lexbuf }
   | ";;"        { EOL }
   | (moji+ as l) ':' { LABEL l }
-  | digit* as x { NUM (int_of_string x) }
-  | "setl"      { SETL }
+  | 'r' (tag as x) { OPR (`Reg (int_of_string x)) }
+  | 'f' (tag as x) { OPR (`FReg (int_of_string x)) }
+  | (moji + as l) "@t" { OPR (`TextLabel l) }
+  | (moji + as l) "@d" { OPR (`DataLabel l) }
   | "add"       { ADD }
-  | "addi"      { ADDI }
   | "sub"       { SUB }
-  | "subi"      { SUBI }
   | "eq"        { EQ }
-  | "eqi"       { EQI }
   | "lt"        { LT }
-  | "lti"       { LTI }
   | "and"       { AND }
-  | "andi"      { ANDI }
   | "or"        { OR }
-  | "ori"       { ORI }
   | "xor"       { XOR }
-  | "xori"      { XORI }
   | "sll"       { SLL }
-  | "slli"      { SLLI }
   | "srl"       { SRL }
-  | "srli"      { SRLI }
   | "sra"       { SRA }
-  | "srai"      { SRAI }
   | "cat"       { CAT }
-  | "cati"      { CATI }
   | "mul"       { MUL }
-  | "muli"      { MULI }
   | "fmovr"     { FMOVR }
   | "ftor"      { FTOR }
   | "feq"       { FEQ }

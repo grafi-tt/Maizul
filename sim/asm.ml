@@ -1,66 +1,88 @@
 open Type
 open Print
 
-let change_alu alucode d a = function
-  | Reg b -> (0b010000 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
-  | Imm b -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor b
+type some_reg = [`Reg of _reg | `FReg of _reg]
 
-let change_aluf alucode d a b = (0b010001 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
+let change_alu env menv alucode (`Reg d) a b =
+  match (a :> some_reg), (b :> opr) with
+    | `Reg a, `Reg b -> (0b010000 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
+    | `Reg a, `Imm b -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor b
+    | `Reg a, (`TextLabel _ as b) -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (find_env b env)
+    | `Reg a, (`DataLabel _ as b) -> (alucode lsl 26) lor (a lsl 21) lor (d lsl 16) lor (find_mem_env b menv)
+    | `FReg a, `FReg b -> (0b010001 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor alucode
+    | _ -> raise (Invalid_argument "invalid source of alu")
 
-let change_fpu fpucode d a b t sign =
+let change_fpu fpucode (`FReg d) a b sign =
   let funct = match sign with
     | Straight -> 0b00
     | Negate -> 0b01
     | Plus -> 0b10
     | Minus -> 0b11
-  in (0b01100 lsl 27) lor (t lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor (funct lsl 4) lor fpucode
+  in match (a :> some_reg), (b :> some_reg) with
+    | `Reg a, `Reg b -> (0b011000 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor (funct lsl 4) lor fpucode
+    | `FReg a, `FReg b -> (0b011001 lsl 26) lor (a lsl 21) lor (b lsl 16) lor (d lsl 11) lor (funct lsl 4) lor fpucode
+    | _ -> raise (Invalid_argument "invalid source of fpu")
 
-let change_generic opcode x y imm = (opcode lsl 26) lor (x lsl 21) lor (y lsl 16) lor imm
+let change_generic env menv opcode x y imm =
+  match x with `Reg x | `FReg x ->
+  match y with `Reg y | `FReg y ->
+  let imm = match imm with
+    | `TextLabel _ as l -> find_env l env
+    | `DataLabel _ as l -> find_mem_env l menv
+    | `Imm i -> i
+  in (opcode lsl 26) lor (x lsl 21) lor (y lsl 16) lor imm
 
 (* TODO: FPU op *)
-let change env = function
-  | Setl (d, label) -> change_generic 0b000101 0 d (M.find label env)
-  | Add (d, a, b) -> change_alu 0b0000 d a b
-  | Sub (d, a, b) -> change_alu 0b0001 d a b
-  | Eq  (d, a, b) -> change_alu 0b0010 d a b
-  | Lt  (d, a, b) -> change_alu 0b0011 d a b
-  | And (d, a, b) -> change_alu 0b0100 d a b
-  | Or  (d, a, b) -> change_alu 0b0101 d a b
-  | Xor (d, a, b) -> change_alu 0b0110 d a b
-  | Sll (d, a, b) -> change_alu 0b0111 d a b
-  | Srl (d, a, b) -> change_alu 0b1000 d a b
-  | Sra (d, a, b) -> change_alu 0b1001 d a b
-  | Cat (d, a, b) -> change_alu 0b1010 d a b
-  | Mul (d, a, b) -> change_alu 0b1011 d a b
-  | Fmovr (d, a)    -> change_aluf 0b1100 d a 0
-  | Ftor  (d, a)    -> change_aluf 0b1101 d a 0
-  | Feq   (d, a, b) -> change_aluf 0b1110 d a b
-  | Flt   (d, a, b) -> change_aluf 0b1111 d a b
-  | Ld  (v, m, d) -> change_generic 0b100000 m v d
-  | St  (v, m, d) -> change_generic 0b100001 m v d
-  | Fld (v, m, d) -> change_generic 0b101000 m v d
-  | Fst (v, m, d) -> change_generic 0b101001 m v d
-  | Fadd (d, a, b, sign) -> change_fpu 0b0000 d a b 1 sign
-  | Fsub (d, a, b, sign) -> change_fpu 0b0001 d a b 1 sign
-  | Fmul (d, a, b, sign) -> change_fpu 0b0010 d a b 1 sign
-  | Finv (d, a, sign) -> change_fpu 0b0011 d a 0 1 sign
-  | Fsqr (d, a, sign) -> change_fpu 0b0100 d a 0 1 sign
-  | Fmov (d, a, sign) -> change_fpu 0b0101 d a 0 1 sign
-  | Rmovf (d, a, sign) -> change_fpu 0b0110 d a 0 0 sign
-  | Rtof  (d, a, sign) -> change_fpu 0b0111 d a 0 0 sign
-  | Beq  (a, b, label) -> change_generic 0b110000 a b (M.find label env)
-  | Bne  (a, b, label) -> change_generic 0b110001 a b (M.find label env)
-  | Blt  (a, b, label) -> change_generic 0b110010 a b (M.find label env)
-  | Bgt  (a, b, label) -> change_generic 0b110011 a b (M.find label env)
-  | Fbeq (a, b, label) -> change_generic 0b111000 a b (M.find label env)
-  | Fbne (a, b, label) -> change_generic 0b111001 a b (M.find label env)
-  | Fblt (a, b, label) -> change_generic 0b111010 a b (M.find label env)
-  | Fbgt (a, b, label) -> change_generic 0b111011 a b (M.find label env)
-  | Jmp  (l, t, label) -> change_generic 0b010100 t l (M.find label env)
-  | Jmp  (l, t, label) -> change_generic 0b010100 t l (M.find label env)
-  | Get  (y) -> change_generic 0b010010 0 y 0b00
-  | Put  (x) -> change_generic 0b010010 x 0 0b01
-  | Getb (y) -> change_generic 0b010010 0 y 0b10
-  | Putb (x) -> change_generic 0b010010 x 0 0b11
+let change env menv = function
+  | Add (d, a, b) -> change_alu env menv 0b0000 d a b
+  | Sub (d, a, b) -> change_alu env menv 0b0001 d a b
+  | Eq  (d, a, b) -> change_alu env menv 0b0010 d a b
+  | Lt  (d, a, b) -> change_alu env menv 0b0011 d a b
+  | And (d, a, b) -> change_alu env menv 0b0100 d a b
+  | Or  (d, a, b) -> change_alu env menv 0b0101 d a b
+  | Xor (d, a, b) -> change_alu env menv 0b0110 d a b
+  | Sll (d, a, b) -> change_alu env menv 0b0111 d a b
+  | Srl (d, a, b) -> change_alu env menv 0b1000 d a b
+  | Sra (d, a, b) -> change_alu env menv 0b1001 d a b
+  | Cat (d, a, b) -> change_alu env menv 0b1010 d a b
+  | Mul (d, a, b) -> change_alu env menv 0b1011 d a b
+  | Fmovr (d, a)    -> change_alu env menv 0b1100 d a (`FReg 0)
+  | Ftor  (d, a)    -> change_alu env menv 0b1101 d a (`FReg 0)
+  | Feq   (d, a, b) -> change_alu env menv 0b1110 d a b
+  | Flt   (d, a, b) -> change_alu env menv 0b1111 d a b
+  | Ld  (v, m, d) -> change_generic env menv 0b100000 m v d
+  | St  (v, m, d) -> change_generic env menv 0b100001 m v d
+  | Fld (v, m, d) -> change_generic env menv 0b101000 m v d
+  | Fst (v, m, d) -> change_generic env menv 0b101001 m v d
+  | Fadd (d, a, b, sign) -> change_fpu 0b0000 d a b sign
+  | Fsub (d, a, b, sign) -> change_fpu 0b0001 d a b sign
+  | Fmul (d, a, b, sign) -> change_fpu 0b0010 d a b sign
+  | Finv (d, a, sign) -> change_fpu 0b0011 d a (`FReg 0) sign
+  | Fsqr (d, a, sign) -> change_fpu 0b0100 d a (`FReg 0) sign
+  | Fmov (d, a, sign) -> change_fpu 0b0101 d a (`FReg 0) sign
+  | Rmovf (d, a, sign) -> change_fpu 0b0110 d a (`FReg 0) sign
+  | Rtof  (d, a, sign) -> change_fpu 0b0111 d a (`FReg 0) sign
+  | Beq  (a, b, label) -> change_generic env menv 0b110000 a b label
+  | Bne  (a, b, label) -> change_generic env menv 0b110001 a b label
+  | Blt  (a, b, label) -> change_generic env menv 0b110010 a b label
+  | Bgt  (a, b, label) -> change_generic env menv 0b110011 a b label
+  | Fbeq (a, b, label) -> change_generic env menv 0b111000 a b label
+  | Fbne (a, b, label) -> change_generic env menv 0b111001 a b label
+  | Fblt (a, b, label) -> change_generic env menv 0b111010 a b label
+  | Fbgt (a, b, label) -> change_generic env menv 0b111011 a b label
+  | Jmp  (l, t, label) -> change_generic env menv 0b010100 t l label
+  | Get  (y) -> change_generic env menv 0b010010 (`Reg 0) y (`Imm 0b00)
+  | Put  (x) -> change_generic env menv 0b010010 x (`Reg 0) (`Imm 0b01)
+  | Getb (y) -> change_generic env menv 0b010010 (`Reg 0) y (`Imm 0b10)
+  | Putb (x) -> change_generic env menv 0b010010 x (`Reg 0) (`Imm 0b11)
 
-let compile env exprs = Array.map (change env) exprs
+let change_data_section ary =
+  let expAry = Array.make (Array.length ary * 3) (Add (`Reg 0, `Reg 0, `Reg 0)) in
+  Array.iteri (fun i (Word w) ->
+    expAry.(i * 3) <- Or (`Reg 1, `Reg 0, `Imm (w land 0x0000FFFF));
+    expAry.(i * 3 + 1) <- Cat (`Reg 1, `Reg 1, `Imm (w lsr 16));
+    expAry.(i * 3 + 2) <- St (`Reg 1, `Reg 0, `Imm i);
+  ) ary;
+  expAry
+
+let compile env exprs menv mexprs = Array.map (change env menv) (Array.append (change_data_section mexprs) exprs)
