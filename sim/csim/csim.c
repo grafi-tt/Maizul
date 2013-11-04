@@ -112,7 +112,7 @@ static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t b) {
 		set_gpr(tagD, (a & ((1 << 16) - 1)) | (b << 16));
 		return issue();
 	case 0b1011:
-		set_gpr(tagD, a * b);
+		set_gpr(tagD, (a & ((1 << 16) - 1)) * (b & 0xFFFF));
 		return issue();
 	default:
 		assert(false);
@@ -199,7 +199,7 @@ static void brr(inst_t code, uint32_t target, uint32_t a, uint32_t b) {
 			if (a < b) PC = target;
 			return issue();
 		case 0b011:
-			if (a >= b) PC = target;
+			if (a > b) PC = target;
 			return issue();
 		default:
 			assert(false);
@@ -219,7 +219,7 @@ static void brf(inst_t code, uint32_t target, float a, float b) {
 			if (a < b) PC = target;
 			return issue();
 		case 0b011:
-			if (a >= b) PC = target;
+			if (a > b) PC = target;
 			return issue();
 		default:
 			assert(false);
@@ -229,7 +229,7 @@ static void brf(inst_t code, uint32_t target, float a, float b) {
 
 static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 	switch (func) {
-		case 0:
+		case 0b00:
 			assert(y == 0);
 			for (int i = 0; i < 4; i++) {
 				y = y << 8;
@@ -237,7 +237,7 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 			}
 			set_gpr(tagX, y);
 			return issue();
-		case 1:
+		case 0b01:
 			assert(tagX == 0);
 			if (FLG_IO_PRINTF) {
 				printf("%u\n", y);
@@ -248,9 +248,18 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 				}
 			}
 			return issue();
+		case 0b10:
+			assert(y == 0);
+			y = (unsigned char) getchar();
+			set_gpr(tagX, y);
+			return issue();
+		case 0b11:
+			assert(tagX == 0);
+			putchar((unsigned char) y);
+			return issue();
 		default:
-			// halt signal
-			return;
+			assert(false);
+			return issue();
 	}
 }
 
@@ -265,33 +274,8 @@ static void frsp(inst_t func, inst_t tagX, uint32_t y) {
 }
 
 static void ffsp(inst_t func, inst_t tagX, float y) {
-	switch (func) {
-		uint32_t tmp;
-		int i;
-		case 0:
-			assert(y == 0.0);
-			for (i = 0; i < 4; i++) {
-				tmp = tmp << 8;
-				tmp &= (unsigned char) getchar();
-			}
-			set_fpr(tagX, int_as_float((int32_t) tmp));
-			return issue();
-		case 1:
-			assert(tagX == 0);
-			tmp = float_as_int(y);
-			if (FLG_IO_PRINTF) {
-				printf("%f\n", y);
-			} else {
-				for (i = 0; i < 4; i++) {
-					putchar((char) tmp >> 24);
-					tmp = tmp >> 8;
-				}
-			}
-			return issue();
-		default:
-			assert(false);
-			return issue();
-	}
+	assert(false);
+	return issue();
 }
 
 static void issue() {
