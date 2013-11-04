@@ -89,14 +89,17 @@ let dump_opr = function
   | `TextLabel label -> label ^ "@t"
   | `DataLabel label -> label ^ "@d"
 
+let dump_generic0 name =
+  sprintf "%s\t;\n" name
+
 let dump_generic1 name a =
-  sprintf "%s;\n" (dump_opr a)
+  sprintf "%s\t%s;\n" name (dump_opr a)
 
 let dump_generic2 name a b =
-  sprintf "%s\t%s;\n" (dump_opr a) (dump_opr b)
+  sprintf "%s\t%s\t%s;\n" name (dump_opr a) (dump_opr b)
 
 let dump_generic3 name a b c =
-  sprintf "%s\t%s\t%s;\n" (dump_opr a) (dump_opr b) (dump_opr c)
+  sprintf "%s\t%s\t%s\t%s;\n" name (dump_opr a) (dump_opr b) (dump_opr c)
 
 let dump_text_mode = ".text\n"
 let dump_data_mode = ".data\n"
