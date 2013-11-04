@@ -308,7 +308,6 @@ static void issue() {
 			case 0b0100:
 			case 0b0101:
 			case 0b0110:
-				assert(imm == 0);
 				set_gpr(tagY, PC);
 				PC = ((GPR[tagX] & (INST_ADDR - 1)) | imm);
 				return issue();
