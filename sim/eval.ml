@@ -6,34 +6,52 @@ let get_regimm regimm reg_env =
   match regimm with
     | Reg t -> reg_env.(t)
     | Imm n -> n
+      
+  (*let put_reg x v reg_env =
+    if x != 0
+    then reg_env.(x) <- v 
+    e lse ()
+  *) 
+      
 
+let put_reg reg_env reg_num value = 
+  if reg_num != 0 
+  then reg_env.(reg_num) <- value
+  else ()
+  
 let add reg_env (x,y,z) =
-  reg_env.(x) <- reg_env.(y) + get_regimm z reg_env
+  let v = reg_env.(y) + get_regimm z reg_env
+  in put_reg reg_env x v 
 
 let sub reg_env (x,y,z) =
-  reg_env.(x) <- reg_env.(y) - get_regimm z reg_env
+  let v = reg_env.(y) - get_regimm z reg_env
+  in put_reg reg_env x v
 
 let eq reg_env (x,y,z) =
   if reg_env.(y) = get_regimm z reg_env
-  then reg_env.(x) <- 1
-  else reg_env.(x) <- 0
+  then put_reg reg_env x 1
+  else put_reg reg_env x 0
 
 let lt reg_env (x,y,z) =
   if reg_env.(y) < get_regimm z reg_env
-  then reg_env.(x) <- 1
-  else reg_env.(x) <- 0
+  then put_reg reg_env x 1
+  else put_reg reg_env x 0 
 
 let eand reg_env (x,y,z) =
-  reg_env.(x) <- reg_env.(y) land get_regimm z reg_env
+  let v = reg_env.(y) land get_regimm z reg_env
+  in put_reg reg_env x v
 
 let eor reg_env (x,y,z) =
-  reg_env.(x) <- reg_env.(y) lor get_regimm z reg_env
+  let v = reg_env.(y) lor get_regimm z reg_env
+  in put_reg reg_env x v
 
 let xor reg_env (x,y,z) =
-  reg_env.(x) <- reg_env.(y) lxor get_regimm z reg_env
+  let v = reg_env.(y) lxor get_regimm z reg_env
+  in put_reg reg_env x v
 
 let ld memory_env reg_env (x,y,z) =
-  reg_env.(x) <- memory_env.(reg_env.(y) + z)
+  let v = memory_env.(reg_env.(y) + z)
+  in put_reg reg_env x v
 
 let st memory_env reg_env (x,y,z) =
   memory_env.(reg_env.(y) + z) <- reg_env.(x)
