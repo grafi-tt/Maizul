@@ -32,7 +32,7 @@ main:
   | expr DELIM { Top $1 }
   | mem_expr DELIM { TopMem $1 }
   | TEXT_SECTION { TopText }
-  | DATA_SECTION { TopText }
+  | DATA_SECTION { TopData }
 
 expr:
   | ADD   OPR OPR OPR { Add (reg $2, reg $3, reg_imm $4) }
