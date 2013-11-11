@@ -196,10 +196,10 @@ static void brr(inst_t code, uint32_t target, uint32_t a, uint32_t b) {
 			if (a != b) PC = target;
 			return issue();
 		case 0b010:
-			if (a < b) PC = target;
+			if (((int32_t) a) < ((int32_t) b)) PC = target;
 			return issue();
 		case 0b011:
-			if (a > b) PC = target;
+			if (((int32_t) a) > ((int32_t) b)) PC = target;
 			return issue();
 		default:
 			assert(false);
@@ -256,6 +256,9 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 		case 0b11:
 			assert(tagX == 0);
 			putchar((unsigned char) y);
+#ifndef NDEBUG
+			fflush(stdout);
+#endif
 			return issue();
 		default:
 			assert(false);
