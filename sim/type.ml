@@ -174,7 +174,7 @@ let dump_expr = function
   | Putb (x) -> dump_generic1 "putb" x
 
 let dump_mem_expr = function
-  | Word word -> "w" ^ string_of_int word
+  | Word word -> sprintf "word\tw%d;\n" word
 
 let construct_env = List.fold_left (fun env (l, i) -> M.add l i env) M.empty
 let construct_mem_env = List.fold_left (fun env (l, i) -> M.add l i env) M.empty
