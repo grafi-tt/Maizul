@@ -36,7 +36,7 @@ static inline void set_gpr(inst_t tag, uint32_t v) {
 }
 
 static inline void set_fpr(inst_t tag, float v) {
-	if (tag) FPR[tag] = v;
+	FPR[tag] = v;
 }
 
 static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
@@ -55,7 +55,7 @@ static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
 		w = copysign(v, -1);
 		break;
 	}
-	if (tag) FPR[tag] = w;
+	FPR[tag] = w;
 }
 
 static union {
@@ -349,9 +349,9 @@ static void issue() {
 	case 0b11:
 		switch (bits(inst, 29, 29)) {
 			case 0b0:
-				return brr(bits(inst, 29, 26), imm, GPR[tagX], GPR[tagY]);
+				return brr(bits(inst, 28, 26), imm, GPR[tagX], GPR[tagY]);
 			case 0b1:
-				return brf(bits(inst, 29, 26), imm, FPR[tagX], FPR[tagY]);
+				return brf(bits(inst, 28, 26), imm, FPR[tagX], FPR[tagY]);
 		}
 	}
 }
