@@ -4,8 +4,12 @@ open Print
 type some_reg = [`Reg of _reg | `FReg of _reg]
 
 let limit_16bit = function
-  | d when -32768 <= d && d < 32768 -> d land 0xFFFF
+  | d when -0x8000 <= d && d < 0x8000 -> d land 0xFFFF
   | _ -> raise (Invalid_argument "too large immediate")
+
+let split_32bit = function
+  | d when -0x80000000 <= d && d < 0x100000000 -> ((d lor -(d land 0x80000000)) asr 16, (d land 0xFFFF) lor -(d land 0x8000))
+  | _ -> raise (Invalid_argument "too large memory word")
 
 let change_alu env menv alucode (`Reg d) a b =
   match (a :> some_reg), (b :> opr) with
@@ -83,8 +87,9 @@ let change env menv = function
 let change_data_section ary =
   let expAry = Array.make (Array.length ary * 3) (Add (`Reg 0, `Reg 0, `Reg 0)) in
   Array.iteri (fun i (Word w) ->
-    expAry.(i * 3) <- Or (`Reg 1, `Reg 0, `Imm (w land 0x0000FFFF));
-    expAry.(i * 3 + 1) <- Cat (`Reg 1, `Reg 1, `Imm (w lsr 16));
+    let h, l = split_32bit w in
+    expAry.(i * 3) <- Or (`Reg 1, `Reg 0, `Imm l);
+    expAry.(i * 3 + 1) <- Cat (`Reg 1, `Reg 1, `Imm h);
     expAry.(i * 3 + 2) <- St (`Reg 1, `Reg 0, `Imm i);
   ) ary;
   expAry
