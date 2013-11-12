@@ -85,13 +85,17 @@ let change offset env menv = function
   | Putb (x) -> change_generic offset env menv 0b010010 x (`Reg 0) (`Imm 0b11)
 
 let change_data_section ary =
-  let expAry = Array.make (Array.length ary * 3) (Add (`Reg 0, `Reg 0, `Reg 0)) in
+  let expAry = Array.make (Array.length ary * 3 + 2) (Add (`Reg 0, `Reg 0, `Reg 0)) in
   Array.iteri (fun i (Word w) ->
     let h, l = split_32bit w in
     expAry.(i * 3) <- Or (`Reg 1, `Reg 0, `Imm l);
     expAry.(i * 3 + 1) <- Cat (`Reg 1, `Reg 1, `Imm h);
     expAry.(i * 3 + 2) <- St (`Reg 1, `Reg 0, `Imm i);
   ) ary;
+  expAry.(Array.length ary * 3) <- Or (`Reg 30, `Reg 0, `Imm (Array.length ary));
+  expAry.(Array.length ary * 3 + 1) <- Cat (`Reg 29, `Reg 0, `Imm 12); (* set stack pointer to 3*2^18, very tekitou *)
   expAry
 
-let compile env exprs menv mexprs = Array.map (change (Array.length mexprs * 3) env menv) (Array.append (change_data_section mexprs) exprs)
+let compile env exprs menv mexprs =
+  let prelude = change_data_section mexprs in
+  Array.map (change (Array.length prelude) env menv) (Array.append prelude exprs)
