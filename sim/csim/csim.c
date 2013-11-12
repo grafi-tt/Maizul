@@ -12,7 +12,6 @@
 
 #define NDEBUG
 #define FLG_STEP false
-#define FLG_IO_PRINTF true
 #define FLG_COUNT_INST true
 #include <assert.h>
 
@@ -154,15 +153,12 @@ static void fpu(inst_t code, inst_t sgn, inst_t tagD, float a, float b) {
 		set_fpr_sgn(tagD, sgn, a * b);
 		return issue();
 	case 0b011:
-		assert(b == 0.0);
 		set_fpr_sgn(tagD, sgn, 1 / a);
 		return issue();
 	case 0b100:
-		assert(b == 0.0);
 		set_fpr_sgn(tagD, sgn, sqrtf(a));
 		return issue();
 	case 0b101:
-		assert(b == 0.0);
 		set_fpr_sgn(tagD, sgn, a);
 		return issue();
 	default:
@@ -239,14 +235,7 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 			return issue();
 		case 0b01:
 			assert(tagX == 0);
-			if (FLG_IO_PRINTF) {
-				printf("%u\n", y);
-			} else {
-				for (int i = 0; i < 4; i++) {
-					putchar((unsigned char) (y >> 24));
-					y = y << 8;
-				}
-			}
+			printf("%u\n", y);
 			return issue();
 		case 0b10:
 			assert(y == 0);
@@ -311,6 +300,9 @@ static void issue() {
 			case 0b0100:
 			case 0b0101:
 			case 0b0110:
+				if (!tagX && imm == PC-1) {
+					return;
+				}
 				set_gpr(tagY, PC);
 				PC = ((GPR[tagX] & (INST_ADDR - 1)) | imm);
 				return issue();
@@ -394,7 +386,7 @@ int main(int argc, const char *argv[]) {
 
 	issue();
 	if (FLG_COUNT_INST) {
-		printf("instruction count %u\n", inst_count);
+		fprintf(stderr, "instruction count %u\n", inst_count);
 	}
 
 	return 0;
