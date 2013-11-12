@@ -52,11 +52,11 @@ begin
         result <= rEq when "000",
                   not rEq when "001",
                   sLt when "010",
-                  sLt or rEq when "011",
+                  (not sLt) and (not rEq) when "011",
                   fEq when "100",
                   not fEq when "101",
-                  fLt when "110",
-                  fLt or fEq when others; -- "111"
+                  fLt and (not feq) when "110",
+                  (not fLt) and (not fEq) when others; -- "111"
 
     ltTmp <= unsigned(a(30 downto 0)) < unsigned(b(30 downto 0));
     zATmp <= a(30 downto 0) = z31;
