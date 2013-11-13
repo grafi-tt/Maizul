@@ -7,41 +7,43 @@ use std.textio.all;
 entity TBCommon is
     port (
         clk : buffer std_logic;
-        a : out std_logic_vector(31 downto 0);
-        b : out std_logic_vector(31 downto 0);
+        a : out std_logic_vector(31 downto 0) := (others => '0');
+        b : out std_logic_vector(31 downto 0) := (others => '0');
         d : in  std_logic_vector(31 downto 0));
 end TBCommon;
 
 architecture FileBench of TBCommon is
-    signal delay1, delay2 : boolean := false;
+    signal delay1, delay2, delay3 : boolean := false;
 
 begin
     main : process(clk)
         file testdata_in  : text open read_mode  is "testdata.in";
         file testdata_out : text open write_mode is "testdata.out";
         variable li, lo : line;
-        variable at, bt, ct : std_logic_vector(31 downto 0);
+        variable at, bt, dt : std_logic_vector(31 downto 0);
 
     begin
         if rising_edge(clk) then
-            if endfile(testdata) then
+            if endfile(testdata_in) then
                 delay1 <= false;
             else
                 readline(testdata_in, li);
-                read(li, at);
-                read(li, bt);
+                hread(li, at);
+                hread(li, bt);
                 a <= at;
                 b <= bt;
                 delay1 <= true;
             end if;
 
             delay2 <= delay1;
+            delay3 <= delay2;
 
-            if delay2 then
-                ct := c;
-                write(lo, ct);
+            if delay3 then
+                dt := d;
+                hwrite(lo, dt);
                 writeline(testdata_out, lo);
             end if;
+        end if;
     end process;
 
     clkgen : process
