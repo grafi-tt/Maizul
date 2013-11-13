@@ -12,7 +12,6 @@
 
 #define NDEBUG
 #define FLG_STEP false
-#define FLG_IO_PRINTF true
 #define FLG_COUNT_INST true
 #include <assert.h>
 
@@ -36,7 +35,7 @@ static inline void set_gpr(inst_t tag, uint32_t v) {
 }
 
 static inline void set_fpr(inst_t tag, float v) {
-	if (tag) FPR[tag] = v;
+	FPR[tag] = v;
 }
 
 static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
@@ -55,7 +54,7 @@ static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
 		w = copysign(v, -1);
 		break;
 	}
-	if (tag) FPR[tag] = w;
+	FPR[tag] = w;
 }
 
 static union {
@@ -154,15 +153,12 @@ static void fpu(inst_t code, inst_t sgn, inst_t tagD, float a, float b) {
 		set_fpr_sgn(tagD, sgn, a * b);
 		return issue();
 	case 0b011:
-		assert(b == 0.0);
 		set_fpr_sgn(tagD, sgn, 1 / a);
 		return issue();
 	case 0b100:
-		assert(b == 0.0);
 		set_fpr_sgn(tagD, sgn, sqrtf(a));
 		return issue();
 	case 0b101:
-		assert(b == 0.0);
 		set_fpr_sgn(tagD, sgn, a);
 		return issue();
 	default:
@@ -196,10 +192,10 @@ static void brr(inst_t code, uint32_t target, uint32_t a, uint32_t b) {
 			if (a != b) PC = target;
 			return issue();
 		case 0b010:
-			if (a < b) PC = target;
+			if (((int32_t) a) < ((int32_t) b)) PC = target;
 			return issue();
 		case 0b011:
-			if (a > b) PC = target;
+			if (((int32_t) a) > ((int32_t) b)) PC = target;
 			return issue();
 		default:
 			assert(false);
@@ -239,14 +235,7 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 			return issue();
 		case 0b01:
 			assert(tagX == 0);
-			if (FLG_IO_PRINTF) {
-				printf("%u\n", y);
-			} else {
-				for (int i = 0; i < 4; i++) {
-					putchar((unsigned char) (y >> 24));
-					y = y << 8;
-				}
-			}
+			printf("%u\n", y);
 			return issue();
 		case 0b10:
 			assert(y == 0);
@@ -256,6 +245,9 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 		case 0b11:
 			assert(tagX == 0);
 			putchar((unsigned char) y);
+#ifndef NDEBUG
+			fflush(stdout);
+#endif
 			return issue();
 		default:
 			assert(false);
@@ -308,7 +300,9 @@ static void issue() {
 			case 0b0100:
 			case 0b0101:
 			case 0b0110:
-				assert(imm == 0);
+				if (!tagX && imm == PC-1) {
+					return;
+				}
 				set_gpr(tagY, PC);
 				PC = ((GPR[tagX] & (INST_ADDR - 1)) | imm);
 				return issue();
@@ -347,9 +341,9 @@ static void issue() {
 	case 0b11:
 		switch (bits(inst, 29, 29)) {
 			case 0b0:
-				return brr(bits(inst, 29, 26), imm, GPR[tagX], GPR[tagY]);
+				return brr(bits(inst, 28, 26), imm, GPR[tagX], GPR[tagY]);
 			case 0b1:
-				return brf(bits(inst, 29, 26), imm, FPR[tagX], FPR[tagY]);
+				return brf(bits(inst, 28, 26), imm, FPR[tagX], FPR[tagY]);
 		}
 	}
 }
@@ -392,7 +386,7 @@ int main(int argc, const char *argv[]) {
 
 	issue();
 	if (FLG_COUNT_INST) {
-		printf("instruction count %u\n", inst_count);
+		fprintf(stderr, "instruction count %u\n", inst_count);
 	}
 
 	return 0;

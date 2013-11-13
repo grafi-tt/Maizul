@@ -5,13 +5,11 @@
 let natural = ['1' - '9'] ['0' - '9']* | '0'
 let digit = '-'? natural
 let tag = ['1' '2']? ['0' - '9'] | '3' ['0' '1']
-let moji = ['a' - 'z' 'A' - 'Z' '0' - '9' '_']
+let moji = ['a' - 'z' 'A' - 'Z' '0' - '9' '_' '.' '-']
 
 rule token = parse
   | [' ' '\t' '\n']+ { token lexbuf }
   | ";"        { DELIM }
-  | ".text" { TEXT_SECTION }
-  | ".data" { DATA_SECTION }
   | (moji+ as l) ':' { LABEL l }
   | 'r' (tag as x) { OPR (`Reg (int_of_string x)) }
   | 'f' (tag as x) { OPR (`FReg (int_of_string x)) }
@@ -19,6 +17,8 @@ rule token = parse
   | (moji+ as l) "@d" { OPR (`DataLabel l) }
   | digit as d { OPR (`Imm (int_of_string d)) }
   | 'w' (natural as n) { WORD_VAL (int_of_string n) }
+  | ".text" { TEXT_SECTION }
+  | ".data" { DATA_SECTION }
   | "add"       { ADD }
   | "sub"       { SUB }
   | "eq"        { EQ }
