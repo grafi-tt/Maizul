@@ -73,10 +73,9 @@ begin
     a_frc <= a1(22 downto 0);
     b_frc <= b1(22 downto 0);
 
-    d1 <= (a_sgn xor b_sgn) & z_exp & z_frc when (a_exp = z_exp and b_exp /= h_exp) or (a_exp /= h_exp and b_exp = z_exp) else -- must be cared
-          (a_sgn xor b_sgn) & h_exp & (a_frc or b_frc) when (a_exp = h_exp and b_exp /= z_exp) or (a_exp /= z_exp and b_exp = h_exp) else
-          (a_sgn xor b_sgn) & h_exp & o_frc;
-    x1 <= a_exp = z_exp or a_exp = h_exp or b_exp = z_exp or b_exp = h_exp;
+    d1 <= (a_sgn xor b_sgn) & h_exp & o_frc when a_exp = z_exp or b_exp = z_exp else
+          (a_sgn xor b_sgn) & h_exp & (a_frc or b_frc);
+    x1 <= a_exp = h_exp or b_exp = h_exp;
 
     d_out <= d3 when x3 else d_fmul;
 

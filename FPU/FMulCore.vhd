@@ -12,17 +12,19 @@ end FMul;
 
 architecture Implementation of FMul is
     signal s1_sgn : std_logic;
-    signal s1_exp_add : unsigned(9 downto 0);
+    signal s1_exp_add : unsigned(8 downto 0);
     signal s1_frc_all : unsigned(47 downto 0);
+    signal s1_zero : std_logic;
 
     signal s2_sgn : std_logic := '0';
-    signal s2_exp_add : unsigned(9 downto 0) := (others => '0');
+    signal s2_exp_add : unsigned(8 downto 0) := (others => '0');
     signal s2_frc_all : unsigned(47 downto 0) := (others => '0');
     signal s2_exp : unsigned(9 downto 0) := (others => '0');
     signal s2_exp_up : unsigned(9 downto 0) := (others => '0');
     signal s2_ulp : unsigned(24 downto 0) := (others => '0');
     signal s2_frc : unsigned(24 downto 0) := (others => '0');
     signal s2_frc_up : unsigned(24 downto 0) := (others => '0');
+    signal s2_zero : std_logic := '0';
     signal s2_tail_any : std_logic := '0';
     signal s2_round : std_logic := '0';
 
@@ -41,8 +43,9 @@ architecture Implementation of FMul is
 
 begin
     s1_sgn <= flt_in1(31) xor flt_in2(31);
-    s1_exp_add <= unsigned("00" & flt_in1(30 downto 23)) + unsigned("00" & flt_in2(30 downto 23));
+    s1_exp_add <= unsigned("0" & flt_in1(30 downto 23)) + unsigned("0" & flt_in2(30 downto 23));
     s1_frc_all <= unsigned('1' & flt_in1(22 downto 0)) * unsigned('1' & flt_in2(22 downto 0));
+    s1_zero <= '1' when flt_in1(30 downto 23) = "00000000" or flt_in2(30 downto 23) = "00000000" else '0';
 
     pipe1 : process(clk)
     begin
@@ -50,11 +53,12 @@ begin
             s2_sgn <= s1_sgn;
             s2_exp_add <= s1_exp_add;
             s2_frc_all <= s1_frc_all;
+            s2_zero <= s1_zero;
         end if;
     end process;
 
-    s2_exp <= s2_exp_add - "0001111111";
-    s2_exp_up <= s2_exp_add - "0001111110";
+    s2_exp <= (('0' & s2_exp_add) - "0001111111") or (s2_zero & "000000000");
+    s2_exp_up <= (('0' & s2_exp_add) - "0001111110") or (s2_zero & "000000000");
     s2_frc <= s2_frc_all(47 downto 23);
     s2_ulp <= x"00000" & "00001" when s2_frc_all(47) = '0' else x"00000" & "00010";
     s2_frc_up <= s2_frc + s2_ulp;
