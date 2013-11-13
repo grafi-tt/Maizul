@@ -13,6 +13,10 @@
 #define NDEBUG
 #define FLG_STEP false
 #define FLG_COUNT_INST true
+#define FLG_EXACT_FPU true
+#define FLG_DUMP_FADD false
+#define FLG_DUMP_FSUB false
+#define FLG_DUMP_FMUL false
 #include <assert.h>
 
 typedef uint32_t inst_t;
@@ -70,6 +74,16 @@ static inline int32_t float_as_int(float f) {
 static inline float int_as_float(int32_t i) {
 	_box.i = i;
 	return _box.f;
+}
+
+static inline float kill_denormal(float f) {
+	_box.f = f;
+	if (bits(_box.i, 30, 23))
+		return _box.f;
+	else {
+		_box.i &= -(1 << 23);
+		return _box.f;
+	}
 }
 
 static void issue();
@@ -141,16 +155,55 @@ static void aluf(inst_t code, inst_t tagD, float a, float b) {
 	}
 }
 
+static inline float fadd(float a, float b) {
+	if (FLG_EXACT_FPU)
+		return kill_denormal(a + b);
+	else
+		return a + b;
+}
+
+static inline float dump_fadd(float a, float b, float d) {
+	if (FLG_DUMP_FADD)
+		fprintf(stderr, "fadd %08x %08x %08x\n", (uint32_t) float_as_int(a), (uint32_t) float_as_int(b), (uint32_t) float_as_int(d));
+	return d;
+}
+
+static inline float fsub(float a, float b) {
+	if (FLG_EXACT_FPU)
+		return kill_denormal(a - b);
+	else
+		return a - b;
+}
+
+static inline float dump_fsub(float a, float b, float d) {
+	if (FLG_DUMP_FSUB)
+		fprintf(stderr, "fsub %08x %08x %08x\n", (uint32_t) float_as_int(a), (uint32_t) float_as_int(b), (uint32_t) float_as_int(d));
+	return d;
+}
+
+static inline float fmul(float a, float b) {
+	if (FLG_EXACT_FPU)
+		return kill_denormal(a * b);
+	else
+		return a * b;
+}
+
+static inline float dump_fmul(float a, float b, float d) {
+	if (FLG_DUMP_FMUL)
+		fprintf(stderr, "fmul %08x %08x %08x\n", (uint32_t) float_as_int(a), (uint32_t) float_as_int(b), (uint32_t) float_as_int(d));
+	return d;
+}
+
 static void fpu(inst_t code, inst_t sgn, inst_t tagD, float a, float b) {
 	switch (code) {
 	case 0b000:
-		set_fpr_sgn(tagD, sgn, a + b);
+		set_fpr_sgn(tagD, sgn, dump_fadd(a, b, fadd(a, b)));
 		return issue();
 	case 0b001:
-		set_fpr_sgn(tagD, sgn, a - b);
+		set_fpr_sgn(tagD, sgn, dump_fsub(a, b, fsub(a, b)));
 		return issue();
 	case 0b010:
-		set_fpr_sgn(tagD, sgn, a * b);
+		set_fpr_sgn(tagD, sgn, dump_fmul(a, b, fmul(a, b)));
 		return issue();
 	case 0b011:
 		set_fpr_sgn(tagD, sgn, 1 / a);
