@@ -308,21 +308,6 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
 	}
 }
 
-static void rfsp(inst_t func, inst_t tagX, float y) {
-	assert(false);
-	return issue();
-}
-
-static void frsp(inst_t func, inst_t tagX, uint32_t y) {
-	assert(false);
-	return issue();
-}
-
-static void ffsp(inst_t func, inst_t tagX, float y) {
-	assert(false);
-	return issue();
-}
-
 static void issue() {
 	if (FLG_STEP) step();
 	if (FLG_COUNT_INST) inst_count++;

@@ -70,14 +70,14 @@ let change offset env menv = function
   | St  (v, m, d) -> change_generic offset env menv 0b010011 m v d
   | Fld (v, m, d) -> change_generic offset env menv 0b011010 m v d
   | Fst (v, m, d) -> change_generic offset env menv 0b011011 m v d
-  | Beq  (a, b, label) -> change_generic offset env menv 0b110000 a b label
-  | Bne  (a, b, label) -> change_generic offset env menv 0b110001 a b label
-  | Blt  (a, b, label) -> change_generic offset env menv 0b110010 a b label
-  | Bgt  (a, b, label) -> change_generic offset env menv 0b110011 a b label
-  | Fbeq (a, b, label) -> change_generic offset env menv 0b111000 a b label
-  | Fbne (a, b, label) -> change_generic offset env menv 0b111001 a b label
-  | Fblt (a, b, label) -> change_generic offset env menv 0b111010 a b label
-  | Fbgt (a, b, label) -> change_generic offset env menv 0b111011 a b label
+  | Beq  (a, b, label) -> change_generic offset env menv 0b100000 a b label
+  | Bne  (a, b, label) -> change_generic offset env menv 0b100001 a b label
+  | Blt  (a, b, label) -> change_generic offset env menv 0b100010 a b label
+  | Bgt  (a, b, label) -> change_generic offset env menv 0b100011 a b label
+  | Fbeq (a, b, label) -> change_generic offset env menv 0b110000 a b label
+  | Fbne (a, b, label) -> change_generic offset env menv 0b110001 a b label
+  | Fblt (a, b, label) -> change_generic offset env menv 0b110010 a b label
+  | Fbgt (a, b, label) -> change_generic offset env menv 0b110011 a b label
   | Jmp  (l, t, label, Jump)   -> change_generic offset env menv 0b010100 t l label
   | Jmp  (l, t, label, Call)   -> change_generic offset env menv 0b010101 t l label
   | Jmp  (l, t, label, Return) -> change_generic offset env menv 0b010110 t l label
