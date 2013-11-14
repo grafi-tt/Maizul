@@ -24,26 +24,23 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
     <tr><td><b>F</b>loat-<b>O</b>peration</td>
         <td colspan="5">01100</td><td colspan="1">type</td><td colspan="5">Ra/Fa</td><td colspan="5">Rb/Fb</td><td colspan="5">Fd</td><td colspan="5">_</td><td colspan="2">sign</td><td colspan="4">FPUCode</td>
     </tr>
+    <tr><td><b>R</b>egisiter-<b>M</b>emory</td>
+        <td colspan="5">01001</td><td colspan="1">MCode</td><td colspan="5">Rm</td><td colspan="5">Rv</td><td colspan="16">Displacement</td>
+    </tr>
+    <tr><td><b>F</b>loat-<b>M</b>emory</td>
+        <td colspan="5">01101</td><td colspan="1">MCode</td><td colspan="5">Rm</td><td colspan="5">Fv</td><td colspan="16">Displacement</td>
+    </tr>
     <tr><td><b>J</b>ump</td>
         <td colspan="4">0101</td><td colspan="2">hint</td><td colspan="5">Rt</td><td colspan="5">Rl</td><td colspan="16">Displacement</td>
     </tr>
-    <tr><td><b>R</b>egister-<b>S</b>pecial</td>
-        <td colspan="5">01001</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
-    </tr>
-    <tr><td><b>F</b>loat-<b>S</b>pecial</td>
-        <td colspan="5">01101</td><td colspan="1">type</td><td colspan="5">Rx/Fx</td><td colspan="5">Fy</td><td colspan="16">Function</td>
-    </tr>
-    <tr><td><b>R</b>egisiter-<b>M</b>emory</td>
-        <td colspan="3">100</td><td colspan="3">RMCode</td><td colspan="5">Rm</td><td colspan="5">Rv</td><td colspan="16">Displacement</td>
-    </tr>
-    <tr><td><b>F</b>loat-<b>M</b>emory</td>
-        <td colspan="3">101</td><td colspan="3">FMCode</td><td colspan="5">Rm</td><td colspan="5">Fv</td><td colspan="16">Displacement</td>
+    <tr><td><b>S</b>pecial</td>
+        <td colspan="4">0101</td><td colspan="2">11</td><td colspan="5">Rx</td><td colspan="5">Ry</td><td colspan="16">Function</td>
     </tr>
     <tr><td><b>R</b>egisiter-<b>B</b>ranch</td>
-        <td colspan="3">110</td><td colspan="3">RBCode</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Target</td>
+        <td colspan="2">10</td><td colspan="4">RBCode</td><td colspan="5">Ra</td><td colspan="5">Rb</td><td colspan="16">Target</td>
     </tr>
     <tr><td><b>F</b>loat-<b>B</b>ranch</td>
-        <td colspan="3">111</td><td colspan="3">FBCode</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Target</td>
+        <td colspan="2">11</td><td colspan="4">FBCode</td><td colspan="5">Fa</td><td colspan="5">Fb</td><td colspan="16">Target</td>
     </tr>
 </table>
 
@@ -52,13 +49,12 @@ DEC Alphaベースで部分的にMIPSの予定だったが，もはやどちら�
 IO [ 00 ][ ALUcode  ][     Ra      ][     Rd      ][                  Immediate                   ]
 RO [    01000    ][t][    Ra/Fa    ][    Rb/Fb    ][     Rd      ][         _         ][ ALUCode  ]
 FO [    01100    ][t][    Ra/Fa    ][    Rb/Fb    ][     Fd      ][      _      ][sgn ][ FPUCode  ]
-J  [    0101  ][hint][     Rt      ][     Rl      ][                    Target                    ]
-RS [    01001    ][t][    Rx/Fx    ][     Ry      ][                   Function                   ]
-FS [    01101    ][t][    Rx/Fx    ][     Fy      ][                   Function                   ]
-RM [  100  ][RMCode ][     Rm      ][     Rv      ][                 Displacement                 ]
-FM [  101  ][FMCode ][     Rm      ][     Fv      ][                 Displacement                 ]
-RB [  110  ][RBCode ][     Ra      ][     Rb      ][                    Target                    ]
-FB [  111  ][FBCode ][     Fa      ][     Fb      ][                    Target                    ]
+RM [    01001    ][m][     Rm      ][     Rv      ][                 Displacement                 ]
+FM [    01101    ][m][     Rm      ][     Fv      ][                 Displacement                 ]
+J  [   0101   ][hint][     Rt      ][     Rl      ][                    Target                    ]
+S  [   0101   ][ 11 ][     Rx      ][     Ry      ][                   Function                   ]
+RB [ 10 ][  RBCode  ][     Ra      ][     Rb      ][                    Target                    ]
+FB [ 11 ][  FBCode  ][     Fa      ][     Fb      ][                    Target                    ]
 -->
 
 ### type
@@ -95,8 +91,6 @@ jmp命令実行時の分岐予測の方向を示す．まだコアの側で実�
         <dd>命令中の即値にジャンプすると予測しつつ，リンクレジスタとして用いるレジスタに格納する値を，内部的なスタックにプッシュ．関数呼び出しのときに用いる．</dd>
     <dt>hint = 10</dt>
         <dd>スタックをポップして得られるアドレスにジャンプすると予測．関数からのリターンのときに用いる．</dd>
-    <dt>hint = 11</dt>
-        <dd>今のところ未定義．Alphaではコルーチンを実現するような怪しい挙動が定まっていたが，それを実装するメリットも無さそうだし，コンパイラ班と相談ということで．</dd>
 </dl>
 
 
@@ -262,13 +256,13 @@ FPUCode `1???`
 SRAMに対しては内部的には32bit単位のアドレスを用いてアクセスする．
 
 #### ldq，fldq
-RMCode `000` / FMCode `000`
+MCode `0`
 
     Rv := load_sram(Rb & Displacement)
     Fv := load_sram(Rb & Displacement)
 
 #### stq，fstq
-RMCode `001` / FMCode `001`
+MCode `1`
 
     store_sram(Rb & Displacement, Rv)
     store_sram(Fb & Displacement, Rv)
@@ -315,8 +309,8 @@ RBCode `011` / FBCode `011`
 RtとTargetをorするという挙動だが，実際にはどちらか片方だけを用いてもう片方を0に固定する使い方を主に想定している．
 
 
-### 特殊命令（RS）
-Functionを広く取ったが，現状シリアル通信のみ．また，オペランドに浮動小数点は用いていない．
+### 特殊命令（S）
+Functionを広く取ったが，現状シリアル通信のみ．
 
 #### get
 Function `0000000000000000` / RS / type = 0
