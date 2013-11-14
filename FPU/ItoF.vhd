@@ -6,7 +6,7 @@ entity ItoF is
     port (
         clk : in std_logic;
         i : in  std_logic_vector(31 downto 0);
-        f : out std_logic_vector(31 downto 0));
+        f : out std_logic_vector(31 downto 0) := (others => '0'));
 end IToF;
 
 architecture Implementation of ItoF is
@@ -19,7 +19,7 @@ architecture Implementation of ItoF is
     signal frc_out : std_logic_vector(22 downto 0);
     signal tail_any : std_logic;
     signal round : std_logic;
-    signal f_pipe : std_logic_vector(31 downto 0);
+    signal f_pipe : std_logic_vector(31 downto 0) := (others => '0');
 
 begin
     u_frc(4) <= '0' & unsigned(i) when i(31) = '0' else
@@ -52,7 +52,7 @@ begin
     begin
         if rising_edge(clk) then
             f_pipe <= i(31) & exp_out & frc_out;
-            f <= i(31) & exp_out & frc_out;
+            f <= f_pipe;
         end if;
     end process;
 

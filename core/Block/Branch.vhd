@@ -6,7 +6,7 @@ use work.types.all;
 entity Branch is
     port (
         clk : in std_logic;
-        code : in std_logic_vector(3 downto 0);
+        code : in std_logic_vector(4 downto 0);
         tagL : in tag_t;
         valA : in value_t;
         valB : in value_t;

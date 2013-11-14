@@ -71,7 +71,7 @@ architecture DataPathImp of DataPath is
     component Branch is
         port (
             clk : in std_logic;
-            code : in std_logic_vector(3 downto 0);
+            code : in std_logic_vector(4 downto 0);
             tagL : in tag_t;
             valA : in value_t;
             valB : in value_t;
@@ -112,7 +112,6 @@ architecture DataPathImp of DataPath is
     signal opL : std_logic_vector(3 downto 0);
 
     signal tagX, tagY, tagZ : tag_t;
-    signal tagFX, tagFY, tagFZ : tag_t;
     signal imm : std_logic_vector(15 downto 0);
 
     signal valX, valY : value_t;
@@ -138,7 +137,7 @@ architecture DataPathImp of DataPath is
     signal tagF1, tagF2, emitTagF : tag_t;
     signal emitValF : value_t;
 
-    signal codeB : std_logic_vector(3 downto 0);
+    signal codeB : std_logic_vector(4 downto 0);
     signal tagL : tag_t;
     signal valA : value_t;
     signal valB : value_t;
@@ -220,7 +219,7 @@ begin
         valB => valBI,
         emitTag => emitTagA,
         emitVal => emitValA);
-    tagD <= "00000" when (stall or ignore) else
+    tagD <= "00000" when stall or ignore else
             tagY when opH = "00" else
             tagZ when (opH = "01" and opL(3 downto 1) = "000") else
             "00000";
@@ -253,15 +252,15 @@ begin
         emitLink => emitValB,
         emitTarget => PCLine,
         result => jump);
-    codeB <= "0001" when stall or ignore else -- always false
-             opL when opH = "11" else
-             "0000" when (opH = "01" and opL(3 downto 2) = "01") else -- always true
-             "0001"; -- always false
+    codeB <= "00001" when stall or ignore else -- always false
+             opH(0) & opL when opH(1) = '1' else
+             "00000" when (opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11") else -- always true
+             "00001"; -- always false
     tagL <= tagY when (opH = "01" and opL(3 downto 2) = "01") and not stall and not ignore else
             "00000";
-    valA <= valX when opH = "11" and not stall and not ignore else (others => '0');
-    valB <= valY when opH = "11" and not stall and not ignore else (others => '0');
-    target <= blkram_addr(imm) when opH = "11" else blkram_addr(imm or valX(15 downto 0));
+    valA <= valX when opH(1) = '1' and not stall and not ignore else (others => '0');
+    valB <= valY when opH(1) = '1' and not stall and not ignore else (others => '0');
+    target <= blkram_addr(imm) when opH(1) = '1' else blkram_addr(imm or valX(15 downto 0));
 
 
 
@@ -375,14 +374,14 @@ begin
             emitValM when emitLoad and tagY = emitTagM else
             valRegY;
 
-    valFX <= (others => '0') when tagFX = "00000" else
-             emitValF when tagFX = emitTagF else
-             emitValM when emitLoad and tagFX = emitTagFM else
+    valFX <= (others => '0') when tagX = "00000" else
+             emitValF when tagX = emitTagF else
+             emitValM when emitLoad and tagX = emitTagFM else
              valFRegX;
 
-    valFY <= (others => '0') when tagFX = "00000" else
-             emitValF when tagFY = emitTagF else
-             emitValM when emitLoad and tagFY = emitTagFM else
+    valFY <= (others => '0') when tagY = "00000" else
+             emitValF when tagY = emitTagF else
+             emitValM when emitLoad and tagY = emitTagFM else
              valFRegY;
 
     stallX <= gprX and tagX /= "00000" and
@@ -398,19 +397,19 @@ begin
                 (load2 and tagZ = tagM2) or
                 (load3 and tagZ = tagM3));
 
-    stallFX <= fprX and tagFX /= "00000" and
+    stallFX <= fprX and tagX /= "00000" and
                ( (tagX = tagF1) or
                  (tagX = tagF2) or
                  (load1 and tagX = tagFM1) or
                  (load2 and tagX = tagFM2) or
                  (load3 and tagX = tagFM3));
-    stallFY <= fprY and tagFY /= "00000" and
+    stallFY <= fprY and tagY /= "00000" and
                ( (tagY = tagF1) or
                  (tagY = tagF2) or
                  (load1 and tagY = tagFM1) or
                  (load2 and tagY = tagFM2) or
                  (load3 and tagY = tagFM3));
-    stallFZ <= fprZ and tagFZ /= "00000" and
+    stallFZ <= fprZ and tagZ /= "00000" and
                ( (tagZ = tagF1) or
                  (tagZ = tagF2) or
                  (load1 and tagZ = tagFM1) or

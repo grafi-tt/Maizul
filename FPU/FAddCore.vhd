@@ -59,7 +59,7 @@ architecture Implementation of FAdd is
 
     signal s3_sgn_sup, s3_sgn_inf : std_logic := '0';
     signal s3_exp_unif : std_logic_vector(7 downto 0) := (others => '0');
-    signal s3_frc_out_adder1, s3_frc_out_adder2 : std_logic_vector(24 downto 0);
+    signal s3_frc_out_adder1, s3_frc_out_adder2 : std_logic_vector(24 downto 0) := (others => '0');
     signal s3_zero_sft, s3_is_add : boolean := false;
 
     signal s3_no_flow, s3_no_down, s3_exact : boolean;
