@@ -197,6 +197,8 @@ FPUCode `0000`
 
     Fd := Fa + Fb
 
+とりあえず非正規化数未対応で偶数丸め．
+
 #### fsub，fsubn，fsubp，fdubm
 FPUCode `0001`
 
@@ -209,7 +211,7 @@ FPUCode `0010`
 
     Fd := Fa * Fb
 
-仕様はFPU班と相談．
+とりあえず非正規化数未対応で偶数丸め．
 
 #### finv，finvn，finvp，finvm
 FPUCode `0011`
@@ -230,21 +232,15 @@ FPUCode `0101`
 
     Fd := Fa（Fbは0レジスタに固定）
 
-コア班が実装．
-
-#### rmovf，rmovfn，rmovfp，rmovfm
+#### fflr，fflrn，fflrp，fflrm
 FPUCode `0110`
 
-    Fd := Ra（Rbは0レジスタに固定）
-
-コア班が実装．
+    Fd := floor(Ra)（Rbは0レジスタに固定）
 
 #### rtof，rtofn，rtofp，rtofm
 FPUCode `0111`
 
     Fd := itof(Fa)
-
-FPU班が変換ルーチンを実装（ソフトウェア実装も可？）
 
 #### fsinなど
 FPUCode `1???`

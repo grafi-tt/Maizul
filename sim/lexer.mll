@@ -59,10 +59,10 @@ rule token = parse
   | "fmovn"     { FMOVN }
   | "fmovp"     { FMOVP }
   | "fmovm"     { FMOVM }
-  | "rmovf"     { RMOVF }
-  | "rmovfn"    { RMOVFN }
-  | "rmovfp"    { RMOVFP }
-  | "rmovfm"    { RMOVFM }
+  | "fflr"      { FFLR }
+  | "fflrn"     { FFLRN }
+  | "fflrp"     { FFLRP }
+  | "fflrm"     { FFLRM }
   | "rtof"      { RTOF }
   | "rtofn"     { RTOFN }
   | "rtofp"     { RTOFP }
@@ -80,6 +80,8 @@ rule token = parse
   | "fblt"      { FBLT }
   | "fbgt"      { FBGT }
   | "jmp"       { JMP }
+  | "jmpc"      { JMPC }
+  | "jmpr"      { JMPR }
   | "get"       { GET }
   | "put"       { PUT }
   | "getb"      { GETB }

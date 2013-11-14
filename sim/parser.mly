@@ -11,11 +11,11 @@
 %token CAT CATI MUL MULI
 %token FMOVR FTOR FEQ FLT
 %token FADD FADDN FADDP FADDM FSUB FSUBN FSUBP FSUBM FMUL FMULN FMULP FMULM
-%token FINV FINVN FINVP FINVM FSQR FSQRN FSQRP FSQRM FMOV FMOVN FMOVP FMOVM
-%token RMOVF RMOVFN RMOVFP RMOVFM RTOF RTOFN RTOFP RTOFM
+%token FINV FINVN FINVP FINVM FSQR FSQRN FSQRP FSQRM FMOV FMOVN FMOVP FMOVM FFLR FFLRN FFLRP FFLRM
+%token RTOF RTOFN RTOFP RTOFM
 %token LD ST FLD FST
 %token BEQ BNE BLT BGT FBEQ FBNE FBLT FBGT
-%token JMP
+%token JMP JMPC JMPR
 %token GET PUT GETB PUTB
 %token WORD
 %token <int> WORD_VAL
@@ -75,18 +75,18 @@ expr:
   | FMOVN OPR OPR     { Fmov (freg $2, freg $3, Negate) }
   | FMOVP OPR OPR     { Fmov (freg $2, freg $3, Plus) }
   | FMOVM OPR OPR     { Fmov (freg $2, freg $3, Minus) }
-  | RMOVF  OPR OPR    { Rmovf (freg $2, reg $3, Straight) }
-  | RMOVFN OPR OPR    { Rmovf (freg $2, reg $3, Negate) }
-  | RMOVFP OPR OPR    { Rmovf (freg $2, reg $3, Plus) }
-  | RMOVFM OPR OPR    { Rmovf (freg $2, reg $3, Minus) }
-  | RTOF   OPR OPR    { Rtof  (freg $2, reg $3, Straight) }
-  | RTOFN  OPR OPR    { Rtof  (freg $2, reg $3, Negate) }
-  | RTOFP  OPR OPR    { Rtof  (freg $2, reg $3, Plus) }
-  | RTOFM  OPR OPR    { Rtof  (freg $2, reg $3, Minus) }
+  | FFLR  OPR OPR     { Fflr (freg $2, freg $3, Straight) }
+  | FFLRN OPR OPR     { Fflr (freg $2, freg $3, Negate) }
+  | FFLRP OPR OPR     { Fflr (freg $2, freg $3, Plus) }
+  | FFLRM OPR OPR     { Fflr (freg $2, freg $3, Minus) }
+  | RTOF  OPR OPR     { Rtof (freg $2, reg $3, Straight) }
+  | RTOFN OPR OPR     { Rtof (freg $2, reg $3, Negate) }
+  | RTOFP OPR OPR     { Rtof (freg $2, reg $3, Plus) }
+  | RTOFM OPR OPR     { Rtof (freg $2, reg $3, Minus) }
   | LD    OPR OPR OPR { Ld  (reg $2, reg $3, data_imm $4) }
   | ST    OPR OPR OPR { St  (reg $2, reg $3, data_imm $4) }
-  | FLD   OPR OPR OPR { Fld (freg $2, reg $3, data_imm $4) }
-  | FST   OPR OPR OPR { Fst (freg $2, reg $3, data_imm $4) }
+  | FLD   OPR OPR OPR { Fld  (freg $2, reg $3, data_imm $4) }
+  | FST   OPR OPR OPR { Fst  (freg $2, reg $3, data_imm $4) }
   | BEQ   OPR OPR OPR { Beq  (reg $2, reg $3, text_imm $4) }
   | BNE   OPR OPR OPR { Bne  (reg $2, reg $3, text_imm $4) }
   | BLT   OPR OPR OPR { Blt  (reg $2, reg $3, text_imm $4) }
@@ -95,7 +95,9 @@ expr:
   | FBNE  OPR OPR OPR { Fbne (freg $2, freg $3, text_imm $4) }
   | FBLT  OPR OPR OPR { Fblt (freg $2, freg $3, text_imm $4) }
   | FBGT  OPR OPR OPR { Fbgt (freg $2, freg $3, text_imm $4) }
-  | JMP   OPR OPR OPR { Jmp  (reg $2, reg $3, text_imm $4) }
+  | JMP   OPR OPR OPR { Jmp  (reg $2, reg $3, text_imm $4, Jump) }
+  | JMPC  OPR OPR OPR { Jmp  (reg $2, reg $3, text_imm $4, Call) }
+  | JMPR  OPR OPR OPR { Jmp  (reg $2, reg $3, text_imm $4, Return) }
   | PUT   OPR         { Put  (reg $2) }
   | GET   OPR         { Get  (reg $2) }
   | PUTB  OPR         { Putb (reg $2) }

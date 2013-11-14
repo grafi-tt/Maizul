@@ -58,18 +58,18 @@ let change offset env menv = function
   | Ftor  (d, a)    -> change_alu offset env menv 0b1101 d a (`FReg 0)
   | Feq   (d, a, b) -> change_alu offset env menv 0b1110 d a b
   | Flt   (d, a, b) -> change_alu offset env menv 0b1111 d a b
-  | Ld  (v, m, d) -> change_generic offset env menv 0b100000 m v d
-  | St  (v, m, d) -> change_generic offset env menv 0b100001 m v d
-  | Fld (v, m, d) -> change_generic offset env menv 0b101000 m v d
-  | Fst (v, m, d) -> change_generic offset env menv 0b101001 m v d
   | Fadd (d, a, b, sign) -> change_fpu 0b0000 d a b sign
   | Fsub (d, a, b, sign) -> change_fpu 0b0001 d a b sign
   | Fmul (d, a, b, sign) -> change_fpu 0b0010 d a b sign
   | Finv (d, a, sign) -> change_fpu 0b0011 d a (`FReg 0) sign
   | Fsqr (d, a, sign) -> change_fpu 0b0100 d a (`FReg 0) sign
   | Fmov (d, a, sign) -> change_fpu 0b0101 d a (`FReg 0) sign
-  | Rmovf (d, a, sign) -> change_fpu 0b0110 d a (`Reg 0) sign
-  | Rtof  (d, a, sign) -> change_fpu 0b0111 d a (`Reg 0) sign
+  | Fflr (d, a, sign) -> change_fpu 0b0110 d a (`FReg 0) sign
+  | Rtof (d, a, sign) -> change_fpu 0b0111 d a (`Reg 0) sign
+  | Ld  (v, m, d) -> change_generic offset env menv 0b010010 m v d
+  | St  (v, m, d) -> change_generic offset env menv 0b010011 m v d
+  | Fld (v, m, d) -> change_generic offset env menv 0b011010 m v d
+  | Fst (v, m, d) -> change_generic offset env menv 0b011011 m v d
   | Beq  (a, b, label) -> change_generic offset env menv 0b110000 a b label
   | Bne  (a, b, label) -> change_generic offset env menv 0b110001 a b label
   | Blt  (a, b, label) -> change_generic offset env menv 0b110010 a b label
@@ -78,11 +78,13 @@ let change offset env menv = function
   | Fbne (a, b, label) -> change_generic offset env menv 0b111001 a b label
   | Fblt (a, b, label) -> change_generic offset env menv 0b111010 a b label
   | Fbgt (a, b, label) -> change_generic offset env menv 0b111011 a b label
-  | Jmp  (l, t, label) -> change_generic offset env menv 0b010100 t l label
-  | Get  (y) -> change_generic offset env menv 0b010010 (`Reg 0) y (`Imm 0b00)
-  | Put  (x) -> change_generic offset env menv 0b010010 x (`Reg 0) (`Imm 0b01)
-  | Getb (y) -> change_generic offset env menv 0b010010 (`Reg 0) y (`Imm 0b10)
-  | Putb (x) -> change_generic offset env menv 0b010010 x (`Reg 0) (`Imm 0b11)
+  | Jmp  (l, t, label, Jump)   -> change_generic offset env menv 0b010100 t l label
+  | Jmp  (l, t, label, Call)   -> change_generic offset env menv 0b010101 t l label
+  | Jmp  (l, t, label, Return) -> change_generic offset env menv 0b010110 t l label
+  | Get  (y) -> change_generic offset env menv 0b010111 (`Reg 0) y (`Imm 0b00)
+  | Put  (x) -> change_generic offset env menv 0b010111 x (`Reg 0) (`Imm 0b01)
+  | Getb (y) -> change_generic offset env menv 0b010111 (`Reg 0) y (`Imm 0b10)
+  | Putb (x) -> change_generic offset env menv 0b010111 x (`Reg 0) (`Imm 0b11)
 
 let change_data_section ary =
   let expAry = Array.make (Array.length ary * 3 + 2) (Add (`Reg 0, `Reg 0, `Reg 0)) in
