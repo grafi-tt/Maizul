@@ -18,6 +18,7 @@ type mem_env
 
 type word = int
 type sign = Straight | Negate | Plus | Minus
+type hint = Jump | Call | Return
 
 type expr =
   | Add of reg * reg * reg_imm
@@ -42,8 +43,8 @@ type expr =
   | Finv of freg * freg * sign
   | Fsqr of freg * freg * sign
   | Fmov of freg * freg * sign
-  | Rmovf of freg * reg * sign
-  | Rtof  of freg * reg * sign
+  | Fflr of freg * freg * sign
+  | Rtof of freg * reg * sign
   | Ld  of reg * reg * data_imm
   | St  of reg * reg * data_imm
   | Fld of freg * reg * data_imm
@@ -56,7 +57,7 @@ type expr =
   | Fbne of freg * freg * text_imm
   | Fblt of freg * freg * text_imm
   | Fbgt of freg * freg * text_imm
-  | Jmp of reg * reg * text_imm
+  | Jmp of reg * reg * text_imm * hint
   | Get  of reg
   | Put  of reg
   | Getb of reg

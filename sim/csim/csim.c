@@ -39,7 +39,7 @@ static inline void set_gpr(inst_t tag, uint32_t v) {
 }
 
 static inline void set_fpr(inst_t tag, float v) {
-	FPR[tag] = v;
+	if (tag) FPR[tag] = v;
 }
 
 static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
@@ -58,7 +58,7 @@ static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
 		w = copysign(v, -1);
 		break;
 	}
-	FPR[tag] = w;
+	if (tag) FPR[tag] = w;
 }
 
 static union {
@@ -332,6 +332,7 @@ static void issue() {
 	inst_t tagY = bits(inst, 20, 16);
 	inst_t tagZ = bits(inst, 15, 11);
 	uint16_t imm = bits(inst, 15, 0);
+	uint32_t addr = (GPR[tagX] + ((int32_t) (int16_t) imm)) & (DATA_ADDR - 1);
 
 	switch (bits(inst, 31, 30)) {
 	case 0b00:
@@ -350,6 +351,18 @@ static void issue() {
 			case 0b1001:
 				assert(bits(inst, 10, 6) == 0);
 				return fpu(bits(inst, 3, 0), bits(inst, 5, 4), tagZ, FPR[tagX], FPR[tagY]);
+			case 0b0010:
+				set_gpr(tagY, DATA_MEM[addr]);
+				return issue();
+			case 0b0011:
+				DATA_MEM[addr] = GPR[tagY];
+				return issue();
+			case 0b1010:
+				set_fpr(tagY, int_as_float((int32_t) DATA_MEM[addr]));
+				return issue();
+			case 0b1011:
+				DATA_MEM[addr] = (uint32_t) float_as_int(FPR[tagY]);
+				return issue();
 			case 0b0100:
 			case 0b0101:
 			case 0b0110:
@@ -359,45 +372,16 @@ static void issue() {
 				set_gpr(tagY, PC);
 				PC = ((GPR[tagX] & (INST_ADDR - 1)) | imm);
 				return issue();
-			case 0b0010:
+			case 0b0111:
 				return rrsp(imm, tagY, GPR[tagX]);
-			case 0b0011:
-				return rfsp(imm, tagY, FPR[tagX]);
-			case 0b1010:
-				return frsp(imm, tagY, GPR[tagX]);
-			case 0b1011:
-				return ffsp(imm, tagY, FPR[tagX]);
 			default:
 				assert(false);
 				return issue();
 		}
 	case 0b10:
-		;
-		uint32_t addr = (GPR[tagX] + ((int32_t) (int16_t) imm)) & (DATA_ADDR - 1);
-		switch (bits(inst, 29, 26)) {
-			case 0b0000:
-				set_gpr(tagY, DATA_MEM[addr]);
-				return issue();
-			case 0b0001:
-				DATA_MEM[addr] = GPR[tagY];
-				return issue();
-			case 0b1000:
-				set_fpr(tagY, int_as_float((int32_t) DATA_MEM[addr]));
-				return issue();
-			case 0b1001:
-				DATA_MEM[addr] = (uint32_t) float_as_int(FPR[tagY]);
-				return issue();
-			default:
-				assert(false);
-				return issue();
-		}
+		return brr(bits(inst, 29, 26), imm, GPR[tagX], GPR[tagY]);
 	case 0b11:
-		switch (bits(inst, 29, 29)) {
-			case 0b0:
-				return brr(bits(inst, 28, 26), imm, GPR[tagX], GPR[tagY]);
-			case 0b1:
-				return brf(bits(inst, 28, 26), imm, FPR[tagX], FPR[tagY]);
-		}
+		return brf(bits(inst, 29, 26), imm, FPR[tagX], FPR[tagY]);
 	}
 }
 

@@ -22,6 +22,7 @@ type mem_env = int M.t
 
 type word = int
 type sign = Straight | Negate | Plus | Minus
+type hint = Jump | Call | Return
 
 type expr =
   | Add of reg * reg * reg_imm
@@ -46,8 +47,8 @@ type expr =
   | Finv of freg * freg * sign
   | Fsqr of freg * freg * sign
   | Fmov of freg * freg * sign
-  | Rmovf of freg * reg * sign
-  | Rtof  of freg * reg * sign
+  | Fflr of freg * freg * sign
+  | Rtof of freg * reg * sign
   | Ld  of reg * reg * data_imm
   | St  of reg * reg * data_imm
   | Fld of freg * reg * data_imm
@@ -60,7 +61,7 @@ type expr =
   | Fbne of freg * freg * text_imm
   | Fblt of freg * freg * text_imm
   | Fbgt of freg * freg * text_imm
-  | Jmp of reg * reg * text_imm
+  | Jmp of reg * reg * text_imm * hint
   | Get  of reg
   | Put  of reg
   | Getb of reg
@@ -135,26 +136,26 @@ let dump_expr = function
   | Fmul (x, y, z, Negate)   -> dump_generic3 "fmuln" x y z
   | Fmul (x, y, z, Plus)     -> dump_generic3 "fmulp" x y z
   | Fmul (x, y, z, Minus)    -> dump_generic3 "fmulm" x y z
-  | Finv (x, y, Straight)  -> dump_generic2 "finv"   x y
-  | Finv (x, y, Negate)    -> dump_generic2 "finvn"  x y
-  | Finv (x, y, Plus)      -> dump_generic2 "finvp"  x y
-  | Finv (x, y, Minus)     -> dump_generic2 "finvm"  x y
-  | Fsqr (x, y, Straight)  -> dump_generic2 "fsqr"   x y
-  | Fsqr (x, y, Negate)    -> dump_generic2 "fsqrn"  x y
-  | Fsqr (x, y, Plus)      -> dump_generic2 "fsqrp"  x y
-  | Fsqr (x, y, Minus)     -> dump_generic2 "fsqrm"  x y
-  | Fmov (x, y, Straight)  -> dump_generic2 "fmov"   x y
-  | Fmov (x, y, Negate)    -> dump_generic2 "fmovn"  x y
-  | Fmov (x, y, Plus)      -> dump_generic2 "fmovp"  x y
-  | Fmov (x, y, Minus)     -> dump_generic2 "fmovm"  x y
-  | Rmovf (x, y, Straight) -> dump_generic2 "rmovf"  x y
-  | Rmovf (x, y, Negate)   -> dump_generic2 "rmovfn" x y
-  | Rmovf (x, y, Plus)     -> dump_generic2 "rmovfp" x y
-  | Rmovf (x, y, Minus)    -> dump_generic2 "rmovfm" x y
-  | Rtof  (x, y, Straight) -> dump_generic2 "rtof"   x y
-  | Rtof  (x, y, Negate)   -> dump_generic2 "rtofn"  x y
-  | Rtof  (x, y, Plus)     -> dump_generic2 "rtofp"  x y
-  | Rtof  (x, y, Minus)    -> dump_generic2 "rtofm"  x y
+  | Finv (x, y, Straight) -> dump_generic2 "finv"  x y
+  | Finv (x, y, Negate)   -> dump_generic2 "finvn" x y
+  | Finv (x, y, Plus)     -> dump_generic2 "finvp" x y
+  | Finv (x, y, Minus)    -> dump_generic2 "finvm" x y
+  | Fsqr (x, y, Straight) -> dump_generic2 "fsqr"  x y
+  | Fsqr (x, y, Negate)   -> dump_generic2 "fsqrn" x y
+  | Fsqr (x, y, Plus)     -> dump_generic2 "fsqrp" x y
+  | Fsqr (x, y, Minus)    -> dump_generic2 "fsqrm" x y
+  | Fmov (x, y, Straight) -> dump_generic2 "fmov"  x y
+  | Fmov (x, y, Negate)   -> dump_generic2 "fmovn" x y
+  | Fmov (x, y, Plus)     -> dump_generic2 "fmovp" x y
+  | Fmov (x, y, Minus)    -> dump_generic2 "fmovm" x y
+  | Fflr (x, y, Straight) -> dump_generic2 "fflr"  x y
+  | Fflr (x, y, Negate)   -> dump_generic2 "fflrn" x y
+  | Fflr (x, y, Plus)     -> dump_generic2 "fflrp" x y
+  | Fflr (x, y, Minus)    -> dump_generic2 "fflrm" x y
+  | Rtof (x, y, Straight) -> dump_generic2 "rtof"  x y
+  | Rtof (x, y, Negate)   -> dump_generic2 "rtofn" x y
+  | Rtof (x, y, Plus)     -> dump_generic2 "rtofp" x y
+  | Rtof (x, y, Minus)    -> dump_generic2 "rtofm" x y
   | Ld  (x, y, z) -> dump_generic3 "ld"  x y z
   | St  (x, y, z) -> dump_generic3 "st"  x y z
   | Fld (x, y, z) -> dump_generic3 "fld" x y z
@@ -167,7 +168,9 @@ let dump_expr = function
   | Fbne (x, y, z) -> dump_generic3 "fbne" x y z
   | Fblt (x, y, z) -> dump_generic3 "fblt" x y z
   | Fbgt (x, y, z) -> dump_generic3 "fbgt" x y z
-  | Jmp  (x, y, z) -> dump_generic3 "jmp"  x y z
+  | Jmp  (x, y, z, Jump)   -> dump_generic3 "jmp"  x y z
+  | Jmp  (x, y, z, Call)   -> dump_generic3 "jmpc" x y z
+  | Jmp  (x, y, z, Return) -> dump_generic3 "jmpr" x y z
   | Get  (x) -> dump_generic1 "get"  x
   | Put  (x) -> dump_generic1 "put"  x
   | Getb (x) -> dump_generic1 "getb" x
