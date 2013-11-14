@@ -13,8 +13,8 @@ architecture Implementation of ItoF is
     type u_frc_ary_t is array (4 downto 0) of unsigned(32 downto 0);
     signal u_frc : u_frc_ary_t;
     signal x_nlz : std_logic_vector(4 downto 0);
-    signal u_frc_out : unsigned(32 downto 0);
-    signal ufrc_norm : unsigned(23 downto 0);
+    signal u_frc_tmp : unsigned(32 downto 0);
+    signal u_frc_norm : unsigned(23 downto 0);
     signal exp_out : std_logic_vector(7 downto 0);
     signal frc_out : std_logic_vector(22 downto 0);
     signal tail_any : std_logic;
@@ -35,16 +35,16 @@ begin
     x_nlz(0) <= '0'             when u_frc(0)(32 downto 32) = 0 else '1';
     u_frc_tmp <= u_frc(0) sll 1 when u_frc(0)(32 downto 32) = 0 else u_frc(0);
 
-    tail_any <= '0' when u_frc_out(7 downto 0) = 0 else '1';
-    round <= (u_frc_out(8) and tail_any) or (u_frc_out(9) and u_frc_out(8));
+    tail_any <= '0' when u_frc_tmp(7 downto 0) = 0 else '1';
+    round <= (u_frc_tmp(8) and tail_any) or (u_frc_tmp(9) and u_frc_tmp(8));
 
     u_frc_norm <= u_frc_tmp(32 downto 9) + (x"00000" & "000" & round);
 
     frc_out <= std_logic_vector(u_frc_norm(22 downto 0)) when u_frc_norm(23) = '0' else
-               '0' & std_logic_vector(u_frc_norm(21 downto 0)); -- round up or `itof(1)` or `itof(0)`, always 0
+               std_logic_vector('0' & u_frc_norm(21 downto 0)); -- round up or `itof(1)` or `itof(0)`, always 0
 
-    exp_out <= "00000000" when u_frc_out(32) = '0' and u_frc_tmp(31) = '0' else
-               "01111111" when u_frc_out(32) = '0' and u_frc_tmp(31) = '1' else
+    exp_out <= "00000000" when u_frc_tmp(32) = '0' and u_frc_tmp(31) = '0' else
+               "01111111" when u_frc_tmp(32) = '0' and u_frc_tmp(31) = '1' else
                "100" & std_logic_vector(unsigned(x_nlz) + 1) when u_frc_norm(23) = '0' else
                "100" & x_nlz;
 

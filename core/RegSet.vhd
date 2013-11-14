@@ -25,7 +25,7 @@ begin
     write : process(clk)
     begin
         if rising_edge(clk) then
-            lineW <= valSet(to_integer(unsigned(tagW)));
+            valSet(to_integer(unsigned(tagW))) <= lineW;
         end if;
     end process;
 
