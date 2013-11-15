@@ -93,8 +93,8 @@ begin
 
     ftoi_map : FtoI port map (
         clk => clk,
-        i => s,
-        f => ftoiD);
+        f => s,
+        i => ftoiD);
 
     with codeInternal select
         emitVal <= addD when "0000",

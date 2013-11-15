@@ -11,7 +11,7 @@ end FtoI;
 
 architecture Implementation of FtoI is
     signal x_len : std_logic_vector(8 downto 0);
-    signal u_frc_4, u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o : unsigned(31 downto 0);
+    signal u_frc_4, u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o, u_frc_v : unsigned(31 downto 0);
     signal any_4, any_3, any_2, any_1, any_0, any_o : std_logic;
     signal round : std_logic;
 
