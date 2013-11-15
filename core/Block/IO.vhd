@@ -7,8 +7,8 @@ entity IO is
         clk : in std_logic;
         enable : in boolean;
         code : in std_logic;
-        serialOk : buffer std_logic := '0';
-        serialGo : buffer std_logic := '0';
+        serialOk : out std_logic;
+        serialGo : out std_logic;
         serialRecvData : in std_logic_vector(7 downto 0);
         serialSendData : out std_logic_vector(7 downto 0);
         serialRecved : in std_logic;
@@ -25,6 +25,7 @@ architecture Implementation of IO is
     signal state : state_t := Sleep;
     signal byteState : integer range 3 downto 0 := 3;
     signal buf : value_t := (others => '0');
+    signal ok, go : std_logic := '0';
 
 begin
     every_clock_do : process(clk)
@@ -42,12 +43,12 @@ begin
 
             case state is
                 when Recv =>
-                    if serialRecved = '1' and serialOk = '0' then
-                        serialOk <= '1';
+                    if serialRecved = '1' and ok = '0' then
+                        ok <= '1';
                     end if;
 
-                    if serialRecved = '0' and serialOk = '1' then
-                        serialOk <= '0';
+                    if serialRecved = '0' and ok = '1' then
+                        ok <= '0';
                         buf <= buf(23 downto 0) & serialRecvData;
                         if byteState = 0 then
                             byteState <= 3;
@@ -58,12 +59,12 @@ begin
                     end if;
 
                 when Send =>
-                    if serialSent = '1' and serialGo = '0' then
-                        serialGo <= '1';
+                    if serialSent = '1' and go = '0' then
+                        go <= '1';
                     end if;
 
-                    if serialSent = '0' and serialGo = '1' then
-                        serialGo <= '0';
+                    if serialSent = '0' and go = '1' then
+                        go <= '0';
                         buf <= buf(23 downto 0) & x"00";
                         if byteState = 0 then
                             byteState <= 3;
@@ -79,6 +80,8 @@ begin
         end if;
     end process;
 
+    serialOk <= ok;
+    serialGo <= go;
     serialSendData <= buf(31 downto 24);
     emitVal <= buf;
     blocking <= state /= Sleep;

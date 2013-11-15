@@ -72,7 +72,7 @@ begin
     zBTmp <= '1' when t(30 downto 0) = z31 else '0';
 
     eqD <= '1' when s = t else '0';
-    ltD <= ((s(31) xor t(31)) and ltTmp) or (not s(31) and t(31));
+    ltD <= ((s(31) xnor t(31)) and ltTmp) or (s(31) and not t(31));
 
     andD <= s and t;
     xorD <= s xor t;

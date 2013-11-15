@@ -7,8 +7,8 @@ entity DataPath is
     port (
         clk : in std_logic;
 
-        serialOk : buffer std_logic;
-        serialGo : buffer std_logic;
+        serialOk : out std_logic;
+        serialGo : out std_logic;
         serialRecvData : in std_logic_vector(7 downto 0);
         serialSendData : out std_logic_vector(7 downto 0);
         serialRecved : in std_logic;
@@ -88,8 +88,8 @@ architecture DataPathImp of DataPath is
             clk : in std_logic;
             enable : in boolean;
             code : in std_logic;
-            serialOk : buffer std_logic;
-            serialGo : buffer std_logic;
+            serialOk : out std_logic;
+            serialGo : out std_logic;
             serialRecvData : in std_logic_vector(7 downto 0);
             serialSendData : out std_logic_vector(7 downto 0);
             serialRecved : in std_logic;
@@ -128,14 +128,17 @@ architecture DataPathImp of DataPath is
 
     signal codeA : std_logic_vector(3 downto 0);
     signal tagD : tag_t;
-    signal valBI : value_t;
     signal emitTagA : tag_t;
     signal emitValA : value_t;
 
     signal codeF : std_logic_vector(2 downto 0);
     signal functF : std_logic_vector(1 downto 0);
+    signal tagFD : tag_t;
     signal tagF1, tagF2, emitTagF : tag_t;
     signal emitValF : value_t;
+
+    signal valAP : value_t;
+    signal valBP : value_t;
 
     signal codeB : std_logic_vector(4 downto 0);
     signal tagL : tag_t;
@@ -150,7 +153,7 @@ architecture DataPathImp of DataPath is
     signal load0, load1, load2, load3, emitLoad : boolean := true;
     signal tagM0, tagM1, tagM2, tagM3, emitTagM : tag_t := (others => '0');
     signal tagFM0, tagFM1, tagFM2, tagFM3, emitTagFM : tag_t := (others => '0');
-    signal valM0, valM1, valM2, valM3, emitValM : value_t := (others => '0');
+    signal valM0, valM1, valM2, emitValM : value_t := (others => '0');
     signal fwdM_1, fwdM_2 : boolean := false;
     signal tagLd : tag_t;
     signal tagFLd : tag_t;
@@ -215,30 +218,34 @@ begin
         clk => clk,
         code => codeA,
         tagD => tagD,
-        valA => valX,
-        valB => valBI,
+        valA => valAP,
+        valB => valBP,
         emitTag => emitTagA,
         emitVal => emitValA);
     tagD <= "00000" when stall or ignore else
             tagY when opH = "00" else
             tagZ when (opH = "01" and opL(3 downto 1) = "000") else
             "00000";
-    valBI <= immSigned when opH = "00" else valY;
     codeA <= opL when opH = "00" else instruction(3 downto 0);
 
     fpu_map : FPU port map (
         clk => clk,
         code => codeF,
         funct => functF,
-        tagD => tagD,
-        valA => valX,
-        valB => valBI,
+        tagD => tagFD,
+        valA => valAP,
+        valB => valBP,
         tag1 => tagF1,
         tag2 => tagF2,
         emitTag => emitTagF,
         emitVal => emitValF);
+    tagFD <= tagZ when (opH = "01" and opL(3 downto 1) = "100") and not stall and not ignore else
+             "00000";
     codeF <= instruction(2 downto 0);
     functF <= instruction(5 downto 4);
+
+    valAP <= valX when opH = "00" or opL(0) = '0' else valFX;
+    valBP <= immSigned when opH = "00" else valY when opL(0) = '0' else valFY;
 
     branch_map : Branch port map (
         clk => clk,
@@ -256,7 +263,7 @@ begin
              opH(0) & opL when opH(1) = '1' else
              "00000" when (opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11") else -- always true
              "00001"; -- always false
-    tagL <= tagY when (opH = "01" and opL(3 downto 2) = "01") and not stall and not ignore else
+    tagL <= tagY when (opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11") and not stall and not ignore else
             "00000";
     valA <= valX when opH(1) = '1' and not stall and not ignore else (others => '0');
     valB <= valY when opH(1) = '1' and not stall and not ignore else (others => '0');
@@ -416,7 +423,7 @@ begin
                  (load2 and tagZ = tagFM2) or
                  (load3 and tagZ = tagFM3));
 
-    stall <= stallX or stallY or blocking;
+    stall <= stallX or stallY or stallZ or stallFX or stallFY or stallFZ or blocking;
     ignore <= ignoreJ1 or ignoreJ2;
 
 end DataPathImp;

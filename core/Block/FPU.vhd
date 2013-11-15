@@ -83,6 +83,9 @@ begin
     d_finv <= (others => '1');
     d_fsqr <= (others => '1');
 
+    -- TODO: it is only `truncate`!!
+    d_fflr <= a1(31 downto 23) & x"00000" & "000";
+
     itof_map : ItoF port map (
         clk => clk,
         i => a1,
