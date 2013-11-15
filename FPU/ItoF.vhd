@@ -40,11 +40,11 @@ begin
 
     u_frc_norm <= u_frc_tmp(32 downto 9) + (x"00000" & "000" & round);
 
-    frc_out <= std_logic_vector(u_frc_norm(22 downto 0)) when u_frc_norm(23) = '0' else
-               std_logic_vector('0' & u_frc_norm(21 downto 0)); -- round up or `itof(1)` or `itof(0)`, always 0
+    frc_out <= std_logic_vector('0' & u_frc_norm(21 downto 0)) when u_frc_norm(23) = '0' else -- round up or `itof(1)` or `itof(0)`, always 0
+               std_logic_vector(u_frc_norm(22 downto 0));
 
-    exp_out <= "00000000" when u_frc_tmp(32) = '0' and u_frc_tmp(31) = '0' else
-               "01111111" when u_frc_tmp(32) = '0' and u_frc_tmp(31) = '1' else
+    exp_out <= "00000000" when u_frc_tmp(32 downto 31) = "00" else
+               "01111111" when u_frc_tmp(32 downto 31) = "01" else
                "100" & std_logic_vector(unsigned(x_nlz) + 1) when u_frc_norm(23) = '0' else
                "100" & x_nlz;
 
