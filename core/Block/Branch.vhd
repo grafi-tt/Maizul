@@ -63,10 +63,10 @@ begin
     zBTmp <= b(30 downto 0) = z31;
 
     rEq <= a = b;
-    sLt <= (a(31) = '0' and b(31) = '1') or
+    sLt <= (a(31) = '1' and b(31) = '0') or
            ((a(31) = b(31)) and ltTmp);
     fEq <= rEq or (zATmp and zBTmp);
-    fLt <= (a(31) = '0' and b(31) = '1') or
+    fLt <= (a(31) = '1' and b(31) = '0') or
            ((a(31) = '0' and b(31) = '0') and ltTmp) or
            ((a(31) = '1' and b(31) = '1') and (not ltTmp));
 
