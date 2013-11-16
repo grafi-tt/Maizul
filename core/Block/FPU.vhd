@@ -50,10 +50,11 @@ architecture Implementation of FPU is
     constant o_frc : std_logic_vector(22 downto 0) := x"00000" & "001";
     signal invalid : boolean;
 
-    signal code1, code2 : std_logic_vector(2 downto 0) := (others => '0');
+    signal code1, code2, code3 : std_logic_vector(2 downto 0) := (others => '0');
     signal funct1, funct2, funct3 : std_logic_vector(1 downto 0) := (others => '0');
 
-    signal a1, b1, d2, d3, d_fadd, d_fmul, d_finv, d_fflr, d_fsqr, d_itof : std_logic_vector(31 downto 0) := (others => '0');
+    signal a1, b1, d2, d3 : std_logic_vector(31 downto 0) := (others => '0');
+    signal d_fadd, d_fmul, d_finv, d_fflr, d_fsqr, d_itof, d_out : std_logic_vector(31 downto 0);
 
 begin
     pipe0 : process(clk)
@@ -160,34 +161,27 @@ begin
     pipe2 : process(clk)
     begin
         if rising_edge(clk) then
-            case code2 is
-                when "000" =>
-                    d3 <= d_fadd;
-                when "001" =>
-                    d3 <= d_fadd;
-                when "010" =>
-                    d3 <= d_fmul;
-                when "011" =>
-                    d3 <= d_finv;
-                when "100" =>
-                    d3 <= d_fsqr;
-                when "101" =>
-                    d3 <= d2;
-                when "110" =>
-                    d3 <= d_fflr;
-                when others =>
-                    d3 <= d_itof;
-            end case;
-
+            d3 <= d2;
+            code3 <= code2;
             emitTag <= tag2;
             funct3 <= funct2;
         end if;
     end process;
 
+    with code3 select
+        d_out <= d_fadd when "000",
+                 d_fadd when "001",
+                 d_fmul when "010",
+                 d_finv when "011",
+                 d_fsqr when "100",
+                 d3 when "101",
+                 d_fflr when "110",
+                 d_itof when others;
+
     with funct3 select
-        emitVal <= value_t(d3) when "00",
-                   value_t(not d3(31) & d3(30 downto 0)) when "01",
-                   value_t('0' & d3(30 downto 0)) when "10",
-                   value_t('1' & d3(30 downto 0)) when others;
+        emitVal <= value_t(d_out) when "00",
+                   value_t(not d_out(31) & d_out(30 downto 0)) when "01",
+                   value_t('0' & d_out(30 downto 0)) when "10",
+                   value_t('1' & d_out(30 downto 0)) when others;
 
 end Implementation;
