@@ -288,7 +288,8 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
             return issue();
         case 0b01:
             assert(tagX == 0);
-            printf("%u\n", y);
+            //printf("%u\n", y);
+            printf("%f\n", int_as_float(y));
             return issue();
         case 0b10:
             assert(y == 0);
