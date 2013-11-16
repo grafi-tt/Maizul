@@ -136,15 +136,15 @@ begin
                     if a_sgn = '1' then
                         d2 <= '1' & h_exp & o_frc;
                     else
-                        d2 <= valA;
+                        d2 <= a1;
                     end if;
                 when "101" =>
-                    d2 <= valA;
+                    d2 <= a1;
                 when "110" =>
                     -- TODO
-                    d2 <= valA;
+                    d2 <= a1;
                 when others =>
-                    d2 <= valA;
+                    d2 <= a1;
             end case;
 
             if invalid then
@@ -153,7 +153,7 @@ begin
                 code2 <= code1;
             end if;
 
-            funct2 <= funct;
+            funct2 <= funct1;
             tag2 <= tag1;
         end if;
     end process;
@@ -163,8 +163,8 @@ begin
         if rising_edge(clk) then
             d3 <= d2;
             code3 <= code2;
-            emitTag <= tag2;
             funct3 <= funct2;
+            emitTag <= tag2;
         end if;
     end process;
 
