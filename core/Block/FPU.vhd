@@ -54,7 +54,7 @@ architecture Implementation of FPU is
     signal funct1, funct2, funct3 : std_logic_vector(1 downto 0) := (others => '0');
 
     signal a1, b1, d2, d3 : std_logic_vector(31 downto 0) := (others => '0');
-    signal d_fadd, d_fmul, d_finv, d_fflr, d_fsqr, d_itof, d_out : std_logic_vector(31 downto 0);
+    signal b_fadd, d_fadd, d_fmul, d_finv, d_fflr, d_fsqr, d_itof, d_out : std_logic_vector(31 downto 0);
 
 begin
     pipe0 : process(clk)
@@ -71,8 +71,9 @@ begin
     fadd_map : FAdd port map (
         clk => clk,
         flt_in1 => a1,
-        flt_in2 => b1,
+        flt_in2 => b_fadd,
         flt_out => d_fadd);
+    b_fadd <= (b1(31) xor code1(0)) & b1(30 downto 0);
 
     fmul_map : FMul port map (
         clk => clk,
@@ -136,15 +137,15 @@ begin
                     if a_sgn = '1' then
                         d2 <= '1' & h_exp & o_frc;
                     else
-                        d2 <= valA;
+                        d2 <= a1;
                     end if;
                 when "101" =>
-                    d2 <= valA;
+                    d2 <= a1;
                 when "110" =>
                     -- TODO
-                    d2 <= valA;
+                    d2 <= a1;
                 when others =>
-                    d2 <= valA;
+                    d2 <= a1;
             end case;
 
             if invalid then
@@ -153,7 +154,7 @@ begin
                 code2 <= code1;
             end if;
 
-            funct2 <= funct;
+            funct2 <= funct1;
             tag2 <= tag1;
         end if;
     end process;
@@ -163,8 +164,8 @@ begin
         if rising_edge(clk) then
             d3 <= d2;
             code3 <= code2;
-            emitTag <= tag2;
             funct3 <= funct2;
+            emitTag <= tag2;
         end if;
     end process;
 

@@ -201,7 +201,7 @@ begin
         lineW => valFW);
     tagFW <= emitTagF or tagFld;
     valFW <= emitValF when emitTagF /= "00000" else
-             emitValM when tagLd /= "00000" else
+             emitValM when tagFld /= "00000" else
              (others => '0');
     tagFld <= emitTagFM when emitLoad else "00000";
 
@@ -265,8 +265,14 @@ begin
              "00001"; -- always false
     tagL <= tagY when (opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11") and not stall and not ignore else
             "00000";
-    valA <= valX when opH(1) = '1' and not stall and not ignore else (others => '0');
-    valB <= valY when opH(1) = '1' and not stall and not ignore else (others => '0');
+    valA <= (others => '0') when stall or ignore else
+            valX when opH = "10" else
+            valFX when opH = "11" else
+            (others => '0');
+    valB <= (others => '0') when stall or ignore else
+            valY when opH = "10" else
+            valFY when opH = "11" else
+            (others => '0');
     target <= blkram_addr(imm) when opH(1) = '1' else blkram_addr(imm or valX(15 downto 0));
 
 
@@ -291,9 +297,9 @@ begin
     ignoreJ2 <= jump;
 
     -- phase 0
-    load0 <= opL(0) = '0' when opH = "01" and opL(2 downto 1) = "01" and not stall and not ignore else true;
-    tagM0 <= tagY         when opH = "01" and opL(3 downto 1) = "001"and not stall and not ignore else "00000";
-    tagFM0 <= tagY        when opH = "01" and opL(3 downto 1) = "101"and not stall and not ignore else "00000";
+    load0 <= opL(0) = '0' when opH = "01" and opL(2 downto 1) = "01"  and not stall and not ignore else true;
+    tagM0 <= tagY         when opH = "01" and opL(3 downto 1) = "001" and not stall and not ignore else "00000";
+    tagFM0 <= tagY        when opH = "01" and opL(3 downto 1) = "101" and not stall and not ignore else "00000";
     valM0 <= valY;
     addr0 <= sram_addr(unsigned(valX(19 downto 0)) + unsigned(immSigned(19 downto 0)));
 
@@ -402,7 +408,7 @@ begin
     stallZ <= gprZ and tagZ /= "00000" and
               ( (load1 and tagZ = tagM1) or
                 (load2 and tagZ = tagM2) or
-                (load3 and tagZ = tagM3));
+                (load3 and tagM3 /= "00000"));
 
     stallFX <= fprX and tagX /= "00000" and
                ( (tagX = tagF1) or
@@ -417,11 +423,7 @@ begin
                  (load2 and tagY = tagFM2) or
                  (load3 and tagY = tagFM3));
     stallFZ <= fprZ and tagZ /= "00000" and
-               ( (tagZ = tagF1) or
-                 (tagZ = tagF2) or
-                 (load1 and tagZ = tagFM1) or
-                 (load2 and tagZ = tagFM2) or
-                 (load3 and tagZ = tagFM3));
+               ( (load1 and tagFM1 /= "00000"));
 
     stall <= stallX or stallY or stallZ or stallFX or stallFY or stallFZ or blocking;
     ignore <= ignoreJ1 or ignoreJ2;
