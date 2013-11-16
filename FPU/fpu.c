@@ -81,6 +81,7 @@ int32_t ftoi_circuit(float f) {
            ~u_frc_v;
 }
 
+/* x87との誤差2ulpを達成してた．非正規化数が絡むulp計算を手抜きするために2^-127より小さい値は（偶数丸めにせず）0に落としてしまっている． */
 float finv_soft(float a) {
     if (a == 0.0f) return copysign(INFINITY, a);
     if (fabs(a) >= scalbn(1.0f, 127)) return copysign(0.0f, a);
@@ -92,6 +93,7 @@ float finv_soft(float a) {
     return x;
 }
 
+/* x87との誤差3ulpを達成してた．aが0のときの処理はやってないけど何故かちゃんと動く． */
 float fsqr_soft(float a) {
     if (a == INFINITY) return a;
     float ahalf = 0.5f * a;

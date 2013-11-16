@@ -60,3 +60,8 @@ static inline int count_ulp(float x, float y, int lim) {
     }
     return n;
 }
+
+float itof_circuit(int32_t i);
+int32_t ftoi_circuit(float f);
+float finv_soft(float a);
+float fsqr_soft(float a);
