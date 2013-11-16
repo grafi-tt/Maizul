@@ -78,12 +78,12 @@ begin
     xorD <= s xor t;
     orD <= s or t;
 
-    sllD <= std_logic_vector(shift_left(unsigned(s), to_integer(unsigned(s(4 downto 0)))));
-    srlD <= std_logic_vector(shift_right(unsigned(s), to_integer(unsigned(s(4 downto 0)))));
-    sraD <= std_logic_vector(shift_right(signed(s), to_integer(unsigned(s(4 downto 0)))));
+    sllD <= std_logic_vector(shift_left(unsigned(s), to_integer(unsigned(t(4 downto 0)))));
+    srlD <= std_logic_vector(shift_right(unsigned(s), to_integer(unsigned(t(4 downto 0)))));
+    sraD <= std_logic_vector(shift_right(signed(s), to_integer(unsigned(t(4 downto 0)))));
 
     catD <= t(15 downto 0) & s(15 downto 0);
-    mulD <= value_t((unsigned(t(15 downto 0)) * unsigned(s(15 downto 0))));
+    mulD <= value_t((unsigned(s(15 downto 0)) * unsigned(t(15 downto 0))));
 
     feqD <= eqD or (zATmp and zBTmp);
     fltD <= not feqD and
