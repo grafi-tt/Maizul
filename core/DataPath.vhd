@@ -408,7 +408,7 @@ begin
     stallZ <= gprZ and tagZ /= "00000" and
               ( (load1 and tagZ = tagM1) or
                 (load2 and tagZ = tagM2) or
-                (load3 and tagZ = tagM3));
+                (load3 and tagM3 /= "00000"));
 
     stallFX <= fprX and tagX /= "00000" and
                ( (tagX = tagF1) or
@@ -423,11 +423,7 @@ begin
                  (load2 and tagY = tagFM2) or
                  (load3 and tagY = tagFM3));
     stallFZ <= fprZ and tagZ /= "00000" and
-               ( (tagZ = tagF1) or
-                 (tagZ = tagF2) or
-                 (load1 and tagZ = tagFM1) or
-                 (load2 and tagZ = tagFM2) or
-                 (load3 and tagZ = tagFM3));
+               ( (load1 and tagFM1 /= "00000"));
 
     stall <= stallX or stallY or stallZ or stallFX or stallFY or stallFZ or blocking;
     ignore <= ignoreJ1 or ignoreJ2;
