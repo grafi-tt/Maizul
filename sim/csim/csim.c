@@ -168,7 +168,9 @@ static void aluf(inst_t code, inst_t tagD, float a, float b) {
         return issue();
     case 0b1101:
         assert(b == 0.0);
-        set_gpr(tagD, (uint32_t) (int32_t) a);
+        int64_t l = lrint(a);
+        int32_t i =  l > INT32_MAX ? INT32_MAX : l < INT32_MIN ? INT32_MIN : l;
+        set_gpr(tagD, (uint32_t) i);
         return issue();
     case 0b1110:
         set_gpr(tagD, a == b);
