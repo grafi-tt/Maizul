@@ -31,17 +31,25 @@ begin
     every_clock_do : process(clk)
     begin
         if (rising_edge(clk)) then
-            if enable then
-                if code = '0' then
-                    state <= Recv;
-                else
-                    state <= Send;
-                end if;
-                emitTag <= getTag;
-                buf <= putVal;
-            end if;
-
             case state is
+                when Sleep =>
+                    if enable then
+                        case code is
+                            when "00" =>
+                                state <= Recv;
+                            when "01" =>
+                                state <= Send;
+                            when "10" =>
+                                state <= Recv;
+                                byteState <= 0;
+                            when others =>
+                                state <= Send;
+                                byteState <= 0;
+                        end case;
+                        emitTag <= getTag;
+                        buf <= putVal;
+                    end if;
+
                 when Recv =>
                     if serialRecved = '1' and ok = '0' then
                         ok <= '1';
@@ -73,9 +81,6 @@ begin
                             byteState <= byteState - 1;
                         end if;
                     end if;
-
-                when Sleep =>
-                    null;
             end case;
         end if;
     end process;
