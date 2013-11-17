@@ -280,10 +280,7 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
     switch (func) {
         case 0b00:
             assert(y == 0);
-            for (int i = 0; i < 4; i++) {
-                y = y << 8;
-                y &= (unsigned char) getchar();
-            }
+            scanf("%d", &y);
             set_gpr(tagX, y);
             return issue();
         case 0b01:
