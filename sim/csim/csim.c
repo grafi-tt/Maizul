@@ -10,13 +10,15 @@
 #define INST_ADDR 0x10000 // 64Kword
 #define DATA_ADDR 0x800000 // 8Mword
 
-#define NDEBUG
+//#define NDEBUG
 #define FLG_STEP false
 #define FLG_COUNT_INST true
 #define FLG_EXACT_FPU true
 #define FLG_DUMP_FADD false
 #define FLG_DUMP_FSUB false
 #define FLG_DUMP_FMUL false
+#define FLG_DAMN_DEBUG true
+#define FLG_FLUSH false
 #include <assert.h>
 
 typedef uint32_t inst_t;
@@ -119,6 +121,31 @@ static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t b) {
         set_gpr(tagD, a >> bits(b, 4, 0));
         return issue();
     case 0b1001:
+        if (FLG_DAMN_DEBUG && !a && !tagD) {
+            switch (b) {
+            case 0:
+                set_fpr(1, kill_denormal(1 / FPR[1]));
+                PC = GPR[31];
+                return issue();
+            case 1:
+                set_fpr(1, kill_denormal(sqrtf(FPR[1])));
+                PC = GPR[31];
+                return issue();
+            case 2:
+                set_fpr(1, kill_denormal(sinf(FPR[1])));
+                PC = GPR[31];
+                return issue();
+            case 3:
+                set_fpr(1, kill_denormal(cosf(FPR[1])));
+                PC = GPR[31];
+                return issue();
+            case 4:
+                set_fpr(1, kill_denormal(atanf(FPR[1])));
+                PC = GPR[31];
+                return issue();
+            default: ;
+            }
+        }
         set_gpr(tagD, ((int32_t) a) >> bits(b, 4, 0)); // relying on undefined behavior
         return issue();
     case 0b1010:
@@ -206,13 +233,20 @@ static void fpu(inst_t code, inst_t sgn, inst_t tagD, float a, float b) {
         set_fpr_sgn(tagD, sgn, dump_fmul(a, b, fmul(a, b)));
         return issue();
     case 0b011:
+        assert(b == 0);
         set_fpr_sgn(tagD, sgn, 1 / a);
         return issue();
     case 0b100:
+        assert(b == 0);
         set_fpr_sgn(tagD, sgn, sqrtf(a));
         return issue();
     case 0b101:
+        assert(b == 0);
         set_fpr_sgn(tagD, sgn, a);
+        return issue();
+    case 0b110:
+        assert(b == 0);
+        set_fpr_sgn(tagD, sgn, floorf(a));
         return issue();
     default:
         assert(false);
@@ -222,10 +256,6 @@ static void fpu(inst_t code, inst_t sgn, inst_t tagD, float a, float b) {
 
 static void fpur(inst_t code, inst_t sgn, inst_t tagD, uint32_t a, uint32_t b) {
     switch (code) {
-    case 0b110:
-        assert(b == 0);
-        set_fpr_sgn(tagD, sgn, int_as_float((int32_t) a));
-        return issue();
     case 0b111:
         assert(b == 0);
         set_fpr_sgn(tagD, sgn, ((float) (int32_t) a));
@@ -299,9 +329,7 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
         case 0b11:
             assert(tagX == 0);
             putchar((unsigned char) y);
-#ifndef NDEBUG
-            fflush(stdout);
-#endif
+            if (FLG_FLUSH) fflush(stdout);
             return issue();
         default:
             assert(false);
