@@ -49,6 +49,10 @@ static inline float ftoi_native(float f) {
     return l > INT32_MAX ? INT32_MAX : l < INT32_MIN ? INT32_MIN : l;
 }
 
+static inline float fflr_native(float f) {
+    return floorf(f);
+}
+
 static inline int count_ulp(float x, float y, int lim) {
     if (isnan(x) || isnan(y)) return -1;
     if (isinf(x) && isinf(y)) return signbit(x) == signbit(y) ? 0 : -1;
@@ -63,5 +67,6 @@ static inline int count_ulp(float x, float y, int lim) {
 
 float itof_circuit(int32_t i);
 int32_t ftoi_circuit(float f);
+float fflr_circuit(float f);
 float finv_soft(float a);
 float fsqr_soft(float a);
