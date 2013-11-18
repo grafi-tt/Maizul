@@ -379,12 +379,14 @@ begin
             emitValA when tagX = emitTagA else
             value_t(x"0000" & emitValB) when tagX = emitTagB else
             emitValM when emitLoad and tagX = emitTagM else
+            emitValIO when tagX = emitTagIO else
             valRegX;
 
     valY <= (others => '0') when tagY = "00000" else
             emitValA when tagY = emitTagA else
             value_t(x"0000" & emitValB) when tagY = emitTagB else
             emitValM when emitLoad and tagY = emitTagM else
+            emitValIO when tagY = emitTagIO else
             valRegY;
 
     valFX <= (others => '0') when tagX = "00000" else

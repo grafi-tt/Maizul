@@ -15,8 +15,8 @@ entity IO is
         serialSent : in std_logic;
         getTag : in tag_t;
         putVal : in value_t;
-        emitTag : out tag_t := (others => '0');
-        emitVal : out value_t := (others => '0');
+        emitTag : out tag_t;
+        emitVal : out value_t;
         blocking : out boolean);
 end IO;
 
@@ -26,6 +26,8 @@ architecture Implementation of IO is
     signal byteState : integer range 3 downto 0 := 3;
     signal buf : value_t := (others => '0');
     signal ok, go : std_logic := '0';
+    signal tagIO : tag_t := "00000";
+    signal recving : boolean := false;
 
 begin
     every_clock_do : process(clk)
@@ -33,21 +35,27 @@ begin
         if (rising_edge(clk)) then
             case state is
                 when Sleep =>
+                    recving <= false;
                     if enable then
                         case code is
                             when "00" =>
                                 state <= Recv;
+                                buf <= (others => '0');
                             when "01" =>
                                 state <= Send;
+                                buf <= putVal;
                             when "10" =>
                                 state <= Recv;
                                 byteState <= 0;
-                            when others =>
+                                buf <= (others => '0');
+                            when "11" =>
                                 state <= Send;
                                 byteState <= 0;
+                                buf <= putVal(7 downto 0) & x"000000";
+                            when others =>
+                                assert false;
                         end case;
-                        emitTag <= getTag;
-                        buf <= putVal;
+                        tagIO <= getTag;
                     end if;
 
                 when Recv =>
@@ -59,6 +67,7 @@ begin
                         ok <= '0';
                         buf <= buf(23 downto 0) & serialRecvData;
                         if byteState = 0 then
+                            recving <= true;
                             byteState <= 3;
                             state <= Sleep;
                         else
@@ -89,6 +98,7 @@ begin
     serialGo <= go;
     serialSendData <= buf(31 downto 24);
     emitVal <= buf;
+    emitTag <= tagIO when recving else "00000";
     blocking <= state /= Sleep;
 
 end Implementation;

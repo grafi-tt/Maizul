@@ -77,8 +77,8 @@ begin
 
             if (recved = '0') then
                 if (recvCnt = 0) then
-                    hread(li, recvBuf);
                     readline(stdin, li);
+                    hread(li, recvBuf);
                     recved <= '1';
                 else
                     recvCnt <= recvCnt - 1;
