@@ -111,6 +111,8 @@ begin
             if load1 then
                 if not (addr1 = addr2 and (not load2)) then
                     data <= pseudoRam(to_integer(unsigned(addr1(PSEUDORAM_WIDTH-1 downto 0))));
+                else
+                    data <= data;
                 end if;
             else
                 data <= (others => 'Z');
