@@ -89,7 +89,7 @@ float fflr_circuit(float f) {
     uint32_t f_out;
 
     len_raw = bits(fu, 30, 23) - 0x7F;
-    len = bits(len_raw, 9, 9) == 1 ? 0 : bits(len_raw, 8, 5) != 0 ? 31 : len_raw;
+    len = bits(len_raw, 8, 8) == 1 ? 0 : bits(len_raw, 7, 5) != 0 ? 31 : len_raw;
     x_mask = UINT32_C(0x007FFFFF) >> len;
     incr = (x_mask << 1) ^ 1 ^ x_mask;
 
@@ -98,8 +98,8 @@ float fflr_circuit(float f) {
     f_out = (bits(fu, 31, 31) == 0 || bits(fu, 30, 0) == f_masked) ? f_masked : f_incr;
 
     uint32_t ret =
-        (bits(fu, 31, 31) == 0 || bits(fu, 30, 23) == 0) && bits(len_raw, 9, 9) == 1 ? bits(fu, 31, 31) << 31 | 0x00 << 23 | bits(f_out, 22, 0) :
-        bits(fu, 31, 31) == 1 && bits(len_raw, 9, 9) == 1 ? bits(fu, 31, 31) << 31 | 0x7F << 23 | bits(f_out, 22, 0) :
+        (bits(fu, 31, 31) == 0 || bits(fu, 30, 23) == 0) && bits(len_raw, 8, 8) == 1 ? bits(fu, 31, 31) << 31 | 0x00 << 23 | bits(f_out, 22, 0) :
+        bits(fu, 31, 31) == 1 && bits(len_raw, 8, 8) == 1 ? bits(fu, 31, 31) << 31 | 0x7F << 23 | bits(f_out, 22, 0) :
         bits(fu, 31, 31) << 31 | f_out;
     return uint_as_float(ret);
 }
