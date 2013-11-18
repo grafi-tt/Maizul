@@ -40,6 +40,13 @@ architecture Implementation of FPU is
             f : out std_logic_vector(31 downto 0));
     end component;
 
+    component FFlr
+        port (
+            clk : in std_logic;
+            f : in  std_logic_vector(31 downto 0);
+            g : out std_logic_vector(31 downto 0));
+    end component;
+
     signal a_sgn, b_sgn : std_logic;
     signal a_exp, b_exp : std_logic_vector(7 downto 0);
     signal a_frc, b_frc : std_logic_vector(22 downto 0);
@@ -54,7 +61,7 @@ architecture Implementation of FPU is
     signal funct1, funct2, funct3 : std_logic_vector(1 downto 0) := (others => '0');
 
     signal a1, b1, d2, d3 : std_logic_vector(31 downto 0) := (others => '0');
-    signal b_fadd, d_fadd, d_fmul, d_finv, d_fflr, d_fsqr, d_itof, d_out : std_logic_vector(31 downto 0);
+    signal b_fadd, d_fadd, d_fmul, d_finv, d_fsqr, d_fflr, d_itof, d_out : std_logic_vector(31 downto 0);
 
 begin
     pipe0 : process(clk)
@@ -85,8 +92,10 @@ begin
     d_finv <= (others => '1');
     d_fsqr <= (others => '1');
 
-    -- TODO: it is only `truncate`!!
-    d_fflr <= a1(31 downto 23) & x"00000" & "000";
+    fflr_map : FFlr port map (
+        clk => clk,
+        f => a1,
+        g => d_fflr);
 
     itof_map : ItoF port map (
         clk => clk,
@@ -142,7 +151,6 @@ begin
                 when "101" =>
                     d2 <= a1;
                 when "110" =>
-                    -- TODO
                     d2 <= a1;
                 when others =>
                     d2 <= a1;
