@@ -6,7 +6,7 @@ entity IO is
     port (
         clk : in std_logic;
         enable : in boolean;
-        code : in std_logic;
+        code : in std_logic_vector(1 downto 0);
         serialOk : out std_logic;
         serialGo : out std_logic;
         serialRecvData : in std_logic_vector(7 downto 0);
