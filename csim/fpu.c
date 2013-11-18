@@ -83,24 +83,25 @@ int32_t ftoi_circuit(float f) {
 
 float fflr_circuit(float f) {
     uint32_t fu = float_as_uint(f);
-    unsigned int len;
+    unsigned int len, len_raw;
     uint32_t x_mask, incr;
     uint32_t f_masked, f_incr;
     uint32_t f_out;
 
-    len = bits(f, 30, 23) - 0x7F;
+    len_raw = bits(fu, 30, 23) - 0x7F;
+    len = bits(len_raw, 9, 9) == 1 ? 0 : bits(len_raw, 8, 5) != 0 ? 31 : len_raw;
     x_mask = UINT32_C(0x007FFFFF) >> len;
-    incr = (x_mask << 1) ^ x_mask;
+    incr = (x_mask << 1) ^ 1 ^ x_mask;
 
-    f_masked = fu & !x_mask;
+    f_masked = bits(fu, 30, 0) & ~x_mask;
     f_incr = f_masked + incr;
-    f_out = (bits(f, 31, 31) == 0 || f == f_masked) ? f_masked : f_incr;
+    f_out = (bits(fu, 31, 31) == 0 || bits(fu, 30, 0) == f_masked) ? f_masked : f_incr;
 
-    return bits(fu, 31, 31) == 0 && bits(len, 9, 9) == 1 ?
-               bits(f_out, 31, 31) << 30 | 0x00 << 23 | bits(f_out, 22, 0) :
-           bits(fu, 31, 31) == 1 && bits(len, 9, 9) == 1 ?
-               bits(f_out, 31, 31) << 30 | 0x7F << 23 | bits(f_out, 22, 0) :
-           bits(f, 31, 31) == 1 && f_masked != f ?  f_incr : f_masked;
+    uint32_t ret =
+        (bits(fu, 31, 31) == 0 || bits(fu, 30, 23) == 0) && bits(len_raw, 9, 9) == 1 ? bits(fu, 31, 31) << 31 | 0x00 << 23 | bits(f_out, 22, 0) :
+        bits(fu, 31, 31) == 1 && bits(len_raw, 9, 9) == 1 ? bits(fu, 31, 31) << 31 | 0x7F << 23 | bits(f_out, 22, 0) :
+        bits(fu, 31, 31) << 31 | f_out;
+    return uint_as_float(ret);
 }
 
 /* x87との誤差2ulpを達成してた．非正規化数が絡むulp計算を手抜きするために2^-127より小さい値は（偶数丸めにせず）0に落としてしまっている． */
