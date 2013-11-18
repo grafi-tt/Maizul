@@ -6,27 +6,41 @@ entity FFlr is
     port (
         clk : in std_logic;
         f : in  std_logic_vector(31 downto 0);
-        g : out std_logic_vector(31 downto 0));
+        g : out std_logic_vector(31 downto 0) := (others => '0'));
 end FFlr;
 
 architecture Implementation of FFlr is
-    signal len : std_logic_vector(8 downto 0);
-    signal x_mask, incr : unsigned(31 downto 0);
-    signal f_masked, f_incr : unsigned(31 downto 0);
-    signal f_out : std_logic_vector(31 downto 0);
+    signal len_raw : unsigned(8 downto 0);
+    signal len : unsigned(4 downto 0);
+    signal x_mask, incr : unsigned(30 downto 0);
+    signal f_masked, f_incr : unsigned(30 downto 0);
+    signal f_out : unsigned(30 downto 0);
+    signal res : unsigned(31 downto 0);
+    signal g_pipe : std_logic_vector(31 downto 0) := (others => '0');
 
 begin
-    len <= unsigned('0' & f(30 downto 23)) - "001111111";
-    x_mask <= shift_right(unsigned(x"007FFFFF"), to_integer(len(4 downto 0)));
-    incr <= (x_mask sll 1) xor x_mask;
+    len_raw <= unsigned('0' & f(30 downto 23)) - "001111111";
+    len <= "00000" when len_raw(9) = '1' else
+           "11111" when len_raw(8 downto 5) /= "000" else
+           len_raw(4 downto 0);
+    x_mask <= shift_right("000" & x"07FFFFF", to_integer(len));
+    incr <= (x_mask(30 downto 0) & '1') xor x_mask;
 
-    f_masked <= f and not mask;
+    f_masked <= unsigned(f(30 downto 0)) and not x_mask;
     f_incr <= f_masked + incr;
-    f_out <= std_logic_vector(f_masked) when f(31) = '0' or f =  f_masked else
-             std_logic_vector(f_incr);
+    f_out <= f_masked when f(31) = '0' or unsigned(f(30 downto 0)) = f_masked else
+             f_incr;
 
-    g <= f_out(31) & "00000000" & f_out(22 downto 0) when f(31) = '0' and len(9) = '1' else
-         f_out(31) & "7FFFFFFF" & f_out(22 downto 0) when f(31) = '1' and len(9) = '1' else
-         f_incr when f(31) = '1' and f_masked /= f else f_masked;
+    res <= f(31) & "00000000" & f_out(22 downto 0) when (f(31) = '0' or f(30 downto 23) = "00000000") and len_raw(9) = '1' else
+           f(31) & "01111111" & f_out(22 downto 0) when f(31) = '1' and len_raw(9) = '1' else
+           f(31) & f_out;
+
+    pipe : process(clk)
+    begin
+        if rising_edge(clk) then
+            g_pipe <= std_logic_vector(res);
+            g <= g_pipe;
+        end if;
+    end process;
 
 end Implementation;
