@@ -174,6 +174,8 @@ architecture DataPathImp of DataPath is
     signal ignore : boolean;
     signal blocking : boolean;
 
+    type value_set_t is array(31 downto 0) of value_t;
+    signal gprSet : value_set_t := (others => (others => '0'));
 begin
     gpr_map : RegSet port map (
         clk => clk,
@@ -183,6 +185,17 @@ begin
         valT => valRegY,
         tagW => tagW,
         lineW => valW);
+
+    --valRegX <= gprSet(to_integer(unsigned(std_logic_vector(tagX))));
+    --valRegY <= gprSet(to_integer(unsigned(std_logic_vector(tagY))));
+    --write_map : process(clk)
+    --begin
+    --    if rising_edge(clk) then
+    --        gprSet(to_integer(unsigned(std_logic_vector(tagW)))) <= valW;
+    --    end if;
+    --end process;
+
+
     tagW <= emitTagA or emitTagB or emitTagIO or tagLd;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
@@ -376,17 +389,19 @@ begin
     fprZ <= opH = "01" and opL(3 downto 1) = "100";
 
     valX <= (others => '0') when tagX = "00000" else
-            emitValA when tagX = emitTagA else
-            value_t(x"0000" & emitValB) when tagX = emitTagB else
-            emitValM when emitLoad and tagX = emitTagM else
-            emitValIO when tagX = emitTagIO else
+    --        emitValA when tagX = emitTagA else
+    --        value_t(x"0000" & emitValB) when tagX = emitTagB else
+    --        emitValM when emitLoad and tagX = emitTagM else
+    --        emitValIO when tagX = emitTagIO else
+            valW when tagX = tagW else
             valRegX;
 
     valY <= (others => '0') when tagY = "00000" else
-            emitValA when tagY = emitTagA else
-            value_t(x"0000" & emitValB) when tagY = emitTagB else
-            emitValM when emitLoad and tagY = emitTagM else
-            emitValIO when tagY = emitTagIO else
+    --        emitValA when tagY = emitTagA else
+    --        value_t(x"0000" & emitValB) when tagY = emitTagB else
+    --        emitValM when emitLoad and tagY = emitTagM else
+    --        emitValIO when tagY = emitTagIO else
+            valW when tagY = tagW else
             valRegY;
 
     valFX <= (others => '0') when tagX = "00000" else
