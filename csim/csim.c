@@ -17,7 +17,7 @@
 #define FLG_DUMP_FADD false
 #define FLG_DUMP_FSUB false
 #define FLG_DUMP_FMUL false
-#define FLG_DAMN_DEBUG true
+#define FLG_TRAP_FPU false
 #define FLG_FLUSH false
 #include <assert.h>
 
@@ -121,7 +121,7 @@ static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t b) {
         set_gpr(tagD, a >> bits(b, 4, 0));
         return issue();
     case 0b1001:
-        if (FLG_DAMN_DEBUG && !a && !tagD) {
+        if (FLG_TRAP_FPU && !a && !tagD) {
             switch (b) {
             case 0:
                 set_fpr(1, kill_denormal(1 / FPR[1]));
@@ -312,7 +312,10 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
     switch (func) {
         case 0b00:
             assert(y == 0);
-            scanf("%d", &y);
+            for (int i = 0; i < 4; i++) {
+                y = y << 8;
+                y &= (unsigned char) getchar();
+            }
             set_gpr(tagX, y);
             return issue();
         case 0b01:
