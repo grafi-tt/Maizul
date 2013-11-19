@@ -17,6 +17,8 @@ end RegSet;
 architecture OnlyArray of RegSet is
     type value_set_t is array(31 downto 0) of value_t;
     signal valSet : value_set_t := (others => (others => '0'));
+    attribute RAM_STYLE : string;
+    attribute RAM_STYLE of valSet : signal is "distributed";
 
 begin
     valS <= valSet(to_integer(unsigned(tagS)));
