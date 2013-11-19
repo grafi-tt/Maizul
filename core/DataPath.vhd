@@ -175,6 +175,51 @@ architecture DataPathImp of DataPath is
     signal blocking : boolean;
 
 begin
+    -- fetch
+    fetch_map : Fetch port map (
+        clk => clk,
+        stall => fetchStall,
+        jump => jump,
+        jumpAddr => PCLine,
+        pc => fetchedPC,
+        instruction => fetchedInst);
+    fetchStall <= not ignore and stall;
+
+    do_fetch : process(clk)
+    begin
+        if rising_edge(clk) then
+            if not fetchStall then
+                instruction <= fetchedInst;
+                pc <= fetchedPC;
+            end if;
+        end if;
+    end process;
+
+    -- decode
+    opH <= instruction(31 downto 30);
+    opL <= instruction(29 downto 26);
+
+    tagX <= tag_t(instruction(25 downto 21));
+    tagY <= tag_t(instruction(20 downto 16));
+    tagZ <= tag_t(instruction(15 downto 11));
+    imm <= instruction(15 downto 0);
+    immSigned <= value_t(resize(signed(imm), 32));
+
+    gprX <= opH = "00" or (opH = "01" and opL(2 downto 0) /= "001") or opH = "10";
+    gprY <= opH = "00" or (opH = "01" and (opL(2 downto 0) /= "001" and opL(3 downto 1) /= "101")) or opH = "10";
+    gprZ <= opH = "01" and opL(3 downto 1) = "000";
+
+    fprX <= (opH = "01" and opL(2 downto 0) = "001") or opH = "11";
+    fprY <= (opH = "01" and (opL(2 downto 0) = "001" or opL(3 downto 1) = "101")) or opH = "11";
+    fprZ <= opH = "01" and opL(3 downto 1) = "100";
+
+    valX <= valW when tagX = tagW else valRegX;
+    valY <= valW when tagY = tagW else valRegY;
+
+    valFX <= valFW when tagX = tagFW else valFRegX;
+    valFY <= valFW when tagY = tagFW else valFRegY;
+
+    -- register
     gpr_map : RegSet port map (
         clk => clk,
         tagS => tagX,
@@ -205,15 +250,7 @@ begin
              (others => '0');
     tagFld <= emitTagFM when emitLoad else "00000";
 
-    fetch_map : Fetch port map (
-        clk => clk,
-        stall => fetchStall,
-        jump => jump,
-        jumpAddr => PCLine,
-        pc => fetchedPC,
-        instruction => fetchedInst);
-    fetchStall <= stall and not ignore;
-
+    -- unit
     alu_map : ALU port map (
         clk => clk,
         code => codeA,
@@ -222,7 +259,7 @@ begin
         valB => valBP,
         emitTag => emitTagA,
         emitVal => emitValA);
-    tagD <= "00000" when stall or ignore else
+    tagD <= "00000" when ignore or stall else
             tagY when opH = "00" else
             tagZ when (opH = "01" and opL(3 downto 1) = "000") else
             "00000";
@@ -239,7 +276,8 @@ begin
         tag2 => tagF2,
         emitTag => emitTagF,
         emitVal => emitValF);
-    tagFD <= tagZ when (opH = "01" and opL(3 downto 1) = "100") and not stall and not ignore else
+    tagFD <= "00000" when ignore or stall else
+             tagZ when opH = "01" and opL(3 downto 1) = "100" else
              "00000";
     codeF <= instruction(2 downto 0);
     functF <= instruction(5 downto 4);
@@ -259,23 +297,22 @@ begin
         emitLink => emitValB,
         emitTarget => PCLine,
         result => jump);
-    codeB <= "00001" when stall or ignore else -- always false
+    codeB <= "00001" when ignore or stall else -- always false
              opH(0) & opL when opH(1) = '1' else
-             "00000" when (opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11") else -- always true
+             "00000" when opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11" else -- always true
              "00001"; -- always false
-    tagL <= tagY when (opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11") and not stall and not ignore else
+    tagL <= "00000" when ignore or stall else
+            tagY when opH = "01" and opL(3 downto 2) = "01" and opL(1 downto 0) /= "11" else
             "00000";
-    valA <= (others => '0') when stall or ignore else
+    valA <= (others => '0') when ignore or stall else
             valX when opH = "10" else
             valFX when opH = "11" else
             (others => '0');
-    valB <= (others => '0') when stall or ignore else
+    valB <= (others => '0') when ignore or stall else
             valY when opH = "10" else
             valFY when opH = "11" else
             (others => '0');
     target <= blkram_addr(imm) when opH(1) = '1' else blkram_addr(imm or valX(15 downto 0));
-
-
 
     io_map : IO port map (
         clk => clk,
@@ -292,27 +329,25 @@ begin
         emitTag => emitTagIO,
         emitVal => emitValIO,
         blocking => blocking);
-    enableIO <= opH = "01" and opL = "0111" and not stall and not ignore;
+    enableIO <= not (ignore or stall) and opH = "01" and opL = "0111";
 
-    ignoreJ2 <= jump;
-
+    -- SRAM
     -- phase 0
-    load0 <= opL(0) = '0' when opH = "01" and opL(2 downto 1) = "01"  and not stall and not ignore else true;
-    tagM0 <= tagY         when opH = "01" and opL(3 downto 1) = "001" and not stall and not ignore else "00000";
-    tagFM0 <= tagY        when opH = "01" and opL(3 downto 1) = "101" and not stall and not ignore else "00000";
+    load0 <= true when ignore or stall else
+             opL(0) = '0' when opH = "01" and opL(2 downto 1) = "01" else
+             true;
+    tagM0 <= "00000" when ignore or stall else
+             tagY when opH = "01" and opL(3 downto 1) = "001" else
+             "00000";
+    tagFM0 <= "00000" when ignore or stall else
+              tagY when opH = "01" and opL(3 downto 1) = "101" else
+              "00000";
     valM0 <= valY;
     addr0 <= sram_addr(unsigned(valX(19 downto 0)) + unsigned(immSigned(19 downto 0)));
 
-    everyClock : process(clk)
+    do_sram : process(clk)
     begin
         if rising_edge(clk) then
-            if not fetchStall then
-                instruction <= fetchedInst;
-                pc <= fetchedPC;
-            end if;
-
-            ignoreJ1 <= ignoreJ2;
-
             -- phase 1
             load1 <= load0;
             tagM1 <= tagM0;
@@ -358,28 +393,15 @@ begin
         end if;
     end process;
 
-    opH <= instruction(31 downto 30);
-    opL <= instruction(29 downto 26);
+    -- control
+    shift_ignore : process(clk)
+    begin
+        if rising_edge(clk) then
+            ignoreJ1 <= ignoreJ2;
+        end if;
+    end process;
 
-    tagX <= tag_t(instruction(25 downto 21));
-    tagY <= tag_t(instruction(20 downto 16));
-    tagZ <= tag_t(instruction(15 downto 11));
-    imm <= instruction(15 downto 0);
-    immSigned <= value_t(resize(signed(imm), 32));
-
-    gprX <= opH = "00" or (opH = "01" and opL(2 downto 0) /= "001") or opH = "10";
-    gprY <= opH = "00" or (opH = "01" and (opL(2 downto 0) /= "001" and opL(3 downto 1) /= "101")) or opH = "10";
-    gprZ <= opH = "01" and opL(3 downto 1) = "000";
-
-    fprX <= (opH = "01" and opL(2 downto 0) = "001") or opH = "11";
-    fprY <= (opH = "01" and (opL(2 downto 0) = "001" or opL(3 downto 1) = "101")) or opH = "11";
-    fprZ <= opH = "01" and opL(3 downto 1) = "100";
-
-    valX <= valW when tagX = tagW else valRegX;
-    valY <= valW when tagY = tagW else valRegY;
-
-    valFX <= valFW when tagX = tagFW else valFRegX;
-    valFY <= valFW when tagY = tagFW else valFRegY;
+    ignoreJ2 <= jump;
 
     stallX <= gprX and tagX /= "00000" and
               ( (load1 and tagX = tagM1) or
