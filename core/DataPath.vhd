@@ -342,7 +342,7 @@ begin
     tagFM0 <= "00000" when ignore or stall else
               tagY when opH = "01" and opL(3 downto 1) = "101" else
               "00000";
-    valM0 <= valY;
+    valM0 <= valY when opL(3) = '0' else valFY;
     addr0 <= sram_addr(unsigned(valX(19 downto 0)) + unsigned(immSigned(19 downto 0)));
 
     do_sram : process(clk)
