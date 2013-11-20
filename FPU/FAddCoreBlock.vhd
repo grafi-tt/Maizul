@@ -2,12 +2,12 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity FractionLeftPadding is
+entity FractionLeftTrimming is
     port (
         frc_in  : in  std_logic_vector(23 downto 0);
         nlz     : out std_logic_vector( 4 downto 0);
-        frc_out : out std_logic_vector(23 downto 0));
-end FractionLeftPadding;
+        frc_out : out std_logic_vector(22 downto 0));
+end FractionLeftTrimming;
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -24,7 +24,7 @@ entity FractionRightShifter is
 end FractionRightShifter;
 
 
-architecture PaddingL24 of FractionLeftPadding is
+architecture TrimmingL24 of FractionLeftTrimming is
     type ufrc_step_vector is array (3 downto 0) of unsigned(23 downto 0);
 
     signal u_frc     : ufrc_step_vector;
@@ -45,9 +45,9 @@ begin
     nlz(0)    <= '1'             when u_frc(0)(23 downto 23) = 0 else '0';
     u_frc_out <= u_frc(0) sll 1  when u_frc(0)(23 downto 23) = 0 else u_frc(0);
 
-    frc_out <= std_logic_vector(u_frc_out);
+    frc_out <= std_logic_vector(u_frc_out(22 downto 0));
 
-end PaddingL24;
+end TrimmingL24;
 
 architecture BarrelShifterR24Mod of FractionRightShifter is
     type ufrc_step_vector is array (3 downto 0) of unsigned(25 downto 0);

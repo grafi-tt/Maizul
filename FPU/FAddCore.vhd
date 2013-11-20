@@ -11,11 +11,11 @@ entity FAdd is
 end FAdd;
 
 architecture Implementation of FAdd is
-    component FractionLeftPadding
+    component FractionLeftTrimming
         port (
             frc_in  : in  std_logic_vector(23 downto 0);
             nlz     : out std_logic_vector( 4 downto 0);
-            frc_out : out std_logic_vector(23 downto 0));
+            frc_out : out std_logic_vector(22 downto 0));
     end component;
 
     component FractionRightShifter is
@@ -48,7 +48,6 @@ architecture Implementation of FAdd is
 
     signal s2_sgn_sup, s2_sgn_inf : std_logic := '0';
     signal s2_exp_unif : std_logic_vector(7 downto 0) := (others => '0');
-    signal s2_frc_inf : std_logic_vector(23 downto 0) := (others => '0');
     signal s2_frc_unif_sup, s2_frc_unif_inf : std_logic_vector(23 downto 0) := (others => '0');
     signal s2_fst_over, s2_snd_over, s2_tail_any : std_logic := '0';
     signal s2_zero_sft, s2_is_add : boolean := false;
@@ -69,7 +68,7 @@ architecture Implementation of FAdd is
     signal s3_exp_out_sub_raw : std_logic_vector(8 downto 0);
 
     signal s3_exp_out_add, s3_exp_out_sub : std_logic_vector(7 downto 0);
-    signal s3_frc_out_add, s3_frc_out_sub : std_logic_vector(23 downto 0);
+    signal s3_frc_out_add, s3_frc_out_sub : std_logic_vector(22 downto 0);
     signal s3_sgn_out_sub : std_logic;
 
 begin
@@ -156,8 +155,8 @@ begin
 
     s3_exp_out_add <= s3_exp_unif when s3_no_flow else s3_exp_unif+1;
     s3_frc_out_add <= (others => '0') when s3_exp_out_add = "11111111" else
-                      s3_frc_out_adder1(23 downto 0) when s3_no_flow else
-                      s3_frc_out_adder2(23 downto 0);
+                      s3_frc_out_adder1(22 downto 0) when s3_no_flow else
+                      s3_frc_out_adder2(22 downto 0);
 
     s3_sgn_out_sub <= '0' when s3_exact else
                       s3_sgn_sup when not s3_zero_sft or s3_no_flow else
@@ -167,7 +166,7 @@ begin
                    s3_frc_out_adder2(23 downto 0) when s3_zero_sft and not s3_no_flow else
                    s3_frc_out_adder1(23 downto 0) when s3_no_down else
                    s3_frc_out_adder2(23 downto 0);
-    pad_frc_ireg_map : FractionLeftPadding port map (
+    pad_frc_ireg_map : FractionLeftTrimming port map (
         frc_in => s3_frc_ireg,
         nlz => s3_nlz,
         frc_out => s3_frc_out_sub);
