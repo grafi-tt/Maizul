@@ -150,13 +150,11 @@ architecture DataPathImp of DataPath is
     signal jump : boolean;
 
     signal addr0 : sram_addr := (others => '0');
-    signal load0, load1, load2, load3, emitLoad : boolean := true;
-    signal tagM0, tagM1, tagM2, tagM3, emitTagM : tag_t := (others => '0');
-    signal tagFM0, tagFM1, tagFM2, tagFM3, emitTagFM : tag_t := (others => '0');
+    signal load0, load1, load2, load3 : boolean := true;
+    signal tagM0, tagM1, tagM2, tagM3, emitTagLoad : tag_t := (others => '0');
+    signal tagFM0, tagFM1, tagFM2, tagFM3, emitTagFLoad : tag_t := (others => '0');
     signal valM0, valM1, valM2, emitValM : value_t := (others => '0');
     signal fwdM_1, fwdM_2 : boolean := false;
-    signal tagLd : tag_t;
-    signal tagFLd : tag_t;
 
     signal enableIO : boolean;
     signal emitTagIO : tag_t;
@@ -228,13 +226,12 @@ begin
         valT => valRegY,
         tagW => tagW,
         lineW => valW);
-    tagW <= emitTagA or emitTagB or emitTagIO or tagLd;
+    tagW <= emitTagA or emitTagB or emitTagIO or emitTagLoad;
     valW <= emitValA when emitTagA /= "00000" else
             value_t(x"0000" & emitValB) when emitTagB /= "00000" else
             emitValIO when emitTagIO /= "00000" else
-            emitValM when tagLd /= "00000" else
+            emitValM when emitTagLoad /= "00000" else
             (others => '0');
-    tagLd <= emitTagM when emitLoad else "00000";
 
     fpr_map : RegSet port map (
         clk => clk,
@@ -244,11 +241,10 @@ begin
         valT => valFRegY,
         tagW => tagFW,
         lineW => valFW);
-    tagFW <= emitTagF or tagFld;
+    tagFW <= emitTagF or emitTagFLoad;
     valFW <= emitValF when emitTagF /= "00000" else
-             emitValM when tagFld /= "00000" else
+             emitValM when emitTagFLoad /= "00000" else
              (others => '0');
-    tagFld <= emitTagFM when emitLoad else "00000";
 
     -- unit
     alu_map : ALU port map (
@@ -360,7 +356,7 @@ begin
             load2 <= load1;
             tagM2 <= tagM1;
             tagFM2 <= tagFM1;
-            if emitLoad and ((tagM1 /= "00000" and tagM1 = emitTagM) or (tagFM1 /= "00000" and tagFM1 = emitTagFM)) then
+            if (tagM1 /= "00000" and tagM1 = emitTagLoad) or (tagFM1 /= "00000" and tagFM1 = emitTagFLoad) then
                 valM2 <= emitValM;
             else
                 valM2 <= valM1;
@@ -385,9 +381,13 @@ begin
             end if;
 
             -- phase 4
-            emitLoad <= load3;
-            emitTagM <= tagM3;
-            emitTagFM <= tagFM3;
+            if load3 then
+                emitTagLoad <= tagM3;
+                emitTagFLoad <= tagFM3;
+            else
+                emitTagLoad <= "00000";
+                emitTagFLoad <= "00000";
+            end if;
             emitValM <= sramData;
 
         end if;
@@ -403,14 +403,16 @@ begin
 
     ignoreJ2 <= jump;
 
-    stallX <= gprX and tagX /= "00000" and
+    stallX <= gprX and tagX /= "00000" and not (opH = "01" and opL(2 downto 1) = "00") and
               ( (load1 and tagX = tagM1) or
                 (load2 and tagX = tagM2) or
                 (load3 and tagX = tagM3));
-    stallY <= gprY and tagY /= "00000" and
+    stallY <= gprY and tagY /= "00000" and not (opH = "01" and opL(2 downto 1) = "00") and
               ( (load1 and tagY = tagM1) or
                 (load2 and tagY = tagM2) or
-                (load3 and tagY = tagM3));
+                (load3 and tagY = tagM3) or
+                (load3 and opH = "00" and tagM3 /= "00000") or
+                (load3 and opH = "01" and opL(3 downto 2) = "01" and tagM3 /= "00000"));
     stallZ <= gprZ and tagZ /= "00000" and
               ( (load1 and tagZ = tagM1) or
                 (load2 and tagZ = tagM2) or
