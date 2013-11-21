@@ -5,8 +5,7 @@ use work.types.all;
 entity FPU is
     port (
         clk : in std_logic;
-        code : in std_logic_vector(2 downto 0);
-        funct : in std_logic_vector(1 downto 0);
+        code : in std_logic_vector(5 downto 0);
         tagD : in tag_t;
         valA : in value_t;
         valB : in value_t;
@@ -69,8 +68,8 @@ begin
         if rising_edge(clk) then
             a1 <= std_logic_vector(valA);
             b1 <= std_logic_vector(valB);
-            code1 <= code;
-            funct1 <= funct;
+            code1 <= code(2 downto 0);
+            funct1 <= code(5 downto 4);
             tag1 <= tagD;
         end if;
     end process;
