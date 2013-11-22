@@ -89,7 +89,7 @@ float fflr_circuit(float f) {
     uint32_t f_out;
 
     len_raw = bits(fu, 30, 23) - 0x7F;
-    len = bits(len_raw, 8, 8) == 1 ? 0 : bits(len_raw, 7, 5) != 0 ? 31 : len_raw;
+    len = bits(len_raw, 8, 8) == 1 ? 0 : bits(len_raw, 7, 5) != 0 ? 31 : bits(len_raw, 4, 0);
     x_mask = UINT32_C(0x007FFFFF) >> len;
     incr = (x_mask << 1) ^ 1 ^ x_mask;
 
