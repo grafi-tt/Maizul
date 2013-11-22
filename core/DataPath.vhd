@@ -98,8 +98,8 @@ architecture DataPathImp of DataPath is
 
     signal fetched_inst : instruction_t;
     signal fetched_pc : blkram_addr;
-    signal old_inst : instruction_t := (others => '0');
-    signal old_pc : blkram_addr := (others => '0');
+    signal inst : instruction_t := (others => '0');
+    signal pc : blkram_addr := (others => '0');
 
     signal PCLine : blkram_addr := (others => '0');
     signal stall_fetch : boolean := false;
@@ -144,6 +144,11 @@ architecture DataPathImp of DataPath is
     signal valM0, valM1, valM2, emitValM : value_t := (others => '0');
     signal fwdM_1, fwdM_2 : boolean := false;
 
+    signal tag_gpr_w_sig : tag_t;
+    signal val_gpr_w_sig : value_t;
+    signal tag_fpr_w_sig : tag_t;
+    signal val_fpr_w_sig : value_t;
+
 begin
     -- fetch
     fetch_map : Fetch port map (
@@ -154,10 +159,26 @@ begin
         pc => fetched_pc,
         instruction => fetched_inst);
 
-    main : process(clk)
-        variable inst : std_logic_vector(31 downto 0);
-        variable pc : unsigned(15 downto 0);
+    sequential : process(clk)
+    begin
+        if rising_edge(clk) then
+            if not stall_fetch then
+                inst <= fetched_inst;
+                pc <= fetched_pc;
+            end if;
 
+            gpr_file(to_integer(unsigned(tag_gpr_w_sig))) <= val_gpr_w_sig;
+            fpr_file(to_integer(unsigned(tag_fpr_w_sig))) <= val_fpr_w_sig;
+
+            jump2 <= jump1;
+        end if;
+    end process;
+
+    combinatorial : process(inst,
+                            emit_tag_alu, emit_val_alu,
+                            pipe1_tag_fpu, pipe2_tag_fpu, emit_tag_fpu, emit_val_fpu,
+                            emit_tag_bra, emit_val_bra, PCLine, jump1,
+                            emit_tag_spc, emit_val_spc, blocking)
         variable tag_gpr_w : tag_t;
         variable val_gpr_w : value_t;
         variable tag_fpr_w : tag_t;
@@ -181,241 +202,234 @@ begin
         variable stall, ignore : boolean;
 
     begin
-        if rising_edge(clk) then
-            if stall_fetch then
-                inst := old_inst;
-                pc := old_pc;
+        tag_gpr_w := emit_tag_alu or emit_tag_bra or emit_tag_spc or emitTagLoad;
+        if emit_tag_alu /= "00000" then
+            val_gpr_w := emit_val_alu;
+        elsif emit_tag_bra /= "00000" then
+            val_gpr_w := value_t(x"0000" & emit_val_bra);
+        elsif emit_tag_spc /= "00000" then
+            val_gpr_w := emit_val_spc;
+        elsif emitTagLoad /= "00000" then
+            val_gpr_w := emitValM;
+        else
+            val_gpr_w := (others => '0');
+        end if;
+
+        tag_fpr_w := emit_tag_fpu or emitTagFLoad;
+        if emit_tag_fpu /= "00000" then
+            val_fpr_w := emit_val_fpu;
+        elsif emitTagFLoad /= "00000" then
+            val_fpr_w := emitValM;
+        else
+            val_fpr_w := (others => '0');
+        end if;
+
+        tag_gpr_w_sig <= tag_gpr_w;
+        tag_fpr_w_sig <= tag_fpr_w;
+        val_gpr_w_sig <= val_gpr_w;
+        val_fpr_w_sig <= val_fpr_w;
+
+        opcode := inst(31 downto 26);
+        tag_x := tag_t(inst(25 downto 21));
+        tag_y := tag_t(inst(20 downto 16));
+        tag_z := tag_t(inst(15 downto 11));
+        imm := unsigned(inst(15 downto 0));
+
+        is_alu_imm := opcode(5 downto 4) = "00";
+        is_alu_gpr := opcode = "010000";
+        is_alu_fpr := opcode = "010001";
+
+        is_fpu_gpr := opcode = "011000";
+        is_fpu_fpr := opcode = "011001";
+
+        is_mem_gpr_ld := opcode = "010010";
+        is_mem_gpr_st := opcode = "010011";
+        is_mem_fpr_ld := opcode = "011010";
+        is_mem_fpr_st := opcode = "011011";
+
+        is_spc := opcode(5 downto 2) = "0101" and opcode(1 downto 0) = "11";
+        is_jmp := opcode(5 downto 2) = "0101" and opcode(1 downto 0) /= "11";
+        is_bra_gpr := opcode(5 downto 4) = "10";
+        is_bra_fpr := opcode(5 downto 4) = "11";
+
+        val_gpr_x := gpr_file(to_integer(unsigned(tag_x)));
+        val_gpr_y := gpr_file(to_integer(unsigned(tag_y)));
+        imm_signed := value_t(resize(signed(imm), 32));
+        if tag_x = tag_gpr_w then
+            val_gpr_fwd_x := val_gpr_w;
+        else
+            val_gpr_fwd_x := val_gpr_x;
+        end if;
+        if tag_y = tag_gpr_w then
+            val_gpr_fwd_y := val_gpr_w;
+        else
+            val_gpr_fwd_y := val_gpr_y;
+        end if;
+
+        val_fpr_x := fpr_file(to_integer(unsigned(tag_x)));
+        val_fpr_y := fpr_file(to_integer(unsigned(tag_y)));
+        if tag_x = tag_fpr_w then
+            val_fpr_fwd_x := val_fpr_w;
+        else
+            val_fpr_fwd_x := val_fpr_x;
+        end if;
+        if tag_y = tag_fpr_w then
+            val_fpr_fwd_y := val_fpr_w;
+        else
+            val_fpr_fwd_y := val_fpr_y;
+        end if;
+
+        stall_raw_gpr_x := tag_x /= "00000" and
+                           (is_alu_gpr or is_alu_imm or is_fpu_gpr or is_spc or is_jmp or is_bra_gpr) and
+                           ( (load1 and tag_x = tagM1) or
+                             (load2 and tag_x = tagM2) or
+                             (load3 and tag_x = tagM3));
+        stall_raw_gpr_y := tag_y /= "00000" and
+                           (is_alu_gpr or is_fpu_gpr or is_bra_gpr) and
+                           ( (load1 and tag_y = tagM1) or
+                             (load2 and tag_y = tagM2) or
+                             (load3 and tag_y = tagM3));
+        stall_waw_gpr_y := tag_y /= "00000" and
+                           (is_alu_imm or is_spc or is_jmp) and
+                           ( (load1 and tag_y = tagM1) or
+                             (load2 and tag_y = tagM2) or
+                             (load3 and tagM3 /= "00000"));
+        stall_waw_gpr_z := tag_z /= "00000" and
+                           is_alu_gpr and
+                           ( (load1 and tag_z = tagM1) or
+                             (load2 and tag_z = tagM2) or
+                             (load3 and tagM3 /= "00000"));
+        stall_raw_fpr_x := tag_x /= "00000" and
+                           (is_alu_fpr or is_fpu_fpr or is_bra_fpr) and
+                           ( (tag_x = pipe1_tag_fpu) or
+                             (tag_x = pipe2_tag_fpu) or
+                             (load1 and tag_x = tagFM1) or
+                             (load2 and tag_x = tagFM2) or
+                             (load3 and tag_x = tagFM3));
+        stall_raw_fpr_y := tag_y /= "00000" and
+                           (is_alu_fpr or is_fpu_fpr or is_bra_fpr) and
+                           ( (tag_y = pipe1_tag_fpu) or
+                             (tag_y = pipe2_tag_fpu) or
+                             (load1 and tag_y = tagFM1) or
+                             (load2 and tag_y = tagFM2) or
+                             (load3 and tag_y = tagFM3));
+        stall_waw_fpr_z := tag_z /= "00000" and
+                           (is_fpu_gpr or is_fpu_fpr) and
+                           ( (load1 and tagFM1 /= "00000"));
+
+        stall := stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
+                 stall_raw_fpr_x or stall_raw_fpr_y or stall_waw_fpr_z or
+                 blocking;
+        ignore := jump2 or jump1;
+        stall_fetch <= not ignore and stall;
+
+        if is_alu_imm then
+            code_alu <= opcode(3 downto 0);
+        else
+            code_alu <= inst(3 downto 0);
+        end if;
+        if ignore or stall then
+            tag_alu_d <= "00000";
+        elsif is_alu_imm then
+            tag_alu_d <= tag_y;
+        elsif is_alu_gpr or is_alu_fpr then
+            tag_alu_d <= tag_z;
+        else
+            tag_alu_d <= "00000";
+        end if;
+
+        code_fpu <= inst(5 downto 0);
+        if ignore or stall then
+            tag_fpu_d <= "00000";
+        elsif is_fpu_gpr or is_fpu_fpr then
+            tag_fpu_d <= tag_z;
+        else
+            tag_fpu_d <= "00000";
+        end if;
+
+        if is_alu_imm then
+            val_alu_fpu_a <= val_gpr_fwd_x;
+            val_alu_fpu_b <= imm_signed;
+        elsif opcode(0) = '0' then
+            val_alu_fpu_a <= val_gpr_fwd_x;
+            val_alu_fpu_b <= val_gpr_fwd_y;
+        else
+            val_alu_fpu_a <= val_fpr_fwd_x;
+            val_alu_fpu_b <= val_fpr_fwd_y;
+        end if;
+
+        if ignore or stall then
+            code_bra <= "00000";
+            tag_bra_l <= "00000";
+            if opcode(4) = '0' then
+                val_bra_a <= '1' & val_gpr_fwd_x(30 downto 0);
+                val_bra_b <= '0' & val_gpr_fwd_y(30 downto 0);
             else
-                inst := fetched_inst;
-                pc := fetched_pc;
+                val_bra_a <= '1' & val_fpr_fwd_x(30 downto 0);
+                val_bra_b <= '0' & val_fpr_fwd_y(30 downto 0);
             end if;
-            old_inst <= inst;
-            old_pc <= pc;
-
-            tag_gpr_w := emit_tag_alu or emit_tag_bra or emit_tag_spc or emitTagLoad;
-            if emit_tag_alu /= "00000" then
-                val_gpr_w := emit_val_alu;
-            elsif emit_tag_bra /= "00000" then
-                val_gpr_w := value_t(x"0000" & emit_val_bra);
-            elsif emit_tag_spc /= "00000" then
-                val_gpr_w := emit_val_spc;
-            elsif emitTagLoad /= "00000" then
-                val_gpr_w := emitValM;
-            else
-                val_gpr_w := (others => '0');
-            end if;
-            gpr_file(to_integer(unsigned(tag_gpr_w))) <= val_gpr_w;
-
-            tag_fpr_w := emit_tag_fpu or emitTagFLoad;
-            if emit_tag_fpu /= "00000" then
-                val_fpr_w := emit_val_fpu;
-            elsif emitTagFLoad /= "00000" then
-                val_fpr_w := emitValM;
-            else
-                val_fpr_w := (others => '0');
-            end if;
-            fpr_file(to_integer(unsigned(tag_fpr_w))) <= val_fpr_w;
-
-            opcode := inst(31 downto 26);
-            tag_x := tag_t(inst(25 downto 21));
-            tag_y := tag_t(inst(20 downto 16));
-            tag_z := tag_t(inst(15 downto 11));
-            imm := unsigned(inst(15 downto 0));
-
-            is_alu_imm := opcode(5 downto 4) = "00";
-            is_alu_gpr := opcode = "010000";
-            is_alu_fpr := opcode = "010001";
-
-            is_fpu_gpr := opcode = "011000";
-            is_fpu_fpr := opcode = "011001";
-
-            is_mem_gpr_ld := opcode = "010010";
-            is_mem_gpr_st := opcode = "010011";
-            is_mem_fpr_ld := opcode = "011010";
-            is_mem_fpr_st := opcode = "011011";
-
-            is_spc := opcode(5 downto 2) = "0101" and opcode(1 downto 0) = "111";
-            is_jmp := opcode(5 downto 2) = "0101" and opcode(1 downto 0) /= "111";
-            is_bra_gpr := opcode(5 downto 4) = "10";
-            is_bra_fpr := opcode(5 downto 4) = "11";
-
-            val_gpr_x := gpr_file(to_integer(unsigned(tag_x)));
-            val_gpr_y := gpr_file(to_integer(unsigned(tag_y)));
-            imm_signed := value_t(resize(signed(imm), 32));
-            if tag_x = tag_gpr_w then
-                val_gpr_fwd_x := val_gpr_w;
-            else
-                val_gpr_fwd_x := val_gpr_x;
-            end if;
-            if tag_y = tag_gpr_w then
-                val_gpr_fwd_y := val_gpr_w;
-            else
-                val_gpr_fwd_y := val_gpr_y;
-            end if;
-
-            val_fpr_x := fpr_file(to_integer(unsigned(tag_x)));
-            val_fpr_y := fpr_file(to_integer(unsigned(tag_y)));
-            if tag_x = tag_fpr_w then
-                val_fpr_fwd_x := val_fpr_w;
-            else
-                val_fpr_fwd_x := val_fpr_x;
-            end if;
-            if tag_y = tag_fpr_w then
-                val_fpr_fwd_y := val_fpr_w;
-            else
-                val_fpr_fwd_y := val_fpr_y;
-            end if;
-
-            stall_raw_gpr_x := tag_x /= "00000" and
-                               (is_alu_gpr or is_alu_imm or is_fpu_gpr or is_spc or is_jmp or is_bra_gpr) and
-                               ( (load1 and tag_x = tagM1) or
-                                 (load2 and tag_x = tagM2) or
-                                 (load3 and tag_x = tagM3));
-            stall_raw_gpr_y := tag_y /= "00000" and
-                               (is_alu_gpr or is_fpu_gpr or is_bra_gpr) and
-                               ( (load1 and tag_y = tagM1) or
-                                 (load2 and tag_y = tagM2) or
-                                 (load3 and tag_y = tagM3));
-            stall_waw_gpr_y := tag_y /= "00000" and
-                               (is_alu_imm or is_spc or is_jmp) and
-                               ( (load1 and tag_y = tagM1) or
-                                 (load2 and tag_y = tagM2) or
-                                 (load3 and tagM3 /= "00000"));
-            stall_waw_gpr_z := tag_z /= "00000" and
-                               is_alu_gpr and
-                               ( (load1 and tag_z = tagM1) or
-                                 (load2 and tag_z = tagM2) or
-                                 (load3 and tagM3 /= "00000"));
-            stall_raw_fpr_x := tag_x /= "00000" and
-                               (is_alu_fpr or is_fpu_fpr or is_bra_fpr) and
-                               ( (tag_x = pipe1_tag_fpu) or
-                                 (tag_x = pipe2_tag_fpu) or
-                                 (load1 and tag_x = tagFM1) or
-                                 (load2 and tag_x = tagFM2) or
-                                 (load3 and tag_x = tagFM3));
-            stall_raw_fpr_y := tag_y /= "00000" and
-                               (is_alu_fpr or is_fpu_fpr or is_bra_fpr) and
-                               ( (tag_y = pipe1_tag_fpu) or
-                                 (tag_y = pipe2_tag_fpu) or
-                                 (load1 and tag_y = tagFM1) or
-                                 (load2 and tag_y = tagFM2) or
-                                 (load3 and tag_y = tagFM3));
-            stall_waw_fpr_z := tag_z /= "00000" and
-                               (is_fpu_gpr or is_fpu_fpr) and
-                               ( (load1 and tagFM1 /= "00000"));
-
-            stall := stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
-                     stall_raw_fpr_x or stall_raw_fpr_y or stall_waw_fpr_z;
-            ignore := jump2 or jump1;
-            stall_fetch <= not ignore and stall;
-            jump2 <= jump1;
-
-            if is_alu_imm then
-                code_alu <= opcode(3 downto 0);
-            else
-                code_alu <= inst(3 downto 0);
-            end if;
-            if ignore or stall then
-                tag_alu_d <= "00000";
-            elsif is_alu_imm then
-                tag_alu_d <= tag_y;
-            elsif is_alu_gpr or is_alu_fpr then
-                tag_alu_d <= tag_z;
-            else
-                tag_alu_d <= "00000";
-            end if;
-
-            code_fpu <= inst(5 downto 0);
-            if ignore or stall then
-                tag_fpu_d <= "00000";
-            elsif is_fpu_gpr or is_fpu_fpr then
-                tag_fpu_d <= tag_z;
-            else
-                tag_fpu_d <= "00000";
-            end if;
-
-            if is_alu_imm then
-                val_alu_fpu_a <= val_gpr_fwd_x;
-                val_alu_fpu_b <= imm_signed;
-            elsif opcode(0) = '0' then
-                val_alu_fpu_a <= val_gpr_fwd_x;
-                val_alu_fpu_b <= val_gpr_fwd_y;
-            else
-                val_alu_fpu_a <= val_fpr_fwd_x;
-                val_alu_fpu_b <= val_fpr_fwd_y;
-            end if;
-
-            if ignore or stall then
-                code_bra <= "00000";
+            val_bra_t <= blkram_addr(imm);
+        else
+            if is_bra_gpr or is_bra_fpr then
+                code_bra <= opcode(4 downto 0);
                 tag_bra_l <= "00000";
                 if opcode(4) = '0' then
-                    val_bra_a <= '1' & val_gpr_x(30 downto 0);
-                    val_bra_b <= '0' & val_gpr_y(30 downto 0);
+                    val_bra_a <= val_gpr_fwd_x;
+                    val_bra_b <= val_gpr_fwd_y;
                 else
-                    val_bra_a <= '1' & val_fpr_x(30 downto 0);
-                    val_bra_b <= '0' & val_fpr_y(30 downto 0);
+                    val_bra_a <= val_fpr_fwd_x;
+                    val_bra_b <= val_fpr_fwd_y;
                 end if;
+                val_bra_t <= blkram_addr(imm);
             else
-                if is_bra_gpr or is_bra_fpr then
-                    code_bra <= opcode(4 downto 0);
+                if is_jmp then
+                    code_bra <= "00010";
+                    tag_bra_l <= tag_y;
+                else
+                    code_bra <= "00000";
                     tag_bra_l <= "00000";
-                    if opcode(4) = '0' then
-                        val_bra_a <= val_gpr_x;
-                        val_bra_b <= val_gpr_y;
-                    else
-                        val_bra_a <= val_fpr_x;
-                        val_bra_b <= val_fpr_y;
-                    end if;
-                    val_bra_t <= blkram_addr(imm);
-                else
-                    if is_jmp then
-                        code_bra <= "00010";
-                        tag_bra_l <= tag_y;
-                    else
-                        code_bra <= "00000";
-                        tag_bra_l <= "00000";
-                    end if;
-                    if opcode(4) = '0' then
-                        val_bra_a <= '1' & val_gpr_x(30 downto 0);
-                        val_bra_b <= '0' & val_gpr_y(30 downto 0);
-                    else
-                        val_bra_a <= '1' & val_fpr_x(30 downto 0);
-                        val_bra_b <= '0' & val_fpr_y(30 downto 0);
-                    end if;
-                    val_bra_t <= blkram_addr(imm or unsigned(val_gpr_x(15 downto 0)));
                 end if;
-                val_bra_l <= pc;
-            end if;
-
-            code_io <= inst(1 downto 0);
-            enable_io <= not (ignore or stall) and is_spc;
-            tag_spc_y <= tag_y;
-            val_spc_x <= val_gpr_x;
-
-            if ignore or stall then
-                load0 <= true;
-                tagM0 <= "00000";
-                tagFM0 <= "00000";
-            else
-                load0 <= not (is_mem_gpr_st or is_mem_fpr_st);
-                if is_mem_gpr_st or is_mem_gpr_ld then
-                    tagM0 <= tag_y;
+                if opcode(4) = '0' then
+                    val_bra_a <= '1' & val_gpr_fwd_x(30 downto 0);
+                    val_bra_b <= '0' & val_gpr_fwd_y(30 downto 0);
                 else
-                    tagM0 <= "00000";
+                    val_bra_a <= '1' & val_fpr_fwd_x(30 downto 0);
+                    val_bra_b <= '0' & val_fpr_fwd_y(30 downto 0);
                 end if;
-                if is_mem_fpr_st or is_mem_fpr_ld then
-                    tagFM0 <= tag_y;
-                else
-                    tagFM0 <= "00000";
-                end if;
+                val_bra_t <= blkram_addr(imm or unsigned(val_gpr_fwd_x(15 downto 0)));
             end if;
-            if opcode(3) = '0' then
-                valM0 <= val_gpr_y;
-            else
-                valM0 <= val_fpr_y;
-            end if;
-            addr0 <= sram_addr(unsigned(val_gpr_x(19 downto 0)) + unsigned(imm_signed(19 downto 0)));
         end if;
+        val_bra_l <= pc;
+
+        code_io <= inst(1 downto 0);
+        enable_io <= not (ignore or stall) and is_spc;
+        tag_spc_y <= tag_y;
+        val_spc_x <= val_gpr_fwd_x;
+
+        if ignore or stall then
+            load0 <= true;
+            tagM0 <= "00000";
+            tagFM0 <= "00000";
+        else
+            load0 <= not (is_mem_gpr_st or is_mem_fpr_st);
+            if is_mem_gpr_st or is_mem_gpr_ld then
+                tagM0 <= tag_y;
+            else
+                tagM0 <= "00000";
+            end if;
+            if is_mem_fpr_st or is_mem_fpr_ld then
+                tagFM0 <= tag_y;
+            else
+                tagFM0 <= "00000";
+            end if;
+        end if;
+        if opcode(3) = '0' then
+            valM0 <= val_gpr_fwd_y;
+        else
+            valM0 <= val_fpr_fwd_y;
+        end if;
+        addr0 <= sram_addr(unsigned(val_gpr_fwd_x(19 downto 0)) + unsigned(imm_signed(19 downto 0)));
+
     end process;
 
     alu_map : ALU port map (
