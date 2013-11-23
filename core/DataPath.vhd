@@ -23,13 +23,14 @@ architecture DataPathImp of DataPath is
     component Fetch is
         port (
             clk : in std_logic;
-
             stall : in boolean;
             jump : in boolean;
             jumpAddr : in blkram_addr;
-
             pc : out blkram_addr;
-            instruction : out instruction_t);
+            inst : out instruction_t;
+            we : in boolean;
+            wpc : in blkram_addr;
+            winst : in instruction_t);
     end component;
 
     component ALU is
@@ -88,7 +89,7 @@ architecture DataPathImp of DataPath is
             emitVal : out value_t;
             emitInstWE : out boolean;
             emitInst : out instruction_t;
-            emitInstPtr : out blkram_addr_t;
+            emitInstPtr : out blkram_addr;
             blocking : out boolean);
     end component;
 
@@ -104,7 +105,7 @@ architecture DataPathImp of DataPath is
     signal inst : instruction_t := (others => '0');
     signal pc : blkram_addr := (others => '0');
     signal enable_inst_w : boolean;
-    signal inst_ptr_w : blkram_addr_t;
+    signal inst_ptr_w : blkram_addr;
     signal inst_w : instruction_t;
 
     signal PCLine : blkram_addr := (others => '0');
@@ -124,14 +125,14 @@ architecture DataPathImp of DataPath is
 
     signal code_bra : std_logic_vector(4 downto 0) := "00000";
     signal tag_bra_l : tag_t := (others => '0');
-    signal val_bra_a : value_t := "1000" & x"0000000";
+    signal val_bra_a : value_t := (others => '0'); -- jmp to addr 0 once
     signal val_bra_b : value_t := (others => '0');
     signal val_bra_l : blkram_addr := (others => '0');
     signal val_bra_t : blkram_addr := (others => '0');
     signal emit_tag_bra : tag_t;
     signal emit_val_bra : blkram_addr;
 
-    signal code_io : std_logic_vector(1 downto 0) := "00";
+    signal code_io : std_logic_vector(2 downto 0) := "000";
     signal enable_io : boolean := false;
     signal tag_spc_y : tag_t := (others => '0');
     signal val_spc_x : value_t := (others => '0');
@@ -415,7 +416,7 @@ begin
         end if;
         val_bra_l <= pc;
 
-        code_io <= inst(1 downto 0);
+        code_io <= inst(2 downto 0);
         enable_io <= not (ignore or stall) and is_spc;
         tag_spc_y <= tag_y;
         val_spc_x <= val_gpr_fwd_x;

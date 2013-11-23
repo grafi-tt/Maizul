@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use work.types.all;
 
 entity IO is
@@ -19,7 +20,7 @@ entity IO is
         emitVal : out value_t;
         emitInstWE : out boolean := false;
         emitInst : out instruction_t := (others => '0');
-        emitInstPtr : out blkram_t := (others => '0');
+        emitInstPtr : out blkram_addr := (others => '0');
         blocking : out boolean);
 end IO;
 
@@ -31,7 +32,7 @@ architecture Implementation of IO is
     signal ok, go : std_logic := '0';
     signal tagIO : tag_t := "00000";
     signal recving : boolean := false;
-    signal inst_ptr : unsigned;
+    signal inst_ptr : unsigned(15 downto 0) := (others => '0');
 
 begin
     every_clock_do : process(clk)
@@ -57,9 +58,9 @@ begin
                                 state <= Send;
                                 byteState <= 0;
                                 buf <= putVal(7 downto 0) & x"000000";
-                            when "100"
-                                inst_ptr <= putVal;
-                            when "101"
+                            when "100" =>
+                                inst_ptr <= unsigned(putVal(15 downto 0));
+                            when "101" =>
                                 emitInst <= instruction_t(putVal);
                                 emitInstPtr <= blkram_addr(inst_ptr);
                                 inst_ptr <= inst_ptr + 1;

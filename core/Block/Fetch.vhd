@@ -9,11 +9,11 @@ entity Fetch is
         stall : in boolean;
         jump : in boolean;
         jumpAddr : in blkram_addr;
-        pc : out blkram_addr;
-        inst : out instruction_t,
-        we => in boolean,
-        wpc => in blkram_addr,
-        winst => in instruction_t);
+        pc : out blkram_addr := (others => '0');
+        inst : out instruction_t;
+        we : in boolean;
+        wpc : in blkram_addr;
+        winst : in instruction_t);
 end Fetch;
 
 architecture Implementation of Fetch is
@@ -27,7 +27,7 @@ architecture Implementation of Fetch is
             winst : in instruction_t);
     end component;
 
-    signal pcInternal : blkram_addr := (others => '0');
+    signal pcOld, pcInc, pcInternal : blkram_addr := (others => '0');
 
 begin
     blkram_map : BlkRAM port map (
@@ -39,28 +39,24 @@ begin
         winst => winst);
 
     sequential : process(clk)
-        signal pcInc : blkram_addr := (others => '0');
-        signal pcOld : blkram_addr := (others => '0');
-
     begin
-        if (rising_edge(clk)) then
-            pcOld := pcInternal;
-            pcInc := pcInternal + 1;
-
-            if stall then
-                pcInternal <= pcOld;
-            elsif jump then
-                pcInternal <= jumpAddr;
-            else
-                pcInternal <= pcInc;
-            end if;
-            pc <= pcInc;
+        pcOld <= pcInternal;
+        if rising_edge(clk) then
+            pcInc <= pcInternal + 1;
+            pcOld <= pcInternal;
         end if;
     end process;
 
-    pcInternal <= pcOld when stall else
-                  jumpAddr when jump else
-                  pcInc;
-    pc <= pcInc;
+    combinatorial : process(stall, jump, jumpAddr, pcOld, pcInc)
+    begin
+        if stall then
+            pcInternal <= pcOld;
+        elsif jump then
+            pcInternal <= jumpAddr;
+        else
+            pcInternal <= pcInc;
+        end if;
+        pc <= pcInc;
+    end process;
 
 end Implementation;
