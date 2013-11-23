@@ -6,7 +6,7 @@ entity IO is
     port (
         clk : in std_logic;
         enable : in boolean;
-        code : in std_logic_vector(1 downto 0);
+        code : in std_logic_vector(2 downto 0);
         serialOk : out std_logic;
         serialGo : out std_logic;
         serialRecvData : in std_logic_vector(7 downto 0);
@@ -17,6 +17,9 @@ entity IO is
         putVal : in value_t;
         emitTag : out tag_t;
         emitVal : out value_t;
+        emitInstWE : out boolean := false;
+        emitInst : out instruction_t := (others => '0');
+        emitInstPtr : out blkram_t := (others => '0');
         blocking : out boolean);
 end IO;
 
@@ -28,6 +31,7 @@ architecture Implementation of IO is
     signal ok, go : std_logic := '0';
     signal tagIO : tag_t := "00000";
     signal recving : boolean := false;
+    signal inst_ptr : unsigned;
 
 begin
     every_clock_do : process(clk)
@@ -38,26 +42,33 @@ begin
                     recving <= false;
                     if enable then
                         case code is
-                            when "00" =>
+                            when "000" =>
                                 state <= Recv;
                                 buf <= (others => '0');
-                            when "01" =>
+                            when "001" =>
                                 assert false;
                                 state <= Send;
                                 buf <= putVal;
-                            when "10" =>
+                            when "010" =>
                                 state <= Recv;
                                 byteState <= 0;
                                 buf <= (others => '0');
-                            when "11" =>
+                            when "011" =>
                                 state <= Send;
                                 byteState <= 0;
                                 buf <= putVal(7 downto 0) & x"000000";
+                            when "100"
+                                inst_ptr <= putVal;
+                            when "101"
+                                emitInst <= instruction_t(putVal);
+                                emitInstPtr <= blkram_addr(inst_ptr);
+                                inst_ptr <= inst_ptr + 1;
                             when others =>
                                 assert false;
                         end case;
                         tagIO <= getTag;
                     end if;
+                    emitInstWE <= enable and code = "101";
 
                 when Recv =>
                     if serialRecved = '1' and ok = '0' then

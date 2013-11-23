@@ -75,7 +75,7 @@ architecture DataPathImp of DataPath is
         port (
             clk : in std_logic;
             enable : in boolean;
-            code : in std_logic_vector(1 downto 0);
+            code : in std_logic_vector(2 downto 0);
             serialOk : out std_logic;
             serialGo : out std_logic;
             serialRecvData : in std_logic_vector(7 downto 0);
@@ -86,6 +86,9 @@ architecture DataPathImp of DataPath is
             putVal : in value_t;
             emitTag : out tag_t;
             emitVal : out value_t;
+            emitInstWE : out boolean;
+            emitInst : out instruction_t;
+            emitInstPtr : out blkram_addr_t;
             blocking : out boolean);
     end component;
 
@@ -100,6 +103,9 @@ architecture DataPathImp of DataPath is
     signal fetched_pc : blkram_addr;
     signal inst : instruction_t := (others => '0');
     signal pc : blkram_addr := (others => '0');
+    signal enable_inst_w : boolean;
+    signal inst_ptr_w : blkram_addr_t;
+    signal inst_w : instruction_t;
 
     signal PCLine : blkram_addr := (others => '0');
     signal stall_fetch : boolean := false;
@@ -157,7 +163,10 @@ begin
         jump => jump1,
         jumpAddr => PCLine,
         pc => fetched_pc,
-        instruction => fetched_inst);
+        inst => fetched_inst,
+        we => enable_inst_w,
+        wpc => inst_ptr_w,
+        winst => inst_w);
 
     sequential : process(clk)
     begin
@@ -484,6 +493,9 @@ begin
         putVal => val_spc_x,
         emitTag => emit_tag_spc,
         emitVal => emit_val_spc,
+        emitInstWE => enable_inst_w,
+        emitInst => inst_w,
+        emitInstPtr => inst_ptr_w,
         blocking => blocking);
 
     do_sram : process(clk)
