@@ -178,7 +178,8 @@ begin
                             emit_tag_alu, emit_val_alu,
                             pipe1_tag_fpu, pipe2_tag_fpu, emit_tag_fpu, emit_val_fpu,
                             emit_tag_bra, emit_val_bra, PCLine, jump1,
-                            emit_tag_spc, emit_val_spc, blocking)
+                            emit_tag_spc, emit_val_spc, blocking,
+                            tagM1, tagM2, tagM3, emitTagLoad, tagFM1, tagFM2, tagFM3, emitTagFLoad, emitValM)
         variable tag_gpr_w : tag_t;
         variable val_gpr_w : value_t;
         variable tag_fpr_w : tag_t;
@@ -197,7 +198,7 @@ begin
         variable val_fpr_x, val_fpr_y, val_fpr_fwd_x, val_fpr_fwd_y : value_t;
 
         variable stall_raw_gpr_x, stall_raw_gpr_y, stall_waw_gpr_y, stall_waw_gpr_z : boolean;
-        variable stall_raw_fpr_x, stall_raw_fpr_y, stall_waw_fpr_z : boolean;
+        variable stall_raw_fpr_x, stall_raw_fpr_y, stall_mst_fpr_y, stall_waw_fpr_z : boolean;
 
         variable stall, ignore : boolean;
 
@@ -280,7 +281,7 @@ begin
         end if;
 
         stall_raw_gpr_x := tag_x /= "00000" and
-                           (is_alu_gpr or is_alu_imm or is_fpu_gpr or is_spc or is_jmp or is_bra_gpr) and
+                           not (is_alu_fpr or is_fpu_fpr or is_bra_fpr) and
                            ( (load1 and tag_x = tagM1) or
                              (load2 and tag_x = tagM2) or
                              (load3 and tag_x = tagM3));
@@ -313,12 +314,16 @@ begin
                              (load1 and tag_y = tagFM1) or
                              (load2 and tag_y = tagFM2) or
                              (load3 and tag_y = tagFM3));
+        stall_mst_fpr_y := tag_y /= "00000" and
+                           (is_mem_fpr_st) and
+                           ( (tag_y = pipe1_tag_fpu) or
+                             (tag_y = pipe2_tag_fpu));
         stall_waw_fpr_z := tag_z /= "00000" and
                            (is_fpu_gpr or is_fpu_fpr) and
                            ( (load1 and tagFM1 /= "00000"));
 
         stall := stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
-                 stall_raw_fpr_x or stall_raw_fpr_y or stall_waw_fpr_z or
+                 stall_raw_fpr_x or stall_raw_fpr_y or stall_mst_fpr_y or stall_waw_fpr_z or
                  blocking;
         ignore := jump2 or jump1;
         stall_fetch <= not ignore and stall;
@@ -511,12 +516,12 @@ begin
             if load2 then
                 sramData <= (others => 'Z');
             else
-                if not fwdM_1 then
-                    if fwdM_2 then
-                        sramData <= emitValM;
-                    else
-                        sramData <= valM2;
-                    end if;
+                if fwdM_1 then
+                    sramData <= sramData;
+                elsif fwdM_2 then
+                    sramData <= emitValM;
+                else
+                    sramData <= valM2;
                 end if;
             end if;
 

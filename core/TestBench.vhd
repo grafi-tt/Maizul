@@ -34,16 +34,16 @@ architecture PseudoConnection of TestBench is
     constant BLOCK_CYCLE : integer := 31;
     signal recvCnt, sendCnt : integer := BLOCK_CYCLE;
 
-    constant PSEUDORAM_WIDTH : natural := 10;
-    constant PSEUDORAM_LENGTH : natural := 1024;
+    constant PSEUDORAM_WIDTH : natural := 20;
+    constant PSEUDORAM_LENGTH : natural := 1048576;
 
     signal ok, go : std_logic;
     signal recvData, sendData : std_logic_vector(7 downto 0) := (others => '0');
     signal recved : std_logic := '0';
     signal sent : std_logic := '1';
 
-    type ram_t is array(0 to PSEUDORAM_LENGTH-1) of value_t;
-    signal pseudoRam : ram_t := (others => (others => '0'));
+    type ram_t is array(0 to PSEUDORAM_LENGTH-1) of integer;
+    signal pseudoRam : ram_t := (others => 0);
     signal load : boolean;
     signal load1, load2 : boolean := true;
     signal addr : sram_addr;
@@ -110,7 +110,7 @@ begin
             load2 <= load1;
             if load1 then
                 if not (addr1 = addr2 and (not load2)) then
-                    data <= pseudoRam(to_integer(unsigned(addr1(PSEUDORAM_WIDTH-1 downto 0))));
+                    data <= std_logic_vector(to_signed(pseudoRam(to_integer(unsigned(addr1(PSEUDORAM_WIDTH-1 downto 0)))),32));
                 else
                     data <= data;
                 end if;
@@ -120,7 +120,7 @@ begin
 
             -- phase 3
             if not load2 then
-                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= data;
+                pseudoRam(to_integer(unsigned(addr2(PSEUDORAM_WIDTH-1 downto 0)))) <= to_integer(signed(data));
             end if;
         end if;
     end process;

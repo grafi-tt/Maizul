@@ -42,6 +42,7 @@ begin
                                 state <= Recv;
                                 buf <= (others => '0');
                             when "01" =>
+                                assert false;
                                 state <= Send;
                                 buf <= putVal;
                             when "10" =>
