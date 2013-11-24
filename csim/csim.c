@@ -35,7 +35,7 @@ static uint32_t PC;
 static inst_t INST_MEM[INST_ADDR];
 static uint32_t DATA_MEM[DATA_ADDR];
 
-static unsigned int inst_count;
+static uint64_t inst_count;
 
 static inline inst_t bits(inst_t inst, unsigned int i, unsigned int j) {
     return (inst & ((1 << (i + 1)) - (1 << j))) >> j;
@@ -441,7 +441,7 @@ int main(int argc, const char *argv[]) {
 
     issue();
     if (FLG_COUNT_INST) {
-        fprintf(stderr, "instruction count %u\n", inst_count);
+        fprintf(stderr, "instruction count %lu\n", inst_count);
     }
 
     return 0;
