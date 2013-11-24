@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SIZE=1024
+SIZE=8192
 
 n=$SIZE
 SIZE_MGN=0
@@ -28,9 +28,6 @@ end entity;
 architecture instance of BlkRAM is
     type blkram_t is array (0 to $(expr $SIZE - 1)) of instruction_t;
     signal RAM : blkram_t := (
-    attribute RAM_STYLE : string;
-    attribute RAM_STYLE of RAM : signal is "blockram";
-    attribute RAM_STYLE of RAM : signal is "blockram";
 EOS
 
 i=1
@@ -53,6 +50,8 @@ echo "        \"${line}\""
 
 cat <<EOS
     );
+    attribute ram_style : string;
+    attribute ram_style of RAM : signal is "block";
 
 begin
     everyClock : process(clk)
