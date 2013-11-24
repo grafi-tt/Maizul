@@ -17,5 +17,5 @@ firmware_loader_loop:
 	getb	r4;
 	or	r3	r4	r3;
 /*	wrti	r3; */ add r0 r0 0;
-blt	r2	r1	firmware_loader_loop@t;
+/* blt	r2	r1	firmware_loader_loop@t; */ blt r2 r1 0;
 /* automatically goto PC 0 by overflow of PC */
