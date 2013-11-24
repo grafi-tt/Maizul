@@ -39,7 +39,7 @@ begin
     every_clock_do : process(clk)
     begin
         if rising_edge(clk) then
-            codeInternal <= code(3) & code(1 downto 0); -- eliminating redundant bit
+            codeInternal <= code(4) & code(1 downto 0); -- eliminating redundant bit
             emitTag <= tagL;
             a <= valA;
             b <= valB;
