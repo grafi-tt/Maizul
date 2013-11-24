@@ -184,12 +184,12 @@ begin
         end if;
     end process;
 
-    combinatorial : process(inst,
+    combinatorial : process(inst, pc, gpr_file, fpr_file,
                             emit_tag_alu, emit_val_alu,
                             pipe1_tag_fpu, pipe2_tag_fpu, emit_tag_fpu, emit_val_fpu,
-                            emit_tag_bra, emit_val_bra, PCLine, jump1,
+                            emit_tag_bra, emit_val_bra, PCLine, jump1, jump2,
                             emit_tag_spc, emit_val_spc, blocking,
-                            tagM1, tagM2, tagM3, emitTagLoad, tagFM1, tagFM2, tagFM3, emitTagFLoad, emitValM)
+                            load1, load2, load3, tagM1, tagM2, tagM3, emitTagLoad, tagFM1, tagFM2, tagFM3, emitTagFLoad, emitValM)
         variable tag_gpr_w : tag_t;
         variable val_gpr_w : value_t;
         variable tag_fpr_w : tag_t;

@@ -40,7 +40,6 @@ begin
 
     sequential : process(clk)
     begin
-        pcOld <= pcInternal;
         if rising_edge(clk) then
             pcInc <= pcInternal + 1;
             pcOld <= pcInternal;
