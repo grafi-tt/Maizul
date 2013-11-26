@@ -27,13 +27,13 @@ main = do
     end entity;
 
     architecture instance of BlkRAM is
-        type blkram_t is array (0 to 8191) of instruction_t;
+        type blkram_t is array (0 to 16383) of instruction_t;
         signal RAM : blkram_t := (
     |]
 
-  let imm = showIntAtBase 2 intToDigit (8192 - length dat) ""
+  let imm = showIntAtBase 2 intToDigit (16384 - length dat) ""
   putStrLn $ "        0 => \"0101000000000000" ++ replicate (16 - length imm) '0' ++ imm ++ "\","
-  forM_ (zip dat [8192 - length dat ..]) (\(d, i) -> putStr $ "        " ++ show i ++ " => \"" ++ d ++ "\",\n")
+  forM_ (zip dat [16384 - length dat ..]) (\(d, i) -> putStr $ "        " ++ show i ++ " => \"" ++ d ++ "\",\n")
   putStr "        others => (others => '0')"
 
   putStr [heredoc|s
@@ -45,9 +45,9 @@ main = do
         everyClock : process(clk)
         begin
             if (rising_edge(clk)) then
-                inst <= RAM(to_integer(unsigned(addr(12 downto 0))));
+                inst <= RAM(to_integer(unsigned(addr(13 downto 0))));
                 if we then
-                    RAM(to_integer(unsigned(waddr(12 downto 0)))) <= winst;
+                    RAM(to_integer(unsigned(waddr(13 downto 0)))) <= winst;
                 end if;
             end if;
         end process;
