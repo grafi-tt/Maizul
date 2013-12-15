@@ -19,18 +19,12 @@ entity DataPath is
         sramData : inout value_t := (others => '0'));
 end DataPath;
 
-architecture DataPathImp of DataPath is
+architecture behaviroral of DataPath is
     component Fetch is
         port (
             clk : in std_logic;
-            stall : in boolean;
-            jump : in boolean;
-            jumpAddr : in blkram_addr;
-            pc : out blkram_addr;
-            inst : out instruction_t;
-            we : in boolean;
-            wpc : in blkram_addr;
-            winst : in instruction_t);
+            d : in fetch_in_t;
+            q : out fetch_out_t);
     end component;
 
     component ALU is
@@ -60,16 +54,8 @@ architecture DataPathImp of DataPath is
     component Branch is
         port (
             clk : in std_logic;
-            code : in std_logic_vector(4 downto 0);
-            tagL : in tag_t;
-            valA : in value_t;
-            valB : in value_t;
-            link : in blkram_addr;
-            target : in blkram_addr;
-            emitTag : out tag_t;
-            emitLink : out blkram_addr;
-            emitTarget : out blkram_addr;
-            result : out boolean);
+            d : in branch_in_t;
+            q : out branch_out_t);
     end component;
 
     component IO is
@@ -108,8 +94,8 @@ architecture DataPathImp of DataPath is
     signal inst_ptr_w : blkram_addr;
     signal inst_w : instruction_t;
 
-    signal PCLine : blkram_addr := (others => '0');
-    signal stall_fetch : boolean := false;
+    signal d_fet : fetch_in_t;
+    signal q_fet : fetch_out_t;
 
     signal code_alu : std_logic_vector(3 downto 0) := (others => '0');
     signal tag_alu_d : tag_t := (others => '0');
@@ -123,14 +109,14 @@ architecture DataPathImp of DataPath is
 
     signal val_alu_fpu_a, val_alu_fpu_b : value_t := (others => '0');
 
-    signal code_bra : std_logic_vector(4 downto 0) := "00000";
-    signal tag_bra_l : tag_t := (others => '0');
-    signal val_bra_a : value_t := (others => '0'); -- jmp to addr 0 once
-    signal val_bra_b : value_t := (others => '0');
-    signal val_bra_l : blkram_addr := (others => '0');
-    signal val_bra_t : blkram_addr := (others => '0');
-    signal emit_tag_bra : tag_t;
-    signal emit_val_bra : blkram_addr;
+    signal d_bra : branch_in_t := (
+        code => "00000", -- jmp to addr 0 once
+        tag_l => (others => '0'),
+        val_a => (others => '0'),
+        val_b => (others => '0'),
+        val_l => (others => '0'),
+        val_t => (others => '0'));
+    signal q_bra : branch_out_t;
 
     signal code_io : std_logic_vector(2 downto 0) := "000";
     signal enable_io : boolean := false;
@@ -158,23 +144,14 @@ architecture DataPathImp of DataPath is
 
 begin
     -- fetch
-    fetch_map : Fetch port map (
-        clk => clk,
-        stall => stall_fetch,
-        jump => jump1,
-        jumpAddr => PCLine,
-        pc => fetched_pc,
-        inst => fetched_inst,
-        we => enable_inst_w,
-        wpc => inst_ptr_w,
-        winst => inst_w);
+    fetch_map : Fetch port map (clk => clk, d => d_fet, q => q_fet);
 
     sequential : process(clk)
     begin
         if rising_edge(clk) then
-            if not stall_fetch then
-                inst <= fetched_inst;
-                pc <= fetched_pc;
+            if not d_fet.stall then
+                inst <= q_fet.inst;
+                pc <= q_fet.pc;
             end if;
 
             gpr_file(to_integer(unsigned(tag_gpr_w_sig))) <= val_gpr_w_sig;
@@ -187,7 +164,7 @@ begin
     combinatorial : process(inst, pc, gpr_file, fpr_file,
                             emit_tag_alu, emit_val_alu,
                             pipe1_tag_fpu, pipe2_tag_fpu, emit_tag_fpu, emit_val_fpu,
-                            emit_tag_bra, emit_val_bra, PCLine, jump1, jump2,
+                            q_bra, q_fet, jump1, jump2,
                             emit_tag_spc, emit_val_spc, blocking,
                             load1, load2, load3, tagM1, tagM2, tagM3, emitTagLoad, tagFM1, tagFM2, tagFM3, emitTagFLoad, emitValM)
         variable tag_gpr_w : tag_t;
@@ -213,11 +190,11 @@ begin
         variable stall, ignore : boolean;
 
     begin
-        tag_gpr_w := emit_tag_alu or emit_tag_bra or emit_tag_spc or emitTagLoad;
+        tag_gpr_w := emit_tag_alu or q_bra.emit_tag or emit_tag_spc or emitTagLoad;
         if emit_tag_alu /= "00000" then
             val_gpr_w := emit_val_alu;
-        elsif emit_tag_bra /= "00000" then
-            val_gpr_w := value_t(x"0000" & emit_val_bra);
+        elsif q_bra.emit_tag /= "00000" then
+            val_gpr_w := value_t(x"0000" & q_bra.emit_link);
         elsif emit_tag_spc /= "00000" then
             val_gpr_w := emit_val_spc;
         elsif emitTagLoad /= "00000" then
@@ -234,6 +211,8 @@ begin
         else
             val_fpr_w := (others => '0');
         end if;
+
+        d_fet.addr <= q_bra.emit_target;
 
         tag_gpr_w_sig <= tag_gpr_w;
         tag_fpr_w_sig <= tag_fpr_w;
@@ -335,8 +314,9 @@ begin
         stall := stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
                  stall_raw_fpr_x or stall_raw_fpr_y or stall_mst_fpr_y or stall_waw_fpr_z or
                  blocking;
+        jump1 <= q_fet.jump;
         ignore := jump2 or jump1;
-        stall_fetch <= not ignore and stall;
+        d_fet.stall <= not ignore and stall;
 
         if is_alu_imm then
             code_alu <= opcode(3 downto 0);
@@ -374,47 +354,47 @@ begin
         end if;
 
         if ignore or stall then
-            code_bra <= "00000";
-            tag_bra_l <= "00000";
+            d_bra.code <= "00000";
+            d_bra.tag_l <= "00000";
             if opcode(4) = '0' then
-                val_bra_a <= '1' & val_gpr_fwd_x(30 downto 0);
-                val_bra_b <= '0' & val_gpr_fwd_y(30 downto 0);
+                d_bra.val_a <= '1' & val_gpr_fwd_x(30 downto 0);
+                d_bra.val_b <= '0' & val_gpr_fwd_y(30 downto 0);
             else
-                val_bra_a <= '1' & val_fpr_fwd_x(30 downto 0);
-                val_bra_b <= '0' & val_fpr_fwd_y(30 downto 0);
+                d_bra.val_a <= '1' & val_fpr_fwd_x(30 downto 0);
+                d_bra.val_b <= '0' & val_fpr_fwd_y(30 downto 0);
             end if;
-            val_bra_t <= blkram_addr(imm);
+            d_bra.val_t <= blkram_addr(imm);
         else
             if is_bra_gpr or is_bra_fpr then
-                code_bra <= opcode(4 downto 0);
-                tag_bra_l <= "00000";
+                d_bra.code <= opcode(4 downto 0);
+                d_bra.tag_l <= "00000";
                 if opcode(4) = '0' then
-                    val_bra_a <= val_gpr_fwd_x;
-                    val_bra_b <= val_gpr_fwd_y;
+                    d_bra.val_a <= val_gpr_fwd_x;
+                    d_bra.val_b <= val_gpr_fwd_y;
                 else
-                    val_bra_a <= val_fpr_fwd_x;
-                    val_bra_b <= val_fpr_fwd_y;
+                    d_bra.val_a <= val_fpr_fwd_x;
+                    d_bra.val_b <= val_fpr_fwd_y;
                 end if;
-                val_bra_t <= blkram_addr(imm);
+                d_bra.val_t <= blkram_addr(imm);
             else
                 if is_jmp then
-                    code_bra <= "00010";
-                    tag_bra_l <= tag_y;
+                    d_bra.code <= "00010";
+                    d_bra.tag_l <= tag_y;
                 else
-                    code_bra <= "00000";
-                    tag_bra_l <= "00000";
+                    d_bra.code <= "00000";
+                    d_bra.tag_l <= "00000";
                 end if;
                 if opcode(4) = '0' then
-                    val_bra_a <= '1' & val_gpr_fwd_x(30 downto 0);
-                    val_bra_b <= '0' & val_gpr_fwd_y(30 downto 0);
+                    d_bra.val_a <= '1' & val_gpr_fwd_x(30 downto 0);
+                    d_bra.val_b <= '0' & val_gpr_fwd_y(30 downto 0);
                 else
-                    val_bra_a <= '1' & val_fpr_fwd_x(30 downto 0);
-                    val_bra_b <= '0' & val_fpr_fwd_y(30 downto 0);
+                    d_bra.val_a <= '1' & val_fpr_fwd_x(30 downto 0);
+                    d_bra.val_b <= '0' & val_fpr_fwd_y(30 downto 0);
                 end if;
-                val_bra_t <= blkram_addr(imm or unsigned(val_gpr_fwd_x(15 downto 0)));
+                d_bra.val_t <= blkram_addr(imm or unsigned(val_gpr_fwd_x(15 downto 0)));
             end if;
         end if;
-        val_bra_l <= pc;
+        d_bra.val_l <= pc;
 
         code_io <= inst(2 downto 0);
         enable_io <= not (ignore or stall) and is_spc;
@@ -467,18 +447,7 @@ begin
         emitTag => emit_tag_fpu,
         emitVal => emit_val_fpu);
 
-    branch_map : Branch port map (
-        clk => clk,
-        code => code_bra,
-        tagL => tag_bra_l,
-        valA => val_bra_a,
-        valB => val_bra_b,
-        link => val_bra_l,
-        target => val_bra_t,
-        emitTag => emit_tag_bra,
-        emitLink => emit_val_bra,
-        emitTarget => PCLine,
-        result => jump1);
+    branch_map : Branch port map (clk => clk, d => d_bra, q => q_bra);
 
     io_map : IO port map (
         clk => clk,
@@ -494,9 +463,9 @@ begin
         putVal => val_spc_x,
         emitTag => emit_tag_spc,
         emitVal => emit_val_spc,
-        emitInstWE => enable_inst_w,
-        emitInst => inst_w,
-        emitInstPtr => inst_ptr_w,
+        emitInstWE => d_fet.we,
+        emitInst => d_fet.winst,
+        emitInstPtr => d_fet.waddr,
         blocking => blocking);
 
     do_sram : process(clk)
@@ -551,4 +520,4 @@ begin
         end if;
     end process;
 
-end DataPathImp;
+end behaviroral;
