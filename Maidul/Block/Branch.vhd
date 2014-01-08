@@ -7,7 +7,10 @@ entity Branch is
     port (
         clk : in std_logic;
         d : in branch_in_t;
-        q : out branch_out_t);
+        q : out branch_out_t := (
+            emit_tag => (others => '0'),
+            emit_link => (others => '0'),
+            emit_target => (others => '0')));
 end Branch;
 
 architecture twoproc of Branch is
@@ -21,7 +24,7 @@ begin
     sequential : process(clk)
     begin
         if rising_edge(clk) then
-            c <= d.code(4) & d.code(1 downto 0); -- eliminating redundant bit
+            c <= d.code; -- eliminating redundant bit
             a <= d.val_a;
             b <= d.val_b;
             q.emit_tag <= d.tag_l;

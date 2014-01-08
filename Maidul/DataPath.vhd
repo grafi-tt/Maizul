@@ -86,13 +86,8 @@ architecture behaviroral of DataPath is
     attribute RAM_STYLE of gpr_file : signal is "distributed";
     attribute RAM_STYLE of fpr_file : signal is "distributed";
 
-    signal fetched_inst : instruction_t;
-    signal fetched_pc : blkram_addr;
     signal inst : instruction_t := (others => '0');
     signal pc : blkram_addr := (others => '0');
-    signal enable_inst_w : boolean;
-    signal inst_ptr_w : blkram_addr;
-    signal inst_w : instruction_t;
 
     signal d_fet : fetch_in_t;
     signal q_fet : fetch_out_t;
@@ -110,7 +105,7 @@ architecture behaviroral of DataPath is
     signal val_alu_fpu_a, val_alu_fpu_b : value_t := (others => '0');
 
     signal d_bra : branch_in_t := (
-        code => "00000", -- jmp to addr 0 once
+        code => "000", -- jmp to addr 0 once
         tag_l => (others => '0'),
         val_a => (others => '0'),
         val_b => (others => '0'),
@@ -129,6 +124,9 @@ architecture behaviroral of DataPath is
 
     signal jump1 : boolean;
     signal jump2 : boolean := false;
+    signal stall : boolean;
+    signal stall_lat : boolean := false;
+    signal emit_target_lat : blkram_addr := (others => '0');
 
     signal addr0 : sram_addr := (others => '0');
     signal load0, load1, load2, load3 : boolean := true;
@@ -149,7 +147,7 @@ begin
     sequential : process(clk)
     begin
         if rising_edge(clk) then
-            if not d_fet.stall then
+            if not stall then
                 inst <= q_fet.inst;
                 pc <= q_fet.pc;
             end if;
@@ -158,13 +156,17 @@ begin
             fpr_file(to_integer(unsigned(tag_fpr_w_sig))) <= val_fpr_w_sig;
 
             jump2 <= jump1;
+            stall_lat <= stall;
+            if not stall_lat then
+                emit_target_lat <= q_bra.emit_target;
+            end if;
         end if;
     end process;
 
-    combinatorial : process(inst, pc, gpr_file, fpr_file,
+    combinatorial : process(inst, pc, gpr_file, fpr_file, stall_lat, emit_target_lat,
                             emit_tag_alu, emit_val_alu,
                             pipe1_tag_fpu, pipe2_tag_fpu, emit_tag_fpu, emit_val_fpu,
-                            q_bra, q_fet, jump1, jump2,
+                            q_bra, q_fet, jump1, jump2, stall,
                             emit_tag_spc, emit_val_spc, blocking,
                             load1, load2, load3, tagM1, tagM2, tagM3, emitTagLoad, tagFM1, tagFM2, tagFM3, emitTagFLoad, emitValM)
         variable tag_gpr_w : tag_t;
@@ -187,7 +189,7 @@ begin
         variable stall_raw_gpr_x, stall_raw_gpr_y, stall_waw_gpr_y, stall_waw_gpr_z : boolean;
         variable stall_raw_fpr_x, stall_raw_fpr_y, stall_mst_fpr_y, stall_waw_fpr_z : boolean;
 
-        variable stall, ignore : boolean;
+        variable ignore : boolean;
 
     begin
         tag_gpr_w := emit_tag_alu or q_bra.emit_tag or emit_tag_spc or emitTagLoad;
@@ -212,7 +214,11 @@ begin
             val_fpr_w := (others => '0');
         end if;
 
-        d_fet.addr <= q_bra.emit_target;
+        if stall_lat then
+            d_fet.addr <= emit_target_lat;
+        else
+            d_fet.addr <= q_bra.emit_target;
+        end if;
 
         tag_gpr_w_sig <= tag_gpr_w;
         tag_fpr_w_sig <= tag_fpr_w;
@@ -311,12 +317,20 @@ begin
                            (is_fpu_gpr or is_fpu_fpr) and
                            ( (load1 and tagFM1 /= "00000"));
 
-        stall := stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
+        stall <= stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
                  stall_raw_fpr_x or stall_raw_fpr_y or stall_mst_fpr_y or stall_waw_fpr_z or
                  blocking;
-        jump1 <= q_fet.jump;
+        if jump2 or stall then
+            jump1 <= false;
+        else
+            jump1 <= q_fet.jump;
+        end if;
         ignore := jump2 or jump1;
-        d_fet.stall <= not ignore and stall;
+
+
+        -- feeding back to fetch module
+        d_fet.enable_addr <= not (ignore or stall);
+        d_fet.enable_fetch <= ignore or not stall;
 
         if is_alu_imm then
             code_alu <= opcode(3 downto 0);
@@ -354,7 +368,7 @@ begin
         end if;
 
         if ignore or stall then
-            d_bra.code <= "00000";
+            d_bra.code <= "000";
             d_bra.tag_l <= "00000";
             if opcode(4) = '0' then
                 d_bra.val_a <= '1' & val_gpr_fwd_x(30 downto 0);
@@ -366,7 +380,7 @@ begin
             d_bra.val_t <= blkram_addr(imm);
         else
             if is_bra_gpr or is_bra_fpr then
-                d_bra.code <= opcode(4 downto 0);
+                d_bra.code <= opcode(4) & opcode(1 downto 0);
                 d_bra.tag_l <= "00000";
                 if opcode(4) = '0' then
                     d_bra.val_a <= val_gpr_fwd_x;
@@ -378,10 +392,10 @@ begin
                 d_bra.val_t <= blkram_addr(imm);
             else
                 if is_jmp then
-                    d_bra.code <= "00010";
+                    d_bra.code <= "010";
                     d_bra.tag_l <= tag_y;
                 else
-                    d_bra.code <= "00000";
+                    d_bra.code <= "000";
                     d_bra.tag_l <= "00000";
                 end if;
                 if opcode(4) = '0' then

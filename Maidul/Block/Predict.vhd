@@ -18,11 +18,11 @@ architecture twoproc of Predict is
     signal gshare_ram : gshare_ram_t := (others => (others => '0'));
     attribute ram_style of gshare_ram : signal is "block";
     signal gshare_we : boolean;
-    signal gshare_key, gshare_wkey : unsigned(gshare_wid-1 downto 0);
+    signal gshare_key, gshare_wkey : unsigned(gshare_wid-1 downto 0) := (others => '0');
     signal gshare_val : std_logic_vector(1 downto 0) := "00";
-    signal gshare_wval : std_logic_vector(1 downto 0);
+    signal gshare_wval : std_logic_vector(1 downto 0) := (others => '0');
     constant hist_len : natural := 8;
-    signal hist : std_logic_vector(hist_len-1 downto 0);
+    signal hist : std_logic_vector(hist_len-1 downto 0) := (others => '0');
     signal hist_wval : std_logic;
 
     constant stack_wid : natural := 11;
@@ -33,7 +33,7 @@ architecture twoproc of Predict is
     signal stack_pred : unsigned(stack_wid-1 downto 0);
     signal stack_push, stack_pop : boolean := false;
     signal stack_addr : blkram_addr := (others => '0');
-    signal stack_waddr : blkram_addr;
+    signal stack_waddr : blkram_addr := (others => '0');
 
     signal we : boolean := false;
     signal addr : blkram_addr;
@@ -41,11 +41,11 @@ architecture twoproc of Predict is
 
     constant buf_len : natural := 2;
     type buf_t is array(buf_len-1 downto 0) of blkram_addr;
-    signal buf : buf_t;
+    signal buf : buf_t := (others => (others => '0'));
     type cont_buf_t is array(buf_len-1 downto 0) of std_logic_vector(2 downto 0);
-    signal cont_buf : cont_buf_t;
+    signal cont_buf : cont_buf_t := (others => (others => '0'));
     type key_buf_t is array(buf_len-1 downto 0) of unsigned(gshare_wid-1 downto 0);
-    signal key_buf : key_buf_t;
+    signal key_buf : key_buf_t := (others => (others => '0'));
 
 begin
     sequential : process(clk)
@@ -55,13 +55,13 @@ begin
             stack_addr <= stack_ram(to_integer(stack_pred));
 
             if we then
-                buf <= addr & buf(buf_len-2 downto 0);
-                key_buf <= gshare_key & key_buf(buf_len-2 downto 0);
-                cont_buf <= cont & cont_buf(buf_len-2 downto 0);
+                buf <= addr & buf(buf_len-1 downto 1);
+                key_buf <= gshare_key & key_buf(buf_len-1 downto 1);
+                cont_buf <= cont & cont_buf(buf_len-1 downto 1);
             end if;
 
             if gshare_we then
-                hist <= hist_wval & hist(hist_len-2 downto 0);
+                hist <= hist_wval & hist(hist_len-1 downto 1);
                 gshare_ram(to_integer(gshare_wkey)) <= gshare_wval;
             end if;
 
@@ -76,7 +76,7 @@ begin
         end if;
     end process;
 
-    predict : process(d, addr)
+    predict : process(d, addr, gshare_val, stack_addr, stack_top)
         variable imm_addr : blkram_addr;
         variable upper : std_logic_vector(hist_len-1 downto 0);
         variable lower : std_logic_vector(gshare_wid-hist_len-1 downto 0);
@@ -99,7 +99,7 @@ begin
                     addr <= d.pc;
                 when "11" => -- static jump
                     addr <= imm_addr;
-                when others => assert false;
+                when others => null;
             end case;
 
         elsif d.inst(30 downto 28) = "101" then
@@ -114,7 +114,7 @@ begin
                     addr <= stack_addr;
                 when "11" => -- not jump
                     addr <= d.pc;
-                when others => assert false;
+                when others => null;
             end case;
 
         else
@@ -128,13 +128,17 @@ begin
         stack_pred <= stack_top - 1;
     end process;
 
-    confirm : process(d, buf, cont_buf, addr)
+    confirm : process(d, buf, cont_buf, key_buf, addr)
         variable cont_head : std_logic_vector(2 downto 0);
         variable succeed : boolean;
 
     begin
+        -- return
+        q.succeed <= buf(0) = d.target;
+
+        -- write back
         cont_head := cont_buf(0);
-        succeed := buf(0) = d.target;
+        succeed := buf(0) = d.target or d.enable_target;
 
         if succeed then
             case cont_head(1 downto 0) is
@@ -162,7 +166,6 @@ begin
             end case;
         end if;
 
-        q.succeed <= succeed;
         if succeed then
             hist_wval <= '1';
             q.addr <= addr;
@@ -171,10 +174,11 @@ begin
             q.addr <= d.target;
         end if;
 
-        we <= d.enable;
-        gshare_we <= d.enable and cont_head(2) = '0';
-        stack_push <= d.enable and cont_head = "101";
-        stack_pop <= d.enable and cont_head = "110";
+        we <= d.enable_fetch;
+        gshare_we <= d.enable_target and cont_head(2) = '0';
+        stack_push <= d.enable_target and cont_head = "101";
+        stack_pop <= d.enable_target and cont_head = "110";
+        stack_waddr <= buf(0);
         gshare_wkey <= key_buf(0);
     end process;
 

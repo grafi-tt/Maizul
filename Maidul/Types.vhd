@@ -15,7 +15,7 @@ package types is
         unsigned(19 downto 0);
 
     type branch_in_t is record
-        code : std_logic_vector(4 downto 0);
+        code : std_logic_vector(2 downto 0);
         tag_l : tag_t;
         val_a : value_t;
         val_b : value_t;
@@ -30,7 +30,8 @@ package types is
     end record;
 
     type fetch_in_t is record
-        stall : boolean;
+        enable_fetch : boolean;
+        enable_addr : boolean;
         addr : blkram_addr;
         we : boolean;
         waddr : blkram_addr;
@@ -47,7 +48,8 @@ package types is
         pc : blkram_addr;
         inst : instruction_t;
         target : blkram_addr;
-        enable : boolean;
+        enable_fetch : boolean;
+        enable_target : boolean;
     end record;
 
     type predict_out_t is record

@@ -25,18 +25,20 @@ architecture twoproc of Fetch is
         port (
             clk : in std_logic;
             d : in predict_in_t;
-            q : in predict_out_t);
+            q : out predict_out_t);
     end component;
 
-    signal pc, pci : blkram_addr := (others => '0');
+    signal pc, pci, pc_inc : blkram_addr := (others => '0');
     signal dp : predict_in_t := (
         pc => (others => '0'),
         inst => (others => '0'),
         target => (others => '0'),
-        enable => false);
+        enable_fetch => false,
+        enable_target => false);
     signal qp : predict_out_t;
 
     signal inst : instruction_t;
+    signal inited : boolean := false;
 
 begin
     blkram_map : BlkRAM port map (
@@ -56,10 +58,11 @@ begin
     begin
         if rising_edge(clk) then
             pci <= pc;
+            inited <= true;
         end if;
     end process;
 
-    combinatorial : process(d, qp, pci, inst)
+    combinatorial : process(d, qp, pci, inst, inited)
         variable pc_inc : blkram_addr;
 
     begin
@@ -67,15 +70,17 @@ begin
         dp.pc <= pc_inc;
         dp.inst <= inst;
         dp.target <= d.addr;
-        dp.enable <= not d.stall;
+        q.jump <= not qp.succeed and inited;
 
-        q.jump <= not qp.succeed;
+        dp.enable_fetch <= d.enable_fetch;
+        dp.enable_target <= d.enable_addr;
+
         q.pc <= pc_inc;
         q.inst <= inst;
-        if d.stall then
-            pc <= pci;
-        else
+        if d.enable_fetch and inited then
             pc <= qp.addr;
+        else
+            pc <= pci;
         end if;
     end process;
 

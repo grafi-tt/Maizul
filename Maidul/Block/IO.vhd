@@ -64,8 +64,7 @@ begin
                                 emitInst <= instruction_t(putVal);
                                 emitInstPtr <= blkram_addr(inst_ptr);
                                 inst_ptr <= inst_ptr + 1;
-                            when others =>
-                                assert false;
+                            when others => null;
                         end case;
                         tagIO <= getTag;
                     end if;
