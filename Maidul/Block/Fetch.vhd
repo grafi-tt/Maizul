@@ -70,10 +70,10 @@ begin
         dp.pc <= pc_inc;
         dp.inst <= inst;
         dp.target <= d.addr;
-        q.jump <= not qp.succeed and inited;
-
-        dp.enable_fetch <= d.enable_fetch;
         dp.enable_target <= d.enable_addr;
+
+        q.jump <= not qp.succeed and inited;
+        dp.enable_fetch <= d.enable_fetch;
 
         q.pc <= pc_inc;
         q.inst <= inst;

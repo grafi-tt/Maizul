@@ -133,38 +133,8 @@ begin
         variable succeed : boolean;
 
     begin
-        -- return
-        q.succeed <= buf(0) = d.target;
-
-        -- write back
-        cont_head := cont_buf(0);
-        succeed := buf(0) = d.target or d.enable_target;
-
-        if succeed then
-            case cont_head(1 downto 0) is
-                when "00" =>
-                    gshare_wval <= "10";
-                when "01" =>
-                    gshare_wval <= "11";
-                when "10" =>
-                    gshare_wval <= "10";
-                when "11" =>
-                    gshare_wval <= "11";
-                when others => assert false;
-            end case;
-        else
-            case cont_head(1 downto 0) is
-                when "00" =>
-                    gshare_wval <= "01";
-                when "01" =>
-                    gshare_wval <= "00";
-                when "10" =>
-                    gshare_wval <= "00";
-                when "11" =>
-                    gshare_wval <= "01";
-                when others => assert false;
-            end case;
-        end if;
+        succeed := buf(0) = d.target or not d.enable_target;
+        q.succeed <= succeed;
 
         if succeed then
             hist_wval <= '1';
@@ -172,6 +142,33 @@ begin
         else
             hist_wval <= '0';
             q.addr <= d.target;
+        end if;
+
+        cont_head := cont_buf(0);
+        if succeed then
+            case cont_head(1 downto 0) is
+                when "00" =>
+                    gshare_wval <= "10";
+                when "01" =>
+                    gshare_wval <= "11";
+                when "10" =>
+                    gshare_wval <= "10";
+                when "11" =>
+                    gshare_wval <= "11";
+                when others => assert false;
+            end case;
+        else
+            case cont_head(1 downto 0) is
+                when "00" =>
+                    gshare_wval <= "01";
+                when "01" =>
+                    gshare_wval <= "00";
+                when "10" =>
+                    gshare_wval <= "00";
+                when "11" =>
+                    gshare_wval <= "01";
+                when others => assert false;
+            end case;
         end if;
 
         we <= d.enable_fetch;
