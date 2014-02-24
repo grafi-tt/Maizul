@@ -147,7 +147,7 @@ begin
     sequential : process(clk)
     begin
         if rising_edge(clk) then
-            if not stall then
+            if ignore or not stall then
                 inst <= q_fet.inst;
                 pc <= q_fet.pc;
             end if;
@@ -468,6 +468,7 @@ begin
         emitInstPtr => d_fet.waddr,
         blocking => blocking);
 
+    -- TODO: separate sram into another component
     do_sram : process(clk)
     begin
         if rising_edge(clk) then
