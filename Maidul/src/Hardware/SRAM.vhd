@@ -26,7 +26,7 @@ entity SRAM is
         xFlowThruPin : out std_logic);
 end SRAM;
 
-architecture ZBTControl of SRAM is
+architecture structural of SRAM is
 begin
     clkPin1 <= clk;
     clkPin2 <= clk;
@@ -44,4 +44,4 @@ begin
     sleepPin <= '0';
     xFlowThruPin <= '1';
 
-end ZBTControl;
+end structural;

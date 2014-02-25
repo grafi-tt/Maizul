@@ -4,7 +4,7 @@ use ieee.std_logic_1164.ALL;
 entity TBFAdd is
 end TBFAdd;
 
-architecture Instantiate of TBFAdd is
+architecture testbench of TBFAdd is
     component TBCommon
         port (
             clk : buffer std_logic;
@@ -80,4 +80,4 @@ begin
 
     d_out <= d3 when x3 else d_fadd;
 
-end Instantiate;
+end testbench;

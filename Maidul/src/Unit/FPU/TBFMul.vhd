@@ -4,7 +4,7 @@ use ieee.std_logic_1164.ALL;
 entity TBFMul is
 end TBFMul;
 
-architecture Instantiate of TBFMul is
+architecture testbench of TBFMul is
     component TBCommon
         port (
             clk : buffer std_logic;
@@ -79,4 +79,4 @@ begin
 
     d_out <= d3 when x3 else d_fmul;
 
-end Instantiate;
+end testbench;

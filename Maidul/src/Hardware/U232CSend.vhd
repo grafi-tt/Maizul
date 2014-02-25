@@ -13,7 +13,7 @@ entity U232CSend is
         sent : out std_logic);
 end U232CSend;
 
-architecture StateMachine of U232CSend is
+architecture statemachine of U232CSend is
     signal countdown : std_logic_vector(15 downto 0) := wTime;
     signal sendBuf : std_logic_vector(8 downto 0) := (others => '1');
     signal state : integer range 0 to 10 := 10;
@@ -51,4 +51,4 @@ begin
             end case;
         end if;
     end process;
-end StateMachine;
+end statemachine;

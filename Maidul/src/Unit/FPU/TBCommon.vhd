@@ -12,7 +12,7 @@ entity TBCommon is
         d : in  std_logic_vector(31 downto 0));
 end TBCommon;
 
-architecture FileBench of TBCommon is
+architecture testbench_file of TBCommon is
     signal delay1, delay2, delay3 : boolean := false;
 
 begin
@@ -54,4 +54,4 @@ begin
         wait for 5 ns;
     end process;
 
-end FileBench;
+end testbench_file;

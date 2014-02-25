@@ -14,7 +14,7 @@ entity ALU is
         emitVal : out value_t);
 end ALU;
 
-architecture Implementation of ALU is
+architecture twoproc of ALU is
     component FtoI
         port (
             clk : in std_logic;
@@ -108,4 +108,4 @@ begin
         end case;
     end process;
 
-end Implementation;
+end twoproc;

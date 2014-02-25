@@ -26,7 +26,7 @@ main = do
             winst : in instruction_t);
     end entity;
 
-    architecture instance of BlkRAM is
+    architecture behavioral of BlkRAM is
         type blkram_t is array (0 to 16383) of instruction_t;
         signal RAM : blkram_t := (
     |]
@@ -52,5 +52,5 @@ main = do
             end if;
         end process;
 
-    end instance;
+    end behavioral;
     |]

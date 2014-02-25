@@ -13,7 +13,7 @@ entity U232CRecv is
         recved : out std_logic);
 end U232CRecv;
 
-architecture StateMachine of U232CRecv is
+architecture statemachine of U232CRecv is
     signal countdown : std_logic_vector(15 downto 0);
     signal recvBuf : std_logic_vector(8 downto 0) := (others => '0');
     signal state : integer range 0 to 11 := 11;
@@ -71,4 +71,4 @@ begin
             end case;
         end if;
     end process;
-end StateMachine;
+end statemachine;

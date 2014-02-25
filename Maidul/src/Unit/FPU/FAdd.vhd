@@ -10,7 +10,7 @@ entity FAdd is
         flt_out : out std_logic_vector(31 downto 0));
 end FAdd;
 
-architecture Implementation of FAdd is
+architecture dataflow_pipeline of FAdd is
     component FractionLeftTrimming
         port (
             frc_in  : in  std_logic_vector(23 downto 0);
@@ -179,4 +179,4 @@ begin
     flt_out <= s3_sgn_sup & s3_exp_out_add & s3_frc_out_add(22 downto 0) when s3_is_add else
                s3_sgn_out_sub & s3_exp_out_sub & s3_frc_out_sub(22 downto 0);
 
-end Implementation;
+end dataflow_pipeline;

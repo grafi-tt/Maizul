@@ -10,7 +10,7 @@ entity Predict is
         q : out predict_out_t);
 end Predict;
 
-architecture twoproc of Predict is
+architecture behavioral of Predict is
     attribute ram_style : string;
 
     constant gshare_wid : natural := 14;
@@ -179,4 +179,4 @@ begin
         gshare_wkey <= key_buf(0);
     end process;
 
-end twoproc;
+end behavioral;

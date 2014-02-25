@@ -10,7 +10,7 @@ entity FMul is
         flt_out : out std_logic_vector(31 downto 0));
 end FMul;
 
-architecture Implementation of FMul is
+architecture dataflow_pipeline of FMul is
     signal s1_sgn : std_logic;
     signal s1_exp_add : unsigned(8 downto 0);
     signal s1_frc_all : unsigned(47 downto 0);
@@ -88,4 +88,4 @@ begin
                   s3_frc_out_tmp(23 downto 1);
     flt_out <= s3_sgn & s3_exp_out & s3_frc_out;
 
-end Implementation;
+end dataflow_pipeline;

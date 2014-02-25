@@ -24,7 +24,7 @@ entity IO is
         blocking : out boolean);
 end IO;
 
-architecture Implementation of IO is
+architecture statemachine of IO is
     type state_t is (Sleep, Recv, Send);
     signal state : state_t := Sleep;
     signal byteState : integer range 3 downto 0 := 3;
@@ -37,7 +37,7 @@ architecture Implementation of IO is
 begin
     every_clock_do : process(clk)
     begin
-        if (rising_edge(clk)) then
+        if rising_edge(clk) then
             case state is
                 when Sleep =>
                     recving <= false;
@@ -113,4 +113,4 @@ begin
     emitTag <= tagIO when recving else "00000";
     blocking <= state /= Sleep;
 
-end Implementation;
+end statemachine;

@@ -15,7 +15,7 @@ entity FPU is
         emitVal : out value_t);
 end FPU;
 
-architecture Implementation of FPU is
+architecture twoproc_pipeline of FPU is
     component FAdd
         port (
             clk : in std_logic;
@@ -204,4 +204,4 @@ begin
         end case;
     end process;
 
-end Implementation;
+end twoproc_pipeline;

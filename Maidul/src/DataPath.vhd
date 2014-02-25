@@ -19,7 +19,7 @@ entity DataPath is
         sramData : inout value_t := (others => '0'));
 end DataPath;
 
-architecture behaviroral of DataPath is
+architecture behavioral of DataPath is
     component Fetch is
         port (
             clk : in std_logic;
@@ -521,4 +521,4 @@ begin
         end if;
     end process;
 
-end behaviroral;
+end behavioral;

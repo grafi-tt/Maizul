@@ -9,7 +9,7 @@ entity FFlr is
         g : out std_logic_vector(31 downto 0) := (others => '0'));
 end FFlr;
 
-architecture Implementation of FFlr is
+architecture dataflow of FFlr is
     signal len_raw : unsigned(8 downto 0);
     signal len : unsigned(4 downto 0);
     signal x_mask, incr : unsigned(30 downto 0);
@@ -43,4 +43,4 @@ begin
         end if;
     end process;
 
-end Implementation;
+end dataflow;
