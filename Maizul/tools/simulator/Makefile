@@ -2,6 +2,8 @@ CC = gcc
 CFLAGS = -std=c99 -Wall -Werror -O3
 LDFLAGS = -lm
 
+all: csim fputest
+
 csim: csim.c fpu.c fpu.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 

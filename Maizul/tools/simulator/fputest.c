@@ -12,14 +12,15 @@ int main(int argc, char *argv[]) {
     int argc2 = 1;
     if (argc > 1) {
         for (int i = 0; tests[i].name; i++) {
-            for (int j = 1; j < argc; j++) {
-                if (!strcmp(tests[i].name, argv[j])) {
+            int j;
+            for (j = 1; j < argc; j++)
+                if (argv[j] && !strcmp(tests[i].name, argv[j])) {
                     argv[j] = NULL;
                     argc2++;
                     break;
                 }
-            }
-            tests[i].name = NULL;
+            if (j == argc)
+                tests[i].name = NULL;
         }
         if (argc != argc2) {
             puts("some of specified tests not available:");
@@ -96,8 +97,58 @@ int test_fflr_circuit() {
     return 0;
 }
 
+int test_fsqr_soft() {
+    uint32_t u;
+    int bound = 0;
+    int c;
+    for (u = 0; u < 0x7f800000; u++) {
+        if (
+            (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
+            (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
+            (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
+        ) continue;
+
+        float f1 = kill_denormal(sqrtf(uint_as_float(u)));
+        float f2 = fsqr_soft(uint_as_float(u));
+        c = count_ulp(f1, f2, 7);
+        if (c == -1) {
+            printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
+            return 1;
+        }
+        if (c > bound) bound = c;
+    }
+    printf("%d\n", bound);
+    return 0;
+}
+
+int test_finv_soft() {
+    uint32_t u;
+    int bound = 0;
+    int c;
+    for (u = 0; u < 0x7f800000; u++) {
+        if (
+            (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
+            (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
+            (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
+        ) continue;
+
+        float f1 = kill_denormal(1 / (uint_as_float(u)));
+        float f2 = finv_soft(uint_as_float(u));
+        c = count_ulp(f1, f2, 7);
+        if (c == -1) {
+            printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
+            return 1;
+        }
+        if (c > bound) bound = c;
+    }
+    printf("%d\n", bound);
+    return 0;
+}
+
 static test_t tests[] = {
     { "ftoi_circuit", test_ftoi_circuit },
     { "itof_circuit", test_itof_circuit },
-    { "fflr_circuit", test_fflr_circuit }
+    { "fflr_circuit", test_fflr_circuit },
+    { "finv_soft", test_finv_soft },
+    { "fsqr_soft", test_fsqr_soft }
 };
