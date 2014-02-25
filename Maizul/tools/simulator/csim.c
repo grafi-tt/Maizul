@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "fpu.h"
 
@@ -407,15 +408,16 @@ static void step() {
     printf("pc: %d\n", PC);
     while (true) {
         char buf[10];
-        gets(buf);
         unsigned int v;
-        if (sscanf(buf, "r%u", &v) == 1 && v < 32) {
-            printf("r%d: %d\n", v, GPR[v]);
-            continue;
-        }
-        if (sscanf(buf, "mem%u", &v) == 1) {
-            printf("mem%d: %d\n", v, DATA_MEM[v]);
-            continue;
+        if (scanf(buf, "%9s%u", buf, &v) == 1) {
+            if (strcmp(buf, "r") == 0 && v < 32) {
+                printf("r%d: %d\n", v, GPR[v]);
+                continue;
+            }
+            if (strcmp(buf, "mem") == 0) {
+                printf("mem%d: %d\n", v, DATA_MEM[v]);
+                continue;
+            }
         }
         break;
     }

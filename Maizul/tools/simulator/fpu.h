@@ -44,9 +44,13 @@ static inline float itof_native(int32_t i) {
     return (float) i;
 }
 
-static inline float ftoi_native(float f) {
+static inline int32_t ftoi_native(float f) {
+    if (f > (int64_t) INT32_MAX + 2) return INT32_MAX;
+    if (f < (int64_t) INT32_MIN - 2) return INT32_MIN;
     int64_t l = lrint(f);
-    return l > INT32_MAX ? INT32_MAX : l < INT32_MIN ? INT32_MIN : l;
+    if (l > INT32_MAX) return INT32_MAX;
+    if (l < INT32_MIN) return INT32_MIN;
+    return l;
 }
 
 static inline float fflr_native(float f) {

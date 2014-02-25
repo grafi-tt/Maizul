@@ -1,7 +1,82 @@
 #include <stdio.h>
-#include "fpu.h"
+#include <string.h>
 
-int main() {
+typedef struct {
+    const char *name;
+    int (*fp)();
+} test_t;
+
+static test_t tests[];
+
+int main(int argc, char *argv[]) {
+    int argc2 = 1;
+    if (argc > 1) {
+        for (int i = 0; tests[i].name; i++) {
+            for (int j = 1; j < argc; j++) {
+                if (!strcmp(tests[i].name, argv[j])) {
+                    argv[j] = NULL;
+                    argc2++;
+                    break;
+                }
+            }
+            tests[i].name = NULL;
+        }
+        if (argc != argc2) {
+            puts("some of specified tests not available:");
+            for (int j = 1; j < argc; j++) {
+                if (argv[j]) puts(argv[j]);
+            }
+            return 1;
+        }
+    }
+    for (int i = 0; tests[i].fp; i++) {
+        if (!tests[i].name) continue;
+        printf("executing %s:\n", tests[i].name);
+        int e = tests[i].fp();
+        if (e) {
+            printf("test failed\n");
+            return 1;
+        }
+    }
+    printf("all test succeeded\n");
+    return 0;
+}
+
+/* test definition */
+#include "fpu.h"
+int test_ftoi_circuit() {
+    uint32_t u;
+    for (u = 0x00000000; u <= UINT32_C(0xFF800000); u++) {
+        if (
+            (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
+            (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
+            (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
+        ) continue;
+        int32_t i1 = ftoi_native(uint_as_float(u));
+        int32_t i2 = ftoi_circuit(uint_as_float(u));
+        if (i1 != i2) {
+            printf("%08x %08x %08x\n", u, i1, i2);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int test_itof_circuit() {
+    uint32_t u = 0;
+    do {
+        float f1 = itof_native((int32_t) u);
+        float f2 = itof_circuit((int32_t) u);
+        if (f1 != f2) {
+            printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
+            return 1;
+        }
+        u++;
+    } while (u != 0);
+    return 0;
+}
+
+int test_fflr_circuit() {
     uint32_t u;
     for (u = 0x00000000; u <= UINT32_C(0xFF800000); u++) {
         if (
@@ -20,3 +95,9 @@ int main() {
     }
     return 0;
 }
+
+static test_t tests[] = {
+    { "ftoi_circuit", test_ftoi_circuit },
+    { "itof_circuit", test_itof_circuit },
+    { "fflr_circuit", test_fflr_circuit }
+};
