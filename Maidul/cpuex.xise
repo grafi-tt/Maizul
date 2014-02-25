@@ -66,7 +66,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
     </file>
-    <file xil_pn:name="../FPU/FMulCore.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="src/Unit/FPU/FMul.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="9"/>
     </file>
