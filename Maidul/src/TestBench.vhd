@@ -11,7 +11,7 @@ end TestBench;
 
 -- TODO move pseudo SRAM controller and U232C controller into separate file
 
-architecture PseudoConnection of TestBench is
+architecture mock_testbench of TestBench is
     component DataPath is
         port (
             clk : in std_logic;
@@ -53,7 +53,7 @@ architecture PseudoConnection of TestBench is
     signal forwardBuf : value_t := (others => '0');
 
 begin
-    clkGen : process
+    clkgen : process
     begin
         clk <= '0';
         wait for CLK_TIME / 2;
@@ -61,7 +61,7 @@ begin
         wait for CLK_TIME / 2;
     end process;
 
-    everyClock : process(clk)
+    mock : process(clk)
         file stdin : text open read_mode is "testbench.in";
         file stdout : text open write_mode is "testbench.out";
         variable li, lo : line;
@@ -136,4 +136,4 @@ begin
         sramLoad => load,
         sramAddr => addr,
         sramData => data);
-end PseudoConnection;
+end mock_testbench;

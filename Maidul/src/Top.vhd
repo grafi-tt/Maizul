@@ -31,7 +31,7 @@ entity Top is
         XZBE : out std_logic_vector(3 downto 0));
 end Top;
 
-architecture Initialize of Top is
+architecture structural of Top is
     component U232CRecv is
         generic (
             -- 9600bps
@@ -163,4 +163,4 @@ begin
         sramAddr => addr,
         sramData => dataLine);
 
-end Initialize;
+end structural;

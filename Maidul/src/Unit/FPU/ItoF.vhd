@@ -9,7 +9,7 @@ entity ItoF is
         f : out std_logic_vector(31 downto 0) := (others => '0'));
 end IToF;
 
-architecture Implementation of ItoF is
+architecture dataflow of ItoF is
     type u_frc_ary_t is array (4 downto 0) of unsigned(32 downto 0);
     signal u_frc : u_frc_ary_t;
     signal x_nlz : std_logic_vector(4 downto 0);
@@ -56,4 +56,4 @@ begin
         end if;
     end process;
 
-end Implementation;
+end dataflow;

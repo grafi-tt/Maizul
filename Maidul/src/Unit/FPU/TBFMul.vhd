@@ -1,10 +1,10 @@
 library ieee;
 use ieee.std_logic_1164.ALL;
 
-entity TBFAdd is
-end TBFAdd;
+entity TBFMul is
+end TBFMul;
 
-architecture Instantiate of TBFAdd is
+architecture testbench of TBFMul is
     component TBCommon
         port (
             clk : buffer std_logic;
@@ -13,7 +13,7 @@ architecture Instantiate of TBFAdd is
             d : in  std_logic_vector(31 downto 0));
     end component;
 
-    component FAdd
+    component FMul
         port (
             clk : in std_logic;
             flt_in1 : in  std_logic_vector(31 downto 0);
@@ -25,7 +25,7 @@ architecture Instantiate of TBFAdd is
     signal a1, b1, d1 : std_logic_vector(31 downto 0);
     signal a2, b2, d2 : std_logic_vector(31 downto 0) := (others => '0');
     signal a3, b3, d3 : std_logic_vector(31 downto 0) := (others => '0');
-    signal d_out, d_fadd : std_logic_vector(31 downto 0);
+    signal d_out, d_fmul : std_logic_vector(31 downto 0);
     signal x1 : boolean;
     signal x2, x3 : boolean := false;
 
@@ -45,11 +45,11 @@ begin
         b => b1,
         d => d_out);
 
-    fadd_map : FAdd port map (
+    fmul_map : FMul port map (
         clk => clk,
         flt_in1 => a1,
         flt_in2 => b1,
-        flt_out => d_fadd);
+        flt_out => d_fmul);
 
     main : process(clk)
     begin
@@ -73,11 +73,10 @@ begin
     a_frc <= a1(22 downto 0);
     b_frc <= b1(22 downto 0);
 
-    d1 <= a_sgn & h_exp & a_frc when b_exp /= h_exp else
-          b_sgn & h_exp & b_frc when a_exp /= h_exp else
-          (a_sgn and b_sgn) & h_exp & (a_frc or b_frc or (x"00000" & "00" & (a_sgn xor b_sgn)));
+    d1 <= (a_sgn xor b_sgn) & h_exp & o_frc when a_exp = z_exp or b_exp = z_exp else
+          (a_sgn xor b_sgn) & h_exp & (a_frc or b_frc);
     x1 <= a_exp = h_exp or b_exp = h_exp;
 
-    d_out <= d3 when x3 else d_fadd;
+    d_out <= d3 when x3 else d_fmul;
 
-end Instantiate;
+end testbench;

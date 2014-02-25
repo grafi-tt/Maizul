@@ -9,7 +9,7 @@ entity FtoI is
         i : out std_logic_vector(31 downto 0));
 end FtoI;
 
-architecture Implementation of FtoI is
+architecture dataflow of FtoI is
     signal x_len : std_logic_vector(8 downto 0);
     signal u_frc_4, u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o, u_frc_v : unsigned(31 downto 0);
     signal any_4, any_3, any_2, any_1, any_0, any_o : std_logic;
@@ -42,4 +42,4 @@ begin
          std_logic_vector(0 - u_frc_v) when round = '0' else
          std_logic_vector(not u_frc_v);
 
-end Implementation;
+end dataflow;
