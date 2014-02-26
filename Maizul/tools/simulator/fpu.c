@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "fpu.h"
 #include "fpu-table.h"
 
@@ -105,38 +106,42 @@ float fflr_circuit(float f) {
     return uint_as_float(ret);
 }
 
+/* 5ulp */
 float finv_circuit(float f) {
     if (f == 0) return copysign(INFINITY, f);
     if (isinf(f)) return copysign(0, f);
+    if (isnan(f)) return f;
     uint32_t u = float_as_uint(f);
 
     uint32_t sgn, exp_in, key, rest;
     uint32_t a0, a1;
     uint32_t frc_out, exp_out;
-    uint32_t key_any, rest_any, no_flow;
+    uint32_t frc_any, no_flow1, no_flow2;
     uint32_t ret;
 
     sgn = bits(u, 31, 31);
     exp_in = bits(u, 30, 23);
     key = bits(u, 22, 13);
     rest = bits(u, 12, 0);
-    key_any = key != 0;
-    rest_any = rest != 0;
-    no_flow = exp_in != 0xFE;
+    frc_any = bits(u, 22, 0) != 0;
+    no_flow1 = exp_in != 0xFD;
+    no_flow2 = exp_in != 0xFE;
 
     a0 = bits(finv_table[key], 35, 13);
     a1 = bits(finv_table[key], 12, 0);
 
-    frc_out = (key_any && no_flow) ? bits(a0 - bits(a1 * rest, 25, 12), 22, 0) : 0;
-    exp_out = 0xFE - exp_in - ((key_any | rest_any) & no_flow); /* when exp == 254, exp_out is fixed to 0 */
+    frc_out = (frc_any && no_flow1 && no_flow2) ? bits(a0 - bits(a1 * rest, 25, 12), 22, 0) : 0;
+    exp_out = bits(0xFE - exp_in - (frc_any & no_flow2), 7, 0); /* when exp == 254, exp_out is fixed to 0 */
     ret = sgn << 31 | exp_out << 23 | frc_out;
 
     return uint_as_float(ret);
 }
 
+/* 3ulp */
 float fsqr_circuit(float f) {
     if (f < 0) return sqrtf(f);
     if (f == 0 || f == INFINITY) return f; /* sqrt(-0) = -0 */
+    if (isnan(f)) return f;
     uint32_t u = float_as_uint(f);
 
     uint32_t exp_in, key, rest;
@@ -152,13 +157,13 @@ float fsqr_circuit(float f) {
     a1 = bits(fsqr_table[key], 12, 0);
 
     frc_out = bits(a0 + bits(a1 * rest, 26, 13), 22, 0);
-    exp_out = bits(exp_in, 7, 1) + 0x3F + bits(exp_in, 0, 0);
+    exp_out = bits(bits(exp_in, 7, 1) + 0x3F + bits(exp_in, 0, 0), 7, 0);
 
     ret = exp_out << 23 | frc_out;
     return uint_as_float(ret);
 }
 
-/* x87との誤差2ulpを達成してた．非正規化数が絡むulp計算を手抜きするために2^-127を（偶数丸めにせず）0に落としてしまっている． */
+/* x87との誤差2ulpを達成してた．非正規化数が絡むulp計算を手抜きするために2^-126より小さい結果になるなら（偶数丸めにせず）0に落としてしまっている． */
 float finv_soft(float a) {
     if (a == 0) return copysign(INFINITY, a);
     if (fabs(a) >= scalbn(1.0f, 127)) return copysign(0.0f, a);

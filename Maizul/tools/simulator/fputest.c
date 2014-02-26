@@ -72,7 +72,7 @@ int test_itof_circuit() {
             printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
             return 1;
         }
-    } while (u++);
+    } while (++u);
     return 0;
 }
 
@@ -107,15 +107,15 @@ int test_finv_circuit() {
             (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
         ) continue;
 
-        float f1 = kill_denormal(1 / (uint_as_float(u)));
-        float f2 = finv_soft(uint_as_float(u));
+        float f1 = finv_native(uint_as_float(u));
+        float f2 = finv_circuit(uint_as_float(u));
         c = count_ulp(f1, f2, 7);
         if (c == -1) {
             printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
             return 1;
         }
         if (c > bound) bound = c;
-    } while (u++);
+    } while (++u);
     printf("%d\n", bound);
     return 0;
 }
@@ -124,8 +124,12 @@ int test_fsqr_circuit() {
     uint32_t u;
     int bound = 0;
     int c;
-    for (u = 0; u <= UINT32_C(0x7f800000); u++) {
-        if (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) continue;
+    u = 0;
+    do {
+        if (
+            (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
+            (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
+        ) continue;
 
         float f1 = fsqr_native(uint_as_float(u));
         float f2 = fsqr_circuit(uint_as_float(u));
@@ -135,7 +139,7 @@ int test_fsqr_circuit() {
             return 1;
         }
         if (c > bound) bound = c;
-    }
+    } while (++u);
     printf("%d\n", bound);
     return 0;
 }
@@ -144,14 +148,14 @@ int test_finv_soft() {
     uint32_t u;
     int bound = 0;
     int c;
-    for (u = 0; u < UINT32_C(0xFF800000); u++) {
+    u = 0;
+    do {
         if (
             (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
-            (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
             (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
         ) continue;
 
-        float f1 = kill_denormal(1 / (uint_as_float(u)));
+        float f1 = finv_native(uint_as_float(u));
         float f2 = finv_soft(uint_as_float(u));
         c = count_ulp(f1, f2, 7);
         if (c == -1) {
@@ -159,7 +163,7 @@ int test_finv_soft() {
             return 1;
         }
         if (c > bound) bound = c;
-    }
+    } while (++u);
     printf("%d\n", bound);
     return 0;
 }
@@ -171,7 +175,7 @@ int test_fsqr_soft() {
     for (u = 0; u <= UINT32_C(0x7F800000); u++) {
         if (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) continue;
 
-        float f1 = kill_denormal(sqrtf(uint_as_float(u)));
+        float f1 = fsqr_native(uint_as_float(u));
         float f2 = fsqr_soft(uint_as_float(u));
         c = count_ulp(f1, f2, 7);
         if (c == -1) {
