@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 #include "fpu.h"
 int test_ftoi_circuit() {
     uint32_t u;
-    for (u = 0x00000000; u <= UINT32_C(0xFF800000); u++) {
+    for (u = 0; u <= UINT32_C(0xFF800000); u++) {
         if (
             (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
             (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
@@ -79,7 +79,7 @@ int test_itof_circuit() {
 
 int test_fflr_circuit() {
     uint32_t u;
-    for (u = 0x00000000; u <= UINT32_C(0xFF800000); u++) {
+    for (u = 0; u <= UINT32_C(0xFF800000); u++) {
         if (
             (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
             (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
@@ -97,19 +97,15 @@ int test_fflr_circuit() {
     return 0;
 }
 
-int test_fsqr_soft() {
+int test_fsqr_circuit() {
     uint32_t u;
     int bound = 0;
     int c;
-    for (u = 0; u < 0x7f800000; u++) {
-        if (
-            (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
-            (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
-            (UINT32_C(0x80000000) < u && u < UINT32_C(0x80800000))
-        ) continue;
+    for (u = 0; u <= UINT32_C(0x7f800000); u++) {
+        if (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) continue;
 
-        float f1 = kill_denormal(sqrtf(uint_as_float(u)));
-        float f2 = fsqr_soft(uint_as_float(u));
+        float f1 = fsqr_native(uint_as_float(u));
+        float f2 = fsqr_circuit(uint_as_float(u));
         c = count_ulp(f1, f2, 7);
         if (c == -1) {
             printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
@@ -125,7 +121,7 @@ int test_finv_soft() {
     uint32_t u;
     int bound = 0;
     int c;
-    for (u = 0; u < 0x7f800000; u++) {
+    for (u = 0; u < UINT32_C(0xFF800000); u++) {
         if (
             (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
             (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
@@ -145,10 +141,32 @@ int test_finv_soft() {
     return 0;
 }
 
+int test_fsqr_soft() {
+    uint32_t u;
+    int bound = 0;
+    int c;
+    for (u = 0; u <= UINT32_C(0x7F800000); u++) {
+        if (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) continue;
+
+        float f1 = kill_denormal(sqrtf(uint_as_float(u)));
+        float f2 = fsqr_soft(uint_as_float(u));
+        c = count_ulp(f1, f2, 7);
+        if (c == -1) {
+            printf("%08x %08x %08x\n", u, float_as_uint(f1), float_as_uint(f2));
+            return 1;
+        }
+        if (c > bound) bound = c;
+    }
+    printf("%d\n", bound);
+    return 0;
+}
+
 static test_t tests[] = {
     { "ftoi_circuit", test_ftoi_circuit },
     { "itof_circuit", test_itof_circuit },
     { "fflr_circuit", test_fflr_circuit },
+    { "fsqr_circuit", test_fsqr_circuit },
     { "finv_soft", test_finv_soft },
-    { "fsqr_soft", test_fsqr_soft }
+    { "fsqr_soft", test_fsqr_soft },
+    { NULL, NULL }
 };

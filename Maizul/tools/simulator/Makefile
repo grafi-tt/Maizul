@@ -4,8 +4,8 @@ LDFLAGS = -lm
 
 all: csim fputest
 
-csim: csim.c fpu.c fpu.h
+csim: csim.c fpu.c fpu.h fpu-table.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-fputest: fputest.c fpu.c fpu.h
+fputest: fputest.c fpu.c fpu.h fpu-table.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^

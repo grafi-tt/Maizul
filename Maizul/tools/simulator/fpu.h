@@ -57,6 +57,14 @@ static inline float fflr_native(float f) {
     return floorf(f);
 }
 
+static inline float finv_native(float f) {
+    return kill_denormal(1 / f);
+}
+
+static inline float fsqr_native(float f) {
+    return kill_denormal(sqrtf(f));
+}
+
 static inline int count_ulp(float x, float y, int lim) {
     if (isnan(x) || isnan(y)) return -1;
     if (isinf(x) && isinf(y)) return signbit(x) == signbit(y) ? 0 : -1;
@@ -72,5 +80,6 @@ static inline int count_ulp(float x, float y, int lim) {
 float itof_circuit(int32_t i);
 int32_t ftoi_circuit(float f);
 float fflr_circuit(float f);
-float finv_soft(float a);
-float fsqr_soft(float a);
+float fsqr_circuit(float f);
+float finv_soft(float f);
+float fsqr_soft(float f);

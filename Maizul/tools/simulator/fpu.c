@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "fpu.h"
+#include "fpu-table.h"
 
 static inline uint64_t bits(uint64_t u, unsigned int i, unsigned int j) {
     return (u & (((uint64_t) 1 << (i + 1)) - ((uint64_t) 1 << j))) >> j;
@@ -101,6 +102,29 @@ float fflr_circuit(float f) {
         (bits(fu, 31, 31) == 0 || bits(fu, 30, 23) == 0) && bits(len_raw, 8, 8) == 1 ? bits(fu, 31, 31) << 31 | 0x00 << 23 | bits(f_out, 22, 0) :
         bits(fu, 31, 31) == 1 && bits(len_raw, 8, 8) == 1 ? bits(fu, 31, 31) << 31 | 0x7F << 23 | bits(f_out, 22, 0) :
         bits(fu, 31, 31) << 31 | f_out;
+    return uint_as_float(ret);
+}
+
+float fsqr_circuit(float f) {
+    if (f == INFINITY || f == 0) return f;
+    uint32_t u = float_as_uint(f);
+
+    uint32_t sgn, exp_in, key, rest;
+    uint32_t a0, a1;
+    uint32_t frc_out, exp_out;
+    uint32_t ret;
+
+    sgn = bits(u, 31, 31);
+    exp_in = bits(u, 30, 23);
+    key = bits(u, 23, 14);
+    rest = bits(u, 13, 0);
+
+    a0 = bits(fsqr_table[key], 35, 13);
+    a1 = bits(fsqr_table[key], 12, 0);
+    frc_out = bits(a0 + bits(a1 * rest, 26, 13), 22, 0);
+    exp_out = bits(exp_in, 7, 1) + 0x3F + bits(exp_in, 0, 0);
+
+    ret = sgn << 31 | exp_out << 23 | frc_out;
     return uint_as_float(ret);
 }
 
