@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Werror -O3
+CFLAGS = -std=c99 -Wall -Werror -O3 -fno-fast-math
 LDFLAGS = -lm
 
 all: csim fputest

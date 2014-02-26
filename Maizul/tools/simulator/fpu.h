@@ -65,9 +65,12 @@ static inline float fsqr_native(float f) {
     return kill_denormal(sqrtf(f));
 }
 
+/* TODO: consider denormalized number */
 static inline int count_ulp(float x, float y, int lim) {
+    if (isnan(x) && isnan(y)) return 0;
     if (isnan(x) || isnan(y)) return -1;
     if (isinf(x) && isinf(y)) return signbit(x) == signbit(y) ? 0 : -1;
+    if (isinf(x) || isinf(y)) return -1;
     int n = 0;
     while (x != y) {
         if (n == lim) return -1;
@@ -80,6 +83,7 @@ static inline int count_ulp(float x, float y, int lim) {
 float itof_circuit(int32_t i);
 int32_t ftoi_circuit(float f);
 float fflr_circuit(float f);
+float finv_circuit(float f);
 float fsqr_circuit(float f);
 float finv_soft(float f);
 float fsqr_soft(float f);
