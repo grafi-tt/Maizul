@@ -41,9 +41,9 @@ architecture structural of Top is
         port (
             clk : in std_logic;
             ok : in std_logic;
-            rxPin : in std_logic;
+            rx_pin : in std_logic;
             data : out std_logic_vector (7 downto 0);
-            recved : out std_logic);
+            recf : out std_logic);
     end component;
 
     component U232CSend is
@@ -56,7 +56,7 @@ architecture structural of Top is
             clk : in std_logic;
             go : in std_logic;
             data : in std_logic_vector (7 downto 0);
-            txPin : out std_logic;
+            tx_pin : out std_logic;
             sent : out std_logic);
     end component;
 
@@ -88,12 +88,8 @@ architecture structural of Top is
     component DataPath is
         port (
             clk : in std_logic;
-            serialOk : out std_logic;
-            serialGo : out std_logic;
-            serialRecvData : in std_logic_vector(7 downto 0);
-            serialSendData : out std_logic_vector(7 downto 0);
-            serialRecved : in std_logic;
-            serialSent : in std_logic;
+            u232c_in : out u232c_in_t;
+            u232c_out : in u232c_out_t;
             sramLoad : out boolean;
             sramAddr : out sram_addr;
             sramData : inout value_t);
@@ -101,10 +97,8 @@ architecture structural of Top is
 
     signal clk, clkio, iclk : std_logic;
 
-    signal ok, go : std_logic;
-    signal recved, sent : std_logic;
-    signal recvData : std_logic_vector(7 downto 0);
-    signal sendData : std_logic_vector(7 downto 0);
+    signal u232c_in : u232c_in_t;
+    signal u232c_out : u232c_out_t;
 
     signal load : boolean;
     signal addr : sram_addr := (others => '0');
@@ -117,17 +111,17 @@ begin
 
     u232c_recv_map : U232CRecv port map (
         clk => clk,
-        ok => ok,
-        data => recvData,
-        rxPin => RS_RX,
-        recved => recved);
+        ok => u232c_in.ok,
+        data => u232c_out.recv_data,
+        rx_pin => RS_RX,
+        recf => u232c_out.recf);
 
     u232c_send_map : U232CSend port map (
         clk => clk,
-        go => go,
-        data => sendData,
-        txPin => RS_TX,
-        sent => sent);
+        go => u232c_in.go,
+        data => u232c_in.send_data,
+        tx_pin => RS_TX,
+        sent => u232c_out.sent);
 
     sram_map : SRAM port map (
         clk => clkio,
@@ -153,12 +147,8 @@ begin
 
     data_path_map : DataPath port map (
         clk => clkio,
-        serialOk => ok,
-        serialGo => go,
-        serialRecvData => recvData,
-        serialSendData => sendData,
-        serialRecved => recved,
-        serialSent => sent,
+        u232c_in => u232c_in;
+        u232c_out => u232c_out;
         sramLoad => load,
         sramAddr => addr,
         sramData => dataLine);

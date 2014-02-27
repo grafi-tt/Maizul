@@ -9,18 +9,17 @@ entity U232CSend is
         clk : in std_logic;
         go : in std_logic;
         data : in std_logic_vector (7 downto 0);
-        txPin : out std_logic;
+        tx_pin : out std_logic;
         sent : out std_logic);
 end U232CSend;
 
 architecture statemachine of U232CSend is
     signal countdown : std_logic_vector(15 downto 0) := wTime;
-    signal sendBuf : std_logic_vector(8 downto 0) := (others => '1');
+    signal buf : std_logic_vector(8 downto 0) := (others => '1');
     signal state : integer range 0 to 10 := 10;
-    signal sigSent : std_logic := '1';
 begin
-    sent <= sigSent;
-    txPin <= sendBuf(0);
+    sent <= '1' when state = 10 else '0';
+    txPin <= buf(0);
 
     statemachine : process(clk)
     begin
@@ -28,21 +27,19 @@ begin
             case state is
                 when 10 =>
                     if go = '1' then
-                        sendBuf <= data&"0";
-                        sigSent <= '0';
+                        buf <= data&"0";
                         countdown <= wTime;
                         state <= state-1;
                     end if;
                 when 0 =>
                     if countdown = 0 then
-                        sigSent <= '1';
                         state <= 10;
                     else
                         countdown <= countdown-1;
                     end if;
                 when others =>
                     if countdown = 0 then
-                        sendBuf <= "1"&sendBuf(8 downto 1);
+                        buf <= "1"&buf(8 downto 1);
                         countdown <= wTime;
                         state <= state-1;
                     else

@@ -6,14 +6,8 @@ use work.types.all;
 entity DataPath is
     port (
         clk : in std_logic;
-
-        serialOk : out std_logic;
-        serialGo : out std_logic;
-        serialRecvData : in std_logic_vector(7 downto 0);
-        serialSendData : out std_logic_vector(7 downto 0);
-        serialRecved : in std_logic;
-        serialSent : in std_logic;
-
+        u232c_in : out u232c_in_t;
+        u232c_out : in u232c_out_t;
         sramLoad : out boolean := true;
         sramAddr : out sram_addr := (others => '0');
         sramData : inout value_t := (others => '0'));
@@ -63,20 +57,15 @@ architecture behavioral of DataPath is
             clk : in std_logic;
             enable : in boolean;
             code : in std_logic_vector(2 downto 0);
-            serialOk : out std_logic;
-            serialGo : out std_logic;
-            serialRecvData : in std_logic_vector(7 downto 0);
-            serialSendData : out std_logic_vector(7 downto 0);
-            serialRecved : in std_logic;
-            serialSent : in std_logic;
             getTag : in tag_t;
             putVal : in value_t;
             emitTag : out tag_t;
             emitVal : out value_t;
+            u232c_in : out u232c_in_t;
+            u232c_out : in u232c_in_t;
             emitInstWE : out boolean;
             emitInst : out instruction_t;
-            emitInstPtr : out blkram_addr;
-            blocking : out boolean);
+            emitInstPtr : out blkram_addr);
     end component;
 
     type reg_file_t is array(31 downto 0) of value_t;

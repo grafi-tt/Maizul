@@ -56,4 +56,16 @@ package types is
         addr : blkram_addr;
         succeed : boolean;
     end record;
+
+    type u232c_in_t is record
+        send_data : std_logic_vector(7 downto 0);
+        ok : std_logic;
+        go : std_logic;
+    end record;
+
+    type u232c_out_t is record
+        recv_data : std_logic_vector(7 downto 0);
+        recf : std_logic;
+        sent : std_logic;
+    end record;
 end;
