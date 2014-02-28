@@ -21,9 +21,7 @@ main = do
             clk : in std_logic;
             addr : in blkram_addr;
             inst : out instruction_t := (others => '0');
-            we : in boolean;
-            waddr : in blkram_addr;
-            winst : in instruction_t);
+            w : in blkram_write_t);
     end entity;
 
     architecture behavioral of BlkRAM is
@@ -42,12 +40,12 @@ main = do
         attribute ram_style of RAM : signal is "block";
 
     begin
-        everyClock : process(clk)
+        blk : process(clk)
         begin
-            if (rising_edge(clk)) then
+            if rising_edge(clk) then
                 inst <= RAM(to_integer(unsigned(addr(13 downto 0))));
-                if we then
-                    RAM(to_integer(unsigned(waddr(13 downto 0)))) <= winst;
+                if w.enable then
+                    RAM(to_integer(unsigned(w.addr(13 downto 0)))) <= w.inst;
                 end if;
             end if;
         end process;

@@ -16,9 +16,7 @@ architecture twoproc of Fetch is
             clk : in std_logic;
             addr : in blkram_addr;
             inst : out instruction_t := (others => '0');
-            we : in boolean;
-            waddr : in blkram_addr;
-            winst : in instruction_t);
+            w : in blkram_write_t);
     end component;
 
     component Predict is
@@ -28,7 +26,7 @@ architecture twoproc of Fetch is
             q : out predict_out_t);
     end component;
 
-    signal pc, pci, pc_inc : blkram_addr := (others => '0');
+    signal pc, pci : blkram_addr := (others => '0');
     signal dp : predict_in_t := (
         pc => (others => '0'),
         inst => (others => '0'),
@@ -45,9 +43,7 @@ begin
         clk => clk,
         addr => pc,
         inst => inst,
-        we => d.we,
-        waddr => d.waddr,
-        winst => d.winst);
+        w => d.w);
 
     predict_map : Predict port map (
         clk => clk,

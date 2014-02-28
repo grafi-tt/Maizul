@@ -49,6 +49,7 @@ begin
                     if countdown = 0 then
                         if buf(8) = '1' then
                             state <= 0;
+                            data <= buf(7 downto 0);
                         else
                             state <= 11;
                         end if;
@@ -71,10 +72,4 @@ begin
         end if;
     end process;
 
-    transfer_data : process(recf_i, ok)
-    begin
-        if recf_i = '1' and rising_edge(ok) then
-            data <= buf(7 downto 0);
-        end if;
-    end process;
 end statemachine;

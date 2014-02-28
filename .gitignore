@@ -1,6 +1,2 @@
-work
-iseconfig
-.DS_Store
-.desktop
-*~
-*.o
+work/
+iseconfig/

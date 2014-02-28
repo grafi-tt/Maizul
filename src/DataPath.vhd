@@ -59,13 +59,12 @@ architecture behavioral of DataPath is
             code : in std_logic_vector(2 downto 0);
             getTag : in tag_t;
             putVal : in value_t;
+            blocking : out boolean;
             emitTag : out tag_t;
             emitVal : out value_t;
             u232c_in : out u232c_in_t;
             u232c_out : in u232c_out_t;
-            emitInstWE : out boolean;
-            emitInst : out instruction_t;
-            emitInstPtr : out blkram_addr);
+            emit_instw : out blkram_write_t);
     end component;
 
     type reg_file_t is array(31 downto 0) of value_t;
@@ -110,6 +109,7 @@ architecture behavioral of DataPath is
     signal emit_tag_spc : tag_t;
     signal emit_val_spc : value_t;
 
+    signal blocking : boolean;
     signal jump1 : boolean;
     signal jump2 : boolean := false;
     signal ignore : boolean;
@@ -152,7 +152,7 @@ begin
     combinatorial : process(inst, pc, gpr_file, fpr_file, stall_lat,
                             emit_tag_alu, emit_val_alu,
                             pipe1_tag_fpu, pipe2_tag_fpu, emit_tag_fpu, emit_val_fpu,
-                            q_bra, q_fet, jump1, jump2, stall, ignore,
+                            q_bra, q_fet, jump1, jump2, stall, ignore, blocking,
                             emit_tag_spc, emit_val_spc,
                             load1, load2, load3, tagM1, tagM2, tagM3, emitTagLoad, tagFM1, tagFM2, tagFM3, emitTagFLoad, emitValM)
         variable tag_gpr_w : tag_t;
@@ -300,7 +300,8 @@ begin
                            ( (load1 and tagFM1 /= "00000"));
 
         stall <= stall_raw_gpr_x or stall_raw_gpr_y or stall_waw_gpr_y or stall_waw_gpr_z or
-                 stall_raw_fpr_x or stall_raw_fpr_y or stall_mst_fpr_y or stall_waw_fpr_z;
+                 stall_raw_fpr_x or stall_raw_fpr_y or stall_mst_fpr_y or stall_waw_fpr_z or
+                 blocking;
         jump1 <= q_fet.jump;
         ignore <= jump2 or jump1;
         d_fet.enable_fetch <= ignore or not stall;
@@ -442,13 +443,12 @@ begin
         code => code_io,
         getTag => tag_spc_y,
         putVal => val_spc_x,
+        blocking => blocking,
         emitTag => emit_tag_spc,
         emitVal => emit_val_spc,
         u232c_in => u232c_in,
         u232c_out => u232c_out,
-        emitInstWE => d_fet.we,
-        emitInst => d_fet.winst,
-        emitInstPtr => d_fet.waddr);
+        emit_instw => d_fet.w);
 
     -- TODO: separate sram into another component
     do_sram : process(clk)

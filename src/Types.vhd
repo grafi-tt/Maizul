@@ -14,6 +14,12 @@ package types is
     subtype sram_addr is
         unsigned(19 downto 0);
 
+    type blkram_write_t is record
+        enable : boolean;
+        addr : blkram_addr;
+        inst : instruction_t;
+    end record;
+
     type branch_in_t is record
         code : std_logic_vector(2 downto 0);
         tag_l : tag_t;
@@ -33,9 +39,7 @@ package types is
         enable_fetch : boolean;
         enable_addr : boolean;
         addr : blkram_addr;
-        we : boolean;
-        waddr : blkram_addr;
-        winst : instruction_t;
+        w : blkram_write_t;
     end record;
 
     type fetch_out_t is record
