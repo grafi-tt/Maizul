@@ -17,9 +17,12 @@ architecture statemachine of U232CRecv is
     signal countdown : std_logic_vector(15 downto 0);
     signal buf : std_logic_vector(8 downto 0) := (others => '0');
     signal state : integer range 0 to 11 := 11;
+    signal recf_i : std_logic;
+
 begin
-    recf <= '1' when state = 0 else '0';
-    buf(8) <= rxPin;
+    recf <= recf_i;
+    recf_i <= '1' when state = 0 else '0';
+    buf(8) <= rx_pin;
 
     everyClock : process(clk)
     begin
@@ -68,9 +71,10 @@ begin
         end if;
     end process;
 
-    transfer_data : process(sigRecved, ok)
-        if sigRecved = '1' and rising_edge(ok) then
+    transfer_data : process(recf_i, ok)
+    begin
+        if recf_i = '1' and rising_edge(ok) then
             data <= buf(7 downto 0);
         end if;
-    end if;
+    end process;
 end statemachine;

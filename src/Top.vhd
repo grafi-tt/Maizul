@@ -147,8 +147,8 @@ begin
 
     data_path_map : DataPath port map (
         clk => clkio,
-        u232c_in => u232c_in;
-        u232c_out => u232c_out;
+        u232c_in => u232c_in,
+        u232c_out => u232c_out,
         sramLoad => load,
         sramAddr => addr,
         sramData => dataLine);

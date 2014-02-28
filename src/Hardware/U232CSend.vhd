@@ -17,9 +17,10 @@ architecture statemachine of U232CSend is
     signal countdown : std_logic_vector(15 downto 0) := wTime;
     signal buf : std_logic_vector(8 downto 0) := (others => '1');
     signal state : integer range 0 to 10 := 10;
+
 begin
     sent <= '1' when state = 10 else '0';
-    txPin <= buf(0);
+    tx_pin <= buf(0);
 
     statemachine : process(clk)
     begin

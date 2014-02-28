@@ -15,14 +15,8 @@ architecture mock_testbench of TestBench is
     component DataPath is
         port (
             clk : in std_logic;
-
-            serialOk : out std_logic;
-            serialGo : out std_logic;
-            serialRecvData : in std_logic_vector(7 downto 0);
-            serialSendData : out std_logic_vector(7 downto 0);
-            serialRecved : in std_logic;
-            serialSent : in std_logic;
-
+            u232c_in : out u232c_in_t;
+            u232c_out : in u232c_out_t;
             sramLoad : out boolean;
             sramAddr : out sram_addr;
             sramData : inout value_t);
@@ -37,10 +31,8 @@ architecture mock_testbench of TestBench is
     constant PSEUDORAM_WIDTH : natural := 20;
     constant PSEUDORAM_LENGTH : natural := 1048576;
 
-    signal ok, go : std_logic;
-    signal recvData, sendData : std_logic_vector(7 downto 0) := (others => '0');
-    signal recved : std_logic := '0';
-    signal sent : std_logic := '1';
+    signal u232c_in : u232c_in_t := ((others => '0'), '0', '0');
+    signal u232c_out : u232c_out_t := ((others => '0'), '0', '1');
 
     type ram_t is array(0 to PSEUDORAM_LENGTH-1) of integer;
     signal pseudoRam : ram_t := (others => 0);
@@ -61,41 +53,41 @@ begin
         wait for CLK_TIME / 2;
     end process;
 
-    mock : process(clk)
+    mock : process(clk, u232c_in.ok)
         file stdin : text open read_mode is "testbench.in";
         file stdout : text open write_mode is "testbench.out";
         variable li, lo : line;
         variable recvBuf, sendBuf : std_logic_vector(7 downto 0) := (others => '0');
 
     begin
-        if rising_edge(clk) then
-            if (ok = '1') then
-                recved <= '0';
-                recvData <= recvBuf;
-                recvCnt <= BLOCK_CYCLE;
-            end if;
+        if rising_edge(u232c_in.ok) then
+            u232c_out.recf <= '0';
+            u232c_out.recv_data <= recvBuf;
+            recvCnt <= BLOCK_CYCLE;
+        end if;
 
-            if (recved = '0') then
-                if (recvCnt = 0) then
+        if rising_edge(clk) then
+            if u232c_out.recf = '0' then
+                if recvCnt = 0 then
                     readline(stdin, li);
                     hread(li, recvBuf);
-                    recved <= '1';
+                    u232c_out.recf <= '1';
                 else
                     recvCnt <= recvCnt - 1;
                 end if;
             end if;
 
-            if (go = '1') then
-                sent <= '0';
-                sendBuf := sendData;
+            if u232c_in.go = '1' then
+                u232c_out.sent <= '0';
+                sendBuf := u232c_in.send_data;
                 sendCnt <= BLOCK_CYCLE;
             end if;
 
-            if (sent = '0') then
-                if (sendCnt = 0) then
+            if u232c_out.sent = '0' then
+                if sendCnt = 0 then
                     hwrite(lo, sendBuf);
                     writeline(stdout, lo);
-                    sent <= '1';
+                    u232c_out.sent <= '1';
                 else
                     sendCnt <= sendCnt - 1;
                 end if;
@@ -127,12 +119,8 @@ begin
 
     data_path_map : DataPath port map (
         clk => clk,
-        serialOk => ok,
-        serialGo => go,
-        serialRecvData => recvData,
-        serialSendData => sendData,
-        serialRecved => recved,
-        serialSent => sent,
+        u232c_in => u232c_in,
+        u232c_out => u232c_out,
         sramLoad => load,
         sramAddr => addr,
         sramData => data);
