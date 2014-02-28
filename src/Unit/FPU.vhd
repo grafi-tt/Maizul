@@ -32,6 +32,20 @@ architecture twoproc_pipeline of FPU is
             flt_out : out std_logic_vector(31 downto 0));
     end component;
 
+    component FInv
+        port (
+            clk : in std_logic;
+            flt_in  : in  std_logic_vector(31 downto 0);
+            flt_out : out std_logic_vector(31 downto 0));
+    end component;
+
+    component FSqr
+        port (
+            clk : in std_logic;
+            flt_in  : in  std_logic_vector(31 downto 0);
+            flt_out : out std_logic_vector(31 downto 0));
+    end component;
+
     component ItoF
         port (
             clk : in std_logic;
@@ -82,9 +96,15 @@ begin
         flt_in2 => b1,
         flt_out => d_fmul);
 
-    -- TODO
-    d_finv <= (others => '1');
-    d_fsqr <= (others => '1');
+    finv_map : FInv port map (
+        clk => clk,
+        flt_in => a1,
+        flt_out => d_finv);
+
+    fsqr_map : FSqr port map (
+        clk => clk,
+        flt_in => a1,
+        flt_out => d_fsqr);
 
     fflr_map : FFlr port map (
         clk => clk,
@@ -139,11 +159,7 @@ begin
                     d1 <= a_sgn & h_exp & o_frc;
                 end if;
             when "100" =>
-                if a_sgn = '1' then
-                    d1 <= '1' & h_exp & o_frc;
-                else
-                    d1 <= a1;
-                end if;
+                d1 <= a_sgn & a_exp & (a_frc or (x"00000" & "00" & a_sgn));
             when "101" =>
                 d1 <= a1;
             when "110" =>

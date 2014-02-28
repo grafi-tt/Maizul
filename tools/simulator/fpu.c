@@ -108,30 +108,40 @@ float fflr_circuit(float f) {
 
 /* 5ulp */
 float finv_circuit(float f) {
-    if (f == 0) return copysign(INFINITY, f);
     if (isinf(f)) return copysign(0, f);
     if (isnan(f)) return f;
     uint32_t u = float_as_uint(f);
 
     uint32_t sgn, exp_in, key, rest;
-    uint32_t a0, a1;
+    uint32_t a0, a1, t1;
     uint32_t frc_out, exp_out;
     uint32_t frc_any, no_flow1, no_flow2;
     uint32_t ret;
 
+    key = bits(u, 22, 13);
+
     sgn = bits(u, 31, 31);
     exp_in = bits(u, 30, 23);
-    key = bits(u, 22, 13);
     rest = bits(u, 12, 0);
     frc_any = bits(u, 22, 0) != 0;
-    no_flow1 = exp_in != 0xFD;
-    no_flow2 = exp_in != 0xFE;
-
     a0 = bits(finv_table[key], 35, 13);
     a1 = bits(finv_table[key], 12, 0);
 
-    frc_out = (frc_any && no_flow1 && no_flow2) ? bits(a0 - bits(a1 * rest, 25, 12), 22, 0) : 0;
-    exp_out = bits(0xFE - exp_in - (frc_any & no_flow2), 7, 0); /* when exp == 254, exp_out is fixed to 0 */
+    no_flow1 = exp_in != 0xFD;
+    no_flow2 = exp_in != 0xFE;
+    t1 = bits(a1 * rest, 25, 12);
+
+    if (exp_in == 0) {
+        exp_out = 0xFF;
+    }
+    else {
+        exp_out = bits(0xFE - exp_in - (frc_any & no_flow2), 7, 0); /* when exp == 254, exp_out is fixed to 0 */
+    }
+    if (frc_any && no_flow1 && no_flow2) {
+        frc_out =  bits(a0 - t1, 22, 0);
+    } else {
+        frc_out = 0;
+    }
     ret = sgn << 31 | exp_out << 23 | frc_out;
 
     return uint_as_float(ret);
@@ -139,25 +149,36 @@ float finv_circuit(float f) {
 
 /* 3ulp */
 float fsqr_circuit(float f) {
-    if (f < 0) return sqrtf(f);
-    if (f == 0 || f == INFINITY) return f; /* sqrt(-0) = -0 */
+    if (f == INFINITY) return f;
+    if (f == -INFINITY) return sqrt(f);
     if (isnan(f)) return f;
     uint32_t u = float_as_uint(f);
 
-    uint32_t exp_in, key, rest;
-    uint32_t a0, a1;
+    uint32_t sgn_in, exp_in, key, rest;
+    uint32_t a0, a1, t1;
     uint32_t frc_out, exp_out;
     uint32_t ret;
 
-    exp_in = bits(u, 30, 23);
     key = bits(u, 23, 14);
-    rest = bits(u, 13, 0);
 
+    sgn_in = bits(u, 31, 31);
+    exp_in = bits(u, 30, 23);
+    rest = bits(u, 13, 0);
     a0 = bits(fsqr_table[key], 35, 13);
     a1 = bits(fsqr_table[key], 12, 0);
 
-    frc_out = bits(a0 + bits(a1 * rest, 26, 13), 22, 0);
-    exp_out = bits(bits(exp_in, 7, 1) + 0x3F + bits(exp_in, 0, 0), 7, 0);
+    t1 = bits(a1 * rest, 26, 13);
+
+    if (exp_in == 0) {
+        exp_out = 0x00;
+        frc_out = 0;
+    } else if (sgn_in == 1) {
+        exp_out = 0xFF;
+        frc_out = 1;
+    } else {
+        frc_out = bits(a0 + t1, 22, 0);
+        exp_out = bits(0x3F + bits(exp_in, 7, 1) + bits(exp_in, 0, 0), 7, 0);
+    }
 
     ret = exp_out << 23 | frc_out;
     return uint_as_float(ret);

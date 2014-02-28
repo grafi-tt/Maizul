@@ -10,39 +10,42 @@ entity FSqr is
 end FSqr;
 
 architecture twoproc_pipeline of FSqr is
-    entity FSqrTable is
+    component FSqrTable is
       port (
         clk : in  std_logic;
-        key : in  std_logic_vector(9 downto 0);
-        val : out std_logic_vector(35 downto 0) := (others => '0'));
-    end FsqrTable;
+        k : in  std_logic_vector(9 downto 0);
+        v : out std_logic_vector(35 downto 0) := (others => '0'));
+    end component;
 
-    signal key : std_logic_vector(9 downto 0) := (others => '0');
-    signal rest : std_logic_vector(12 downto 0) := (others => '0');
-    signal exp_in, exp_in_ : std_logic_vector(7 downto 0) := (others => '0');
-    signal a0, a0_ : std_logic_vector(22 downto 0) := (others => '0');
-    signal a1, a1_ : std_logic_vector(12 downto 0) := (others => '0');
-    signal t1, t1_ : std_logic_vector(22 downto 0) := (others => '0');
+    signal k : std_logic_vector(9 downto 0) := (others => '0');
+    signal v : std_logic_vector(35 downto 0);
+    signal rest : unsigned(13 downto 0) := (others => '0');
+    signal sgn_in, sgn_in_p : std_logic := '0';
+    signal exp_in, exp_in_p : unsigned(7 downto 0) := (others => '0');
+    signal a0, a0_p : unsigned(22 downto 0) := (others => '0');
+    signal a1, a1_p : unsigned(12 downto 0) := (others => '0');
+    signal t1, t1_p : unsigned(22 downto 0) := (others => '0');
 
 begin
     conbinatorial1 : process(flt_in)
     begin
-        key <= flt_in(23 downto 14);
+        k <= flt_in(23 downto 14);
     end process;
-    table_map : FSqrTable port map (clk => clk, key => key, val => val);
+    table_map : FSqrTable port map (clk => clk, k => k, v => v);
 
     sequential2 : process(clk)
     begin
         if rising_edge(clk) then
-            exp_in <= flt_in(30 downto 23);
-            rest <= flt_in(13 downto 0);
-            a0 <= val(35 downto 13);
-            a1 <= val(12 downto 0);
+            sgn_in <= flt_in(31);
+            exp_in <= unsigned(flt_in(30 downto 23));
+            rest <= unsigned(flt_in(13 downto 0));
+            a0 <= unsigned(v(35 downto 13));
+            a1 <= unsigned(v(12 downto  0));
         end if;
     end process;
 
     conbinatorial2 : process(a1, rest)
-        variable tmp : std_logic_vector(26 downto 0);
+        variable tmp : unsigned(26 downto 0);
     begin
         tmp := a1 * rest;
         t1 <= "000000000" & tmp(26 downto 13);
@@ -51,19 +54,28 @@ begin
     sequential3 : process(clk)
     begin
         if rising_edge(clk) then
-            exp_in_ <= exp_in;
-            a0_ <= a0;
-            t1_ <= t1;
+            sgn_in_p <= sgn_in;
+            exp_in_p <= exp_in;
+            a0_p <= a0;
+            t1_p <= t1;
         end if;
     end process;
 
-    conbinatorial3 : process(exp_in_, a0_, t1_)
-        variable std_logic_vector(7 downto 0) exp_out;
-        variable std_logic_vector(22 downto 0) frc_out;
+    conbinatorial3 : process(sgn_in_p, exp_in_p, a0_p, t1_p)
+        variable exp_out : unsigned(7 downto 0);
+        variable frc_out : unsigned(22 downto 0);
     begin
-        exp_out := add_unsigned(x"3F", "0" & exp_in_(7 downto 1), exp_in(0));
-        frc_out := a0_ + t1_;
-        flt_out <= '0' & exp_out & frc_out;
+        if exp_in_p = x"00" then
+            exp_out := x"00";
+            frc_out := (others => '0');
+        elsif sgn_in_p = '1' then
+            exp_out := x"FF";
+            frc_out := x"00000" & "00" & '1';
+        else
+            exp_out := x"3F" + ("0" & exp_in_p(7 downto 1)) + unsigned'(0 => exp_in_p(0));
+            frc_out := a0_p + t1_p;
+        end if;
+        flt_out <= std_logic_vector(sgn_in_p & exp_out & frc_out);
     end process;
 
 end twoproc_pipeline;

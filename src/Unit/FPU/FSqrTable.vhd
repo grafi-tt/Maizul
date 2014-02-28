@@ -5,8 +5,8 @@ use ieee.numeric_std.all;
 entity FSqrTable is
   port (
     clk : in  std_logic;
-    key : in  std_logic_vector(9 downto 0);
-    val : out std_logic_vector(35 downto 0) := (others => '0'));
+    k : in  std_logic_vector(9 downto 0);
+    v : out std_logic_vector(35 downto 0) := (others => '0'));
 end FSqrTable;
 
 architecture behavioral of FSqrTable is
@@ -1041,7 +1041,7 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            val <= table(to_integer(unsigned(key)));
+            v <= table(to_integer(unsigned(k)));
         end if;
     end process;
 end behavioral;

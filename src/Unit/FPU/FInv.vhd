@@ -10,46 +10,59 @@ entity FInv is
 end FInv;
 
 architecture twoproc_pipeline of FInv is
-    entity finv_table is
+    component FInvTable is
       port (
         clk : in  std_logic;
-        key : in  std_logic_vector(9 downto 0);
-        val : out std_logic_vector(35 downto 0) := (others => '0'));
-    end finv_table;
+        k : in  std_logic_vector(9 downto 0);
+        v : out std_logic_vector(35 downto 0) := (others => '0'));
+    end component;
 
-    signal key : std_logic_vector(9 downto 0) := (others => '0');
-    signal rest : std_logic_vector(12 downto 0) := (others => '0');
-    signal sgn, sgn_ : std_logic := '0';
-    signal exp_in, exp_in_ : std_logic_vector(7 downto 0) := (others => '0');
-    signal a0, a0_ : std_logic_vector(22 downto 0) := (others => '0');
-    signal a1, a1_ : std_logic_vector(12 downto 0) := (others => '0');
-    signal t1, t1_ : std_logic_vector(22 downto 0) := (others => '0');
-    signal no_flow1, now_flow1_, no_flow2, no_flow2_, frc_any, frc_any_ : std_logic := '0';
+    signal k : std_logic_vector(9 downto 0) := (others => '0');
+    signal v : std_logic_vector(35 downto 0);
+    signal rest : unsigned(12 downto 0) := (others => '0');
+    signal sgn, sgn_p : std_logic := '0';
+    signal exp_in, exp_in_p : unsigned(7 downto 0) := (others => '0');
+    signal a0, a0_p : unsigned(22 downto 0) := (others => '0');
+    signal a1, a1_p : unsigned(12 downto 0) := (others => '0');
+    signal t1, t1_p : unsigned(22 downto 0) := (others => '0');
+    signal no_flow1, no_flow1_p, no_flow2, no_flow2_p, frc_any, frc_any_p : std_logic := '0';
 
 begin
     conbinatorial1 : process(flt_in)
     begin
-        key <= flt_in(22 downto 13);
+        k <= flt_in(22 downto 13);
     end process;
-    table_map : FInvTable port map (clk => clk, key => key, val => val);
+    table_map : FInvTable port map (clk => clk, k => k, v => v);
 
     sequential2 : process(clk)
     begin
         if rising_edge(clk) then
             sgn <= flt_in(31);
-            exp_in <= flt_in(30 downto 23);
-            rest <= flt_in(12 downto 0);
-            frc_any <= flt_in(22 downto 0) = 0;
-            a0 <= val(35 downto 13);
-            a1 <= val(12 downto 0);
+            exp_in <= unsigned(flt_in(30 downto 23));
+            rest <= unsigned(flt_in(12 downto 0));
+            if unsigned(flt_in(22 downto 0)) = 0 then
+                frc_any <= '0';
+            else
+                frc_any <= '1';
+            end if;
+            a0 <= unsigned(v(35 downto 13));
+            a1 <= unsigned(v(12 downto  0));
         end if;
     end process;
 
     conbinatorial2 : process(exp_in, a1, rest)
-        variable tmp : std_logic_vector(25 downto 0);
+        variable tmp : unsigned(25 downto 0);
     begin
-        no_flow1 <= exp_in /= "0xFD";
-        no_flow2 <= exp_in /= "0xFE";
+        if exp_in = x"FD" then
+            no_flow1 <= '0';
+        else
+            no_flow1 <= '1';
+        end if;
+        if exp_in = x"FE" then
+            no_flow2 <= '0';
+        else
+            no_flow2 <= '1';
+        end if;
         tmp := a1 * rest;
         t1 <= "000000000" & tmp(25 downto 12);
     end process;
@@ -57,27 +70,31 @@ begin
     sequential3 : process(clk)
     begin
         if rising_edge(clk) then
-            no_flow1_ <= no_flow1;
-            no_flow2_ <= no_flow2;
-            frc_any_ <= frc_any;
-            exp_in_ <= exp_in;
-            sgn_ <= sgn;
-            a0_ <= a0;
-            t1_ <= t1;
+            no_flow1_p <= no_flow1;
+            no_flow2_p <= no_flow2;
+            frc_any_p <= frc_any;
+            exp_in_p <= exp_in;
+            sgn_p <= sgn;
+            a0_p <= a0;
+            t1_p <= t1;
         end if;
     end process;
 
-    conbinatorial3 : process(no_flow1_, no_flow2_, frc_any_, exp_in_, sgn_, a0_, t1_)
-        variable std_logic_vector(7 downto 0) exp_out;
-        variable std_logic_vector(22 downto 0) frc_out;
+    conbinatorial3 : process(no_flow1_p, no_flow2_p, frc_any_p, exp_in_p, sgn_p, a0_p, t1_p)
+        variable exp_out : unsigned(7 downto 0);
+        variable frc_out : unsigned(22 downto 0);
     begin
-        exp_out := add_unsigned(x"FE", not exp_in_, not (frc_any_ and no_flow2_));
-        if (frc_any_ and no_flow1_ and no_flow2_) = '1' then
-            frc_out := a0_ - t1_(25 downto 12);
+        if exp_in_p = x"00" then
+            exp_out := x"FF";
         else
-            frc_out := 0;
+            exp_out := x"FE" - exp_in_p - unsigned'(0 => (frc_any_p and no_flow2_p));
         end if;
-        flt_out <= sgn_ & exp_out & frc_out;
+        if (frc_any_p and no_flow1_p and no_flow2_p) = '1' then
+            frc_out := a0_p - t1_p;
+        else
+            frc_out := (others => '0');
+        end if;
+        flt_out <= std_logic_vector(sgn_p & exp_out & frc_out);
     end process;
 
 end twoproc_pipeline;

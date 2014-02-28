@@ -177,7 +177,7 @@ ALUCode `1100`
 #### ftor
 ALUCode `1101`
 
-1クロックで回るなら実装したい．
+1クロックで回るなら実装したい．1クロックが厳しいなら，fmovの第二オペランドを使いまわしてFPUとして実装し，そのあとftorさせる．
 
     Rd := ftoi(Fa)
 
@@ -192,40 +192,42 @@ ALUCode `1111`
     Rd := Fa < Fb
 
 ### FPU（FO）
+非正規化数には非対応．1^-126より小さい数は，1^-127以上を切り上げるようなことをせず全て0に落とす．無限大やNaNには対応する．ただし，NaNの中に何らかの情報を入れるようなことはせず，全てのNaNを同一視する．
+
 #### fadd，faddn，faddp，faddm
 FPUCode `0000`
 
     Fd := Fa + Fb
 
-とりあえず非正規化数未対応で偶数丸め．
+最近接偶数丸め．
 
 #### fsub，fsubn，fsubp，fdubm
 FPUCode `0001`
 
     Fd := Fa - Fb
 
-faddと同様．
+最近接偶数丸め．
 
 #### fmul，fmuln，fmulp，fmulm
 FPUCode `0010`
 
     Fd := Fa * Fb
 
-とりあえず非正規化数未対応で偶数丸め．
+最近接偶数丸め．
 
 #### finv，finvn，finvp，finvm
 FPUCode `0011`
 
     Fd := 1 / Fa （Fbは0レジスタに固定）
 
-仕様はFPU班と相談．
+8ulp未満．
 
 #### fsqr，fsqrn，fsqrp，fsqrm
 FPUCode `0100`
 
     Fd := √ Fa （Fbは0レジスタに固定）
 
-仕様はFPU班と相談．
+8ulp未満．
 
 #### fmov，fmovn，fmovp，fmovm
 FPUCode `0101`
@@ -237,16 +239,14 @@ FPUCode `0110`
 
     Fd := floor(Ra)（Rbは0レジスタに固定）
 
+最近接偶数．
+
 #### rtof，rtofn，rtofp，rtofm
 FPUCode `0111`
 
     Fd := itof(Fa)
 
-#### fsinなど
-FPUCode `1???`
-
-もしハードウェア化するなら
-
+最近接偶数．
 
 ### メモリアクセス命令（RM，FM）
 SRAMに対しては内部的には32bit単位のアドレスを用いてアクセスする．
