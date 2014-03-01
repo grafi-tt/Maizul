@@ -44,6 +44,8 @@ architecture mock_testbench of TestBench is
 
     signal forwardBuf : value_t := (others => '0');
 
+    signal sendBuf : std_logic_vector(7 downto 0) := (others => '0');
+
 begin
     clkgen : process
     begin
@@ -57,29 +59,29 @@ begin
         file stdin : text open read_mode is "testbench.in";
         file stdout : text open write_mode is "testbench.out";
         variable li, lo : line;
-        variable recvBuf, sendBuf : std_logic_vector(7 downto 0) := (others => '0');
+        variable recvBuf : std_logic_vector(7 downto 0) := (others => '0');
 
     begin
-        if rising_edge(u232c_in.ok) then
-            u232c_out.recf <= '0';
-            u232c_out.recv_data <= recvBuf;
-            recvCnt <= BLOCK_CYCLE;
-        end if;
-
         if rising_edge(clk) then
+            if u232c_in.ok = '1' and u232c_out.recf = '1' then
+                u232c_out.recf <= '0';
+                recvCnt <= BLOCK_CYCLE;
+            end if;
+
             if u232c_out.recf = '0' then
                 if recvCnt = 0 then
                     readline(stdin, li);
                     hread(li, recvBuf);
+                    u232c_out.recv_data <= recvBuf;
                     u232c_out.recf <= '1';
                 else
                     recvCnt <= recvCnt - 1;
                 end if;
             end if;
 
-            if u232c_in.go = '1' then
+            if u232c_in.go = '1' and u232c_out.sent = '1' then
                 u232c_out.sent <= '0';
-                sendBuf := u232c_in.send_data;
+                sendBuf <= u232c_in.send_data;
                 sendCnt <= BLOCK_CYCLE;
             end if;
 
