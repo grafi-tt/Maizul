@@ -49,6 +49,7 @@ type expr =
   | Fmov of freg * freg * sign
   | Fflr of freg * freg * sign
   | Rtof of freg * reg * sign
+  | Ftorx of freg * reg
   | Ld  of reg * reg * data_imm
   | St  of reg * reg * data_imm
   | Fld of freg * reg * data_imm
@@ -156,6 +157,7 @@ let dump_expr = function
   | Rtof (x, y, Negate)   -> dump_generic2 "rtofn" x y
   | Rtof (x, y, Plus)     -> dump_generic2 "rtofp" x y
   | Rtof (x, y, Minus)    -> dump_generic2 "rtofm" x y
+  | Ftorx (x, y)          -> dump_generic2 "ftorx" x y
   | Ld  (x, y, z) -> dump_generic3 "ld"  x y z
   | St  (x, y, z) -> dump_generic3 "st"  x y z
   | Fld (x, y, z) -> dump_generic3 "fld" x y z

@@ -66,6 +66,7 @@ let change offset env menv = function
   | Fmov (d, a, sign) -> change_fpu 0b0101 d a (`FReg 0) sign
   | Fflr (d, a, sign) -> change_fpu 0b0110 d a (`FReg 0) sign
   | Rtof (d, a, sign) -> change_fpu 0b0111 d a (`Reg 0) sign
+  | Ftorx (d, b)      -> change_fpu 0b0111 d (`Reg 0) b Straight
   | Ld  (v, m, d) -> change_generic offset env menv 0b010010 m v d
   | St  (v, m, d) -> change_generic offset env menv 0b010011 m v d
   | Fld (v, m, d) -> change_generic offset env menv 0b011010 m v d

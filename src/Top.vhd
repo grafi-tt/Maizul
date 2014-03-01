@@ -45,11 +45,15 @@ architecture structural of Top is
     component U232CRecv is
         generic (
             -- 9600bps
-            --WTIME : std_logic_vector(15 downto 0) := x"1B17"
+            -- wTime : std_logic_vector(15 downto 0) := x"1B17"
             -- 115200bps, 66MHz (perfectly works)
-            wTime : std_logic_vector(15 downto 0) := x"0255"
-            -- 115200bps, 77MHz
-            -- wTime : std_logic_vector(15 downto 0) := x"01FF"
+            -- wTime : std_logic_vector(15 downto 0) := x"0255"
+            -- 115200bps, 72MHz
+            -- wTime : std_logic_vector(15 downto 0) := x"028b"
+            -- 115200bps, 84MHz
+            -- wTime : std_logic_vector(15 downto 0) := x"02f7"
+            -- 115200bps, 99MHz
+            wTime : std_logic_vector(15 downto 0) := x"037f"
         );
         port (
             clk : in std_logic;
@@ -62,11 +66,15 @@ architecture structural of Top is
     component U232CSend is
         generic (
             -- 9600bps
-            --WTIME : std_logic_vector(15 downto 0) := x"1ADB"
+            -- wTime : std_logic_vector(15 downto 0) := x"1ADB"
             -- 115200bps, 66MHz (perfectly works)
-            wTime : std_logic_vector(15 downto 0) := x"0240"
-            -- 115200bps, 77MHz
-            -- wTime : std_logic_vector(15 downto 0) := x"01ED"
+            -- wTime : std_logic_vector(15 downto 0) := x"0240"
+            -- 115200bps, 72MHz
+            -- wTime : std_logic_vector(15 downto 0) := x"0274"
+            -- 115200bps, 84MHz
+            -- wTime : std_logic_vector(15 downto 0) := x"02dd"
+            -- 115200bps, 99MHz
+            wTime : std_logic_vector(15 downto 0) := x"0360"
         );
         port (
             clk : in std_logic;

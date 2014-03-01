@@ -177,7 +177,7 @@ ALUCode `1100`
 #### ftor
 ALUCode `1101`
 
-1クロックで回るなら実装したい．1クロックが厳しいなら，fmovの第二オペランドを使いまわしてFPUとして実装し，そのあとftorさせる．
+クロックが厳しいのでftorxに移動．
 
     Rd := ftoi(Fa)
 
@@ -237,16 +237,19 @@ FPUCode `0101`
 #### fflr，fflrn，fflrp，fflrm
 FPUCode `0110`
 
-    Fd := floor(Ra)（Rbは0レジスタに固定）
+    Fd := floor(Fa)（Fbは0レジスタに固定）
 
 最近接偶数．
 
-#### rtof，rtofn，rtofp，rtofm
+#### rtof，rtofn，rtofp，rtofm, ftorx
 FPUCode `0111`
 
-    Fd := itof(Fa)
+    Fd := itof(Ra) | ftoi(Rb)
 
-最近接偶数．
+最近接偶数．orを取っているが，当然片方を0に固定することを想定している（itof,ftoiともに，入力が0なら出力も自動的に0になる）．ftorxになるのはファンクトが0のとき．
+
+ftoiと言いながら，汎用レジスタから浮動小数点レジスタへの移動であるので，前後でfmovrを使う必要有る（設計が良くなかった）．
+
 
 ### メモリアクセス命令（RM，FM）
 SRAMに対しては内部的には32bit単位のアドレスを用いてアクセスする．

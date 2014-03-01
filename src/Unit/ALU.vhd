@@ -15,14 +15,6 @@ entity ALU is
 end ALU;
 
 architecture twoproc of ALU is
-    component FtoI
-        port (
-            clk : in std_logic;
-            f : in  std_logic_vector(31 downto 0);
-            i : out std_logic_vector(31 downto 0));
-    end component;
-    signal d_ftoi : std_logic_vector(31 downto 0);
-
     signal c : std_logic_vector(3 downto 0) := "0000";
     signal s : value_t := (others => '0');
     signal t : value_t := (others => '0');
@@ -49,12 +41,7 @@ begin
         end if;
     end process;
 
-    ftoi_map : FtoI port map (
-        clk => clk,
-        f => s,
-        i => d_ftoi);
-
-    combinatorial : process(c, s, t, d_ftoi)
+    combinatorial : process(c, s, t)
         variable d_add, d_sub, d_xor, d_and, d_or, d_sll, d_srl, d_sra, d_cat, d_mul : value_t;
         variable d_eq, d_lt, d_feq, d_flt : boolean;
         variable tmp_lt, tmp_z_s, tmp_z_t : boolean;
@@ -101,7 +88,7 @@ begin
             when "1010" => emitVal <= d_cat;
             when "1011" => emitVal <= d_mul;
             when "1100" => emitVal <= s;
-            when "1101" => emitVal <= value_t(d_ftoi);
+            when "1101" => assert(false); emitVal <= s;
             when "1110" => emitVal <= boolean_value(d_feq);
             when "1111" => emitVal <= boolean_value(d_flt);
             when others => assert false;

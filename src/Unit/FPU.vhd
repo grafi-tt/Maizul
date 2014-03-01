@@ -53,6 +53,13 @@ architecture twoproc_pipeline of FPU is
             f : out std_logic_vector(31 downto 0));
     end component;
 
+    component FtoI2 is
+        port (
+            clk : in std_logic;
+            f : in  std_logic_vector(31 downto 0);
+            i : out std_logic_vector(31 downto 0));
+    end component;
+
     component FFlr
         port (
             clk : in std_logic;
@@ -69,7 +76,7 @@ architecture twoproc_pipeline of FPU is
     signal funct1, funct2, funct3 : std_logic_vector(1 downto 0) := (others => '0');
 
     signal a1, b1, d1, d2, d3 : std_logic_vector(31 downto 0) := (others => '0');
-    signal b_fadd, d_fadd, d_fmul, d_finv, d_fsqr, d_fflr, d_itof : std_logic_vector(31 downto 0);
+    signal b_fadd, d_fadd, d_fmul, d_finv, d_fsqr, d_fflr, d_itof, d_ftoi : std_logic_vector(31 downto 0);
 
 begin
     sequential1 : process(clk)
@@ -115,6 +122,11 @@ begin
         clk => clk,
         i => a1,
         f => d_itof);
+
+    ftoi2_map : FtoI2 port map (
+        clk => clk,
+        f => b1,
+        i => d_ftoi);
 
     combinatorial1 : process(a1, b1, code1)
         variable a_sgn, b_sgn : std_logic;
@@ -195,7 +207,7 @@ begin
         end if;
     end process;
 
-    combinatorial3 : process(code3, funct3, d_fadd, d_fmul, d_finv, d_fsqr, d3, d_fflr, d_itof)
+    combinatorial3 : process(code3, funct3, d_fadd, d_fmul, d_finv, d_fsqr, d3, d_fflr, d_itof, d_ftoi)
         variable d_out : std_logic_vector(31 downto 0);
 
     begin
@@ -207,7 +219,7 @@ begin
             when "100" => d_out := d_fsqr;
             when "101" => d_out := d3;
             when "110" => d_out := d_fflr;
-            when "111" => d_out := d_itof;
+            when "111" => d_out := d_itof or d_ftoi;
             when others => assert false;
         end case;
 

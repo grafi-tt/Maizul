@@ -54,15 +54,17 @@ architecture dataflow_pipeline of FAdd is
 
     signal s2_round_further, s2_round_further_dbl, s2_round_further_hlf : std_logic;
     signal s2_frc_out_adder1, s2_frc_out_adder2 : std_logic_vector(24 downto 0);
+    signal s2_frc_ireg : std_logic_vector(23 downto 0);
+    signal s2_frc_out_noinf_add : std_logic_vector(22 downto 0);
+    signal s2_no_flow, s2_no_down, s2_exact : boolean;
 
 
     signal s3_sgn_sup, s3_sgn_inf : std_logic := '0';
     signal s3_exp_unif : std_logic_vector(7 downto 0) := (others => '0');
-    signal s3_frc_out_adder1, s3_frc_out_adder2 : std_logic_vector(24 downto 0) := (others => '0');
-    signal s3_zero_sft, s3_is_add : boolean := false;
+    signal s3_frc_ireg : std_logic_vector(23 downto 0) := (others => '0');
+    signal s3_frc_out_noinf_add : std_logic_vector(22 downto 0) := (others => '0');
+    signal s3_no_flow, s3_no_down, s3_exact, s3_zero_sft, s3_is_add : boolean := false;
 
-    signal s3_no_flow, s3_no_down, s3_exact : boolean;
-    signal s3_frc_ireg : std_logic_vector(23 downto 0);
     signal s3_nlz : std_logic_vector(4 downto 0);
     signal s3_down_frc : std_logic;
     signal s3_exp_out_sub_raw : std_logic_vector(8 downto 0);
@@ -136,36 +138,43 @@ begin
                          ('0' & s2_frc_unif_inf) - ('0' & s2_frc_unif_sup) - s2_round_further when s2_zero_sft else
                          ('0' & (s2_frc_unif_sup(22 downto 0)) & '0') - ('0' & (s2_frc_unif_inf(22 downto 0) & s2_fst_over)) - s2_round_further_hlf;
 
+    s2_no_flow <= s2_frc_out_adder1(24) = '0';
+    s2_exact <= s2_frc_out_adder2(24) = '0' and s2_no_flow and s2_zero_sft;
+    s2_no_down <= s2_frc_out_adder1(23) = '1';
+
+    s2_frc_ireg <= s2_frc_out_adder1(23 downto 0) when s2_zero_sft and s2_no_flow else
+                   s2_frc_out_adder2(23 downto 0) when s2_zero_sft and not s2_no_flow else
+                   s2_frc_out_adder1(23 downto 0) when s2_no_down else
+                   s2_frc_out_adder2(23 downto 0);
+    s2_frc_out_noinf_add <= s2_frc_out_adder1(22 downto 0) when s2_no_flow else
+                            s2_frc_out_adder2(22 downto 0);
+
     pipe2: process(clk)
     begin
         if rising_edge(clk) then
             s3_sgn_sup <= s2_sgn_sup;
             s3_sgn_inf <= s2_sgn_inf;
             s3_exp_unif <= s2_exp_unif;
-            s3_frc_out_adder1 <= s2_frc_out_adder1;
-            s3_frc_out_adder2 <= s2_frc_out_adder2;
+
+            s3_frc_ireg <= s2_frc_ireg;
+            s3_frc_out_noinf_add <= s2_frc_out_noinf_add;
+
+            s3_no_flow <= s2_no_flow;
+            s3_exact <= s2_exact;
+            s3_no_down <= s2_no_down;
             s3_zero_sft <= s2_zero_sft;
             s3_is_add <= s2_is_add;
         end if;
     end process;
 
-    s3_no_flow <= s3_frc_out_adder1(24) = '0';
-    s3_exact <= s3_frc_out_adder2(24) = '0' and s3_no_flow and s3_zero_sft;
-    s3_no_down <= s3_frc_out_adder1(23) = '1';
-
     s3_exp_out_add <= s3_exp_unif when s3_no_flow else s3_exp_unif+1;
     s3_frc_out_add <= (others => '0') when s3_exp_out_add = "11111111" else
-                      s3_frc_out_adder1(22 downto 0) when s3_no_flow else
-                      s3_frc_out_adder2(22 downto 0);
+                      s3_frc_out_noinf_add;
 
     s3_sgn_out_sub <= '0' when s3_exact else
                       s3_sgn_sup when not s3_zero_sft or s3_no_flow else
                       s3_sgn_inf;
 
-    s3_frc_ireg <= s3_frc_out_adder1(23 downto 0) when s3_zero_sft and s3_no_flow else
-                   s3_frc_out_adder2(23 downto 0) when s3_zero_sft and not s3_no_flow else
-                   s3_frc_out_adder1(23 downto 0) when s3_no_down else
-                   s3_frc_out_adder2(23 downto 0);
     pad_frc_ireg_map : FractionLeftTrimming port map (
         frc_in => s3_frc_ireg,
         nlz => s3_nlz,

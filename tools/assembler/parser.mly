@@ -12,7 +12,7 @@
 %token FMOVR FTOR FEQ FLT
 %token FADD FADDN FADDP FADDM FSUB FSUBN FSUBP FSUBM FMUL FMULN FMULP FMULM
 %token FINV FINVN FINVP FINVM FSQR FSQRN FSQRP FSQRM FMOV FMOVN FMOVP FMOVM FFLR FFLRN FFLRP FFLRM
-%token RTOF RTOFN RTOFP RTOFM
+%token RTOF RTOFN RTOFP RTOFM FTORX
 %token LD ST FLD FST
 %token BEQ BNE BLT BGT FBEQ FBNE FBLT FBGT
 %token JMP JMPC JMPR
@@ -83,6 +83,7 @@ expr:
   | RTOFN OPR OPR     { Rtof (freg $2, reg $3, Negate) }
   | RTOFP OPR OPR     { Rtof (freg $2, reg $3, Plus) }
   | RTOFM OPR OPR     { Rtof (freg $2, reg $3, Minus) }
+  | FTORX OPR OPR     { Ftorx (freg $2, reg $3) }
   | LD    OPR OPR OPR { Ld  (reg $2, reg $3, data_imm $4) }
   | ST    OPR OPR OPR { St  (reg $2, reg $3, data_imm $4) }
   | FLD   OPR OPR OPR { Fld  (freg $2, reg $3, data_imm $4) }

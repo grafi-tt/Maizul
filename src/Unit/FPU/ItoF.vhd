@@ -9,21 +9,37 @@ entity ItoF is
         f : out std_logic_vector(31 downto 0) := (others => '0'));
 end IToF;
 
-architecture dataflow of ItoF is
+architecture dataflow_pipeline of ItoF is
     type u_frc_ary_t is array (4 downto 0) of unsigned(32 downto 0);
-    signal u_frc : u_frc_ary_t;
+    signal u_frc_4_pre : unsigned(32 downto 0);
+
+    signal sgn_p : std_logic := '0';
+    signal u_frc : u_frc_ary_t := (others => (others => '0'));
     signal x_nlz : std_logic_vector(4 downto 0);
     signal u_frc_tmp : unsigned(32 downto 0);
-    signal u_frc_norm : unsigned(23 downto 0);
-    signal exp_out : std_logic_vector(7 downto 0);
-    signal frc_out : std_logic_vector(22 downto 0);
     signal tail_any : std_logic;
     signal round : std_logic;
-    signal f_pipe : std_logic_vector(31 downto 0) := (others => '0');
+    signal u_frc_norm : unsigned(23 downto 0);
+
+    signal sgn_pp : std_logic := '0';
+    signal x_nlz_suf : std_logic_vector(4 downto 0) := (others => '0');
+    signal u_frc_over_guard : unsigned(1 downto 0) := (others => '0');
+    signal u_frc_norm_suf : unsigned(23 downto 0) := (others => '0');
+    signal exp_out : std_logic_vector(7 downto 0);
+    signal frc_out : std_logic_vector(22 downto 0);
 
 begin
-    u_frc(4) <= '0' & unsigned(i) when i(31) = '0' else
-                '0' & (x"00000000" - unsigned(i));
+    u_frc_4_pre <= '0' & unsigned(i) when i(31) = '0' else
+                   '0' & (x"00000000" - unsigned(i));
+
+    pipe1 : process(clk)
+    begin
+        if rising_edge(clk) then
+            u_frc(4) <= u_frc_4_pre;
+            sgn_p <= i(31);
+        end if;
+    end process;
+
     x_nlz(4) <= '0'             when u_frc(4)(32 downto 17) = 0 else '1';
     u_frc(3) <= u_frc(4) sll 16 when u_frc(4)(32 downto 17) = 0 else u_frc(4);
     x_nlz(3) <= '0'             when u_frc(3)(32 downto 25) = 0 else '1';
@@ -40,20 +56,23 @@ begin
 
     u_frc_norm <= u_frc_tmp(32 downto 9) + (x"00000" & "000" & round);
 
-    frc_out <= std_logic_vector('0' & u_frc_norm(21 downto 0)) when u_frc_norm(23) = '0' else -- round up or `itof(1)` or `itof(0)`, always 0
-               std_logic_vector(u_frc_norm(22 downto 0));
-
-    exp_out <= "00000000" when u_frc_tmp(32 downto 31) = "00" else
-               "01111111" when u_frc_tmp(32 downto 31) = "01" else
-               "100" & std_logic_vector(unsigned(x_nlz) + 1) when u_frc_norm(23) = '0' else
-               "100" & x_nlz;
-
-    pipe : process(clk)
+    pipe2 : process(clk)
     begin
         if rising_edge(clk) then
-            f_pipe <= i(31) & exp_out & frc_out;
-            f <= f_pipe;
+            x_nlz_suf <= x_nlz;
+            u_frc_over_guard <= u_frc_tmp(32 downto 31);
+            u_frc_norm_suf <= u_frc_norm;
+            sgn_pp <= sgn_p;
         end if;
     end process;
 
-end dataflow;
+    frc_out <= std_logic_vector('0' & u_frc_norm_suf(21 downto 0)) when u_frc_norm_suf(23) = '0' else -- round up or `itof(1)` or `itof(0)`, always 0
+               std_logic_vector(u_frc_norm_suf(22 downto 0));
+
+    exp_out <= "00000000" when u_frc_over_guard = "00" else
+               "01111111" when u_frc_over_guard = "01" else
+               "100" & std_logic_vector(unsigned(x_nlz_suf) + 1) when u_frc_norm_suf(23) = '0' else
+               "100" & x_nlz_suf;
+    f <= sgn_pp & exp_out & frc_out;
+
+end dataflow_pipeline;

@@ -126,6 +126,7 @@ static void aluf(inst_t code, inst_t tagD, float a, float b) {
         return issue();
     case B(1101):
         assert(b == 0.0);
+        assert(false);
         set_gpr(tagD, ftoi_native(a));
         return issue();
     case B(1110):
@@ -176,8 +177,8 @@ static void fpu(inst_t code, inst_t sgn, inst_t tagD, float a, float b) {
 static void fpur(inst_t code, inst_t sgn, inst_t tagD, uint32_t a, uint32_t b) {
     switch (code) {
     case B(111):
-        assert(b == 0);
-        set_fpr_sgn(tagD, sgn, itof_native(a));
+        assert(a == 0 || b == 0);
+        set_fpr_sgn(tagD, sgn, uint_as_float(float_as_uint(itof_native(a)) | ftoi_native(uint_as_float(b))));
         return issue();
     default:
         assert(false);

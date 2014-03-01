@@ -45,6 +45,7 @@ type expr =
   | Fmov of freg * freg * sign
   | Fflr of freg * freg * sign
   | Rtof of freg * reg * sign
+  | Ftorx of freg * reg
   | Ld  of reg * reg * data_imm
   | St  of reg * reg * data_imm
   | Fld of freg * reg * data_imm

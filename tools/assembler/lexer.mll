@@ -67,6 +67,7 @@ rule token = parse
   | "rtofn"     { RTOFN }
   | "rtofp"     { RTOFP }
   | "rtofm"     { RTOFM }
+  | "ftorx"     { FTORX }
   | "ld"        { LD }
   | "st"        { ST }
   | "fld"       { FLD }
