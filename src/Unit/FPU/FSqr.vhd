@@ -23,7 +23,6 @@ architecture twoproc_pipeline of FSqr is
     signal sgn_in, sgn_in_p : std_logic := '0';
     signal exp_in, exp_in_p : unsigned(7 downto 0) := (others => '0');
     signal a0, a0_p : unsigned(22 downto 0) := (others => '0');
-    signal a1, a1_p : unsigned(12 downto 0) := (others => '0');
     signal t1, t1_p : unsigned(22 downto 0) := (others => '0');
 
 begin
@@ -39,14 +38,15 @@ begin
             sgn_in <= flt_in(31);
             exp_in <= unsigned(flt_in(30 downto 23));
             rest <= unsigned(flt_in(13 downto 0));
-            a0 <= unsigned(v(35 downto 13));
-            a1 <= unsigned(v(12 downto  0));
         end if;
     end process;
 
-    conbinatorial2 : process(a1, rest)
+    conbinatorial2 : process(v, rest)
+        variable a1 : unsigned(12 downto 0);
         variable tmp : unsigned(26 downto 0);
     begin
+        a0 <= unsigned(v(35 downto 13));
+        a1 := unsigned(v(12 downto  0));
         tmp := a1 * rest;
         t1 <= "000000000" & tmp(26 downto 13);
     end process;

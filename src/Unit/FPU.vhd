@@ -69,7 +69,7 @@ architecture twoproc_pipeline of FPU is
     signal funct1, funct2, funct3 : std_logic_vector(1 downto 0) := (others => '0');
 
     signal a1, b1, d1, d2, d3 : std_logic_vector(31 downto 0) := (others => '0');
-    signal b_fadd, d_fadd, d_fmul, d_finv, d_fsqr, d_fflr, d_itof, d_out : std_logic_vector(31 downto 0);
+    signal b_fadd, d_fadd, d_fmul, d_finv, d_fsqr, d_fflr, d_itof : std_logic_vector(31 downto 0);
 
 begin
     sequential1 : process(clk)

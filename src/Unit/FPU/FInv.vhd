@@ -23,7 +23,6 @@ architecture twoproc_pipeline of FInv is
     signal sgn, sgn_p : std_logic := '0';
     signal exp_in, exp_in_p : unsigned(7 downto 0) := (others => '0');
     signal a0, a0_p : unsigned(22 downto 0) := (others => '0');
-    signal a1, a1_p : unsigned(12 downto 0) := (others => '0');
     signal t1, t1_p : unsigned(22 downto 0) := (others => '0');
     signal no_flow1, no_flow1_p, no_flow2, no_flow2_p, frc_any, frc_any_p : std_logic := '0';
 
@@ -45,14 +44,15 @@ begin
             else
                 frc_any <= '1';
             end if;
-            a0 <= unsigned(v(35 downto 13));
-            a1 <= unsigned(v(12 downto  0));
         end if;
     end process;
 
-    conbinatorial2 : process(exp_in, a1, rest)
+    conbinatorial2 : process(v, exp_in, rest)
+        variable a1 : unsigned(12 downto 0);
         variable tmp : unsigned(25 downto 0);
     begin
+        a0 <= unsigned(v(35 downto 13));
+        a1 := unsigned(v(12 downto  0));
         if exp_in = x"FD" then
             no_flow1 <= '0';
         else
