@@ -176,8 +176,8 @@ float fsqr_circuit(float f) {
         exp_out = 0xFF;
         frc_out = 1;
     } else {
-        frc_out = bits(a0 + t1, 22, 0);
         exp_out = bits(0x3F + bits(exp_in, 7, 1) + bits(exp_in, 0, 0), 7, 0);
+        frc_out = bits(a0 + t1, 22, 0);
     }
 
     ret = exp_out << 23 | frc_out;

@@ -122,7 +122,7 @@ NET RS_RX			LOC=J11;
 #// = Inputs. =
 #NET  CLK48M 	   LOC=H17;
 NET  MCLK1		   LOC=J16;
-#NET XRST		   LOC=H18;
+NET XRST		   LOC=H18;
 
 #////////////////////////////////////////
 #// UNIVERSAL-I/O connection.
@@ -485,7 +485,7 @@ NET  ZZA		   IOSTANDARD = LVTTL;
 #// = Inputs. =
 #NET  CLK48M 	   IOSTANDARD = LVTTL;
 NET  MCLK1		   IOSTANDARD = LVTTL;
-#NET XRST		   IOSTANDARD = LVTTL;
+NET XRST		   IOSTANDARD = LVTTL;
 NET RS_TX		   IOSTANDARD = LVTTL;
 NET RS_RX		   IOSTANDARD = LVTTL;
 
@@ -497,7 +497,7 @@ NET RS_RX		   IOSTANDARD = LVTTL;
 #NET "u_mig/u_infrastructure/sys_clk_ibufg" TNM_NET =  "SYS_CLK";
 #NET "bufg_66" TNM_NET = "SYS_CLK";
 NET "MCLK1" TNM_NET = "SYS_CLK";
-TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 15.00 ns HIGH 50 %;
+TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 15.152 ns HIGH 50 %;
 
 # from Data Sheet
 # TODO consider delay of board (nearly 0.5ns?)

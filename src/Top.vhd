@@ -9,6 +9,7 @@ entity Top is
     port (
         -- Clock
         MCLK1 : in std_logic;
+        XRST : in std_logic;
 
         -- RS-232C
         RS_RX : in  std_logic;
@@ -32,12 +33,24 @@ entity Top is
 end Top;
 
 architecture structural of Top is
+    component DCM
+    port(
+        CLKIN_IN : in std_logic;
+        RST_IN : in std_logic;
+        CLKFX_OUT : out std_logic;
+        CLKIN_IBUFG_OUT : out std_logic;
+        CLK0_OUT : out std_logic);
+    end component;
+
     component U232CRecv is
         generic (
             -- 9600bps
-            --WTIME : std_logic_vector(15 downto 0) := x"1B17");
-            -- 115200bps
-            wTime : std_logic_vector(15 downto 0) := x"0255");
+            --WTIME : std_logic_vector(15 downto 0) := x"1B17"
+            -- 115200bps, 66MHz (perfectly works)
+            wTime : std_logic_vector(15 downto 0) := x"0255"
+            -- 115200bps, 77MHz
+            -- wTime : std_logic_vector(15 downto 0) := x"01FF"
+        );
         port (
             clk : in std_logic;
             ok : in std_logic;
@@ -49,9 +62,12 @@ architecture structural of Top is
     component U232CSend is
         generic (
             -- 9600bps
-            --WTIME : std_logic_vector(15 downto 0) := x"1ADB");
-            -- 115200bps
-            wTime : std_logic_vector(15 downto 0) := x"0240");
+            --WTIME : std_logic_vector(15 downto 0) := x"1ADB"
+            -- 115200bps, 66MHz (perfectly works)
+            wTime : std_logic_vector(15 downto 0) := x"0240"
+            -- 115200bps, 77MHz
+            -- wTime : std_logic_vector(15 downto 0) := x"01ED"
+        );
         port (
             clk : in std_logic;
             go : in std_logic;
@@ -95,7 +111,7 @@ architecture structural of Top is
             sramData : inout value_t);
     end component;
 
-    signal clk, clkio, iclk : std_logic;
+    signal clkfx, clk0, iclk : std_logic;
 
     signal u232c_in : u232c_in_t;
     signal u232c_out : u232c_out_t;
@@ -105,26 +121,29 @@ architecture structural of Top is
     signal dataLine : value_t;
 
 begin
-    ib : IBUFG port map (i => MCLK1, o => iclk);
-    bg : BUFG port map (i => iclk, o => clk);
-    bg2 : BUFG port map (i => iclk, o => clkio);
+    dcm_map : DCM port map (
+        CLKIN_IN => MCLK1,
+        RST_IN => not XRST,
+        CLKFX_OUT => clkfx,
+        CLKIN_IBUFG_OUT => iclk,
+        CLK0_OUT => clk0);
 
     u232c_recv_map : U232CRecv port map (
-        clk => clk,
+        clk => clkfx,
         ok => u232c_in.ok,
         data => u232c_out.recv_data,
         rx_pin => RS_RX,
         recf => u232c_out.recf);
 
     u232c_send_map : U232CSend port map (
-        clk => clk,
+        clk => clkfx,
         go => u232c_in.go,
         data => u232c_in.send_data,
         tx_pin => RS_TX,
         sent => u232c_out.sent);
 
     sram_map : SRAM port map (
-        clk => clkio,
+        clk => clkfx,
         load => load,
         addr => std_logic_vector(addr),
         data => dataLine,
@@ -146,7 +165,7 @@ begin
         xFlowThruPin => XFT);
 
     data_path_map : DataPath port map (
-        clk => clkio,
+        clk => clkfx,
         u232c_in => u232c_in,
         u232c_out => u232c_out,
         sramLoad => load,
