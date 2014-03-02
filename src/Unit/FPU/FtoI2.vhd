@@ -16,7 +16,7 @@ architecture dataflow_pipeline of FtoI2 is
     signal sgn_p : std_logic := '0';
     signal x_len : std_logic_vector(8 downto 0) := (others => '0');
     signal u_frc_4 : unsigned(31 downto 0) := (others => '0');
-    signal u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o : unsigned(31 downto 0);
+    signal u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o, u_frc_v2 : unsigned(31 downto 0);
     signal any_3, any_2, any_1, any_0, any_o : std_logic;
     signal round : std_logic;
     signal i_err : std_logic_vector(31 downto 0);
@@ -71,10 +71,8 @@ begin
         end if;
     end process;
 
+    u_frc_v2 <= u_frc_v when sgn_pp = '0' else not u_frc_v;
     i <= i_err_suf when err_suf else
-         std_logic_vector(u_frc_v) when sgn_pp = '0' and round_suf = '0' else
-         std_logic_vector(u_frc_v + 1) when sgn_pp = '0' and round_suf = '1' else
-         std_logic_vector(0 - u_frc_v) when round_suf = '0' else
-         std_logic_vector(not u_frc_v);
+         std_logic_vector(u_frc_v2 + unsigned'(0 => sgn_pp xor round_suf));
 
 end dataflow_pipeline;

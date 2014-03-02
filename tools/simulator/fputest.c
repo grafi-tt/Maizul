@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
 /* test definition */
 #include "fpu.h"
 int test_ftoi_circuit() {
-    uint32_t u;
-    for (u = 0; u <= UINT32_C(0xFF800000); u++) {
+    uint32_t u = 0;
+    do {
         if (
             (UINT32_C(0x00000000) < u && u < UINT32_C(0x00800000)) ||
             (UINT32_C(0x7F800000) < u && u < UINT32_C(0x80000000)) ||
@@ -59,7 +59,7 @@ int test_ftoi_circuit() {
             printf("%08x %08x %08x\n", u, i1, i2);
             return 1;
         }
-    }
+    } while (++u);
     return 0;
 }
 

@@ -51,11 +51,14 @@ float itof_circuit(int32_t i) {
 
 int32_t ftoi_circuit(float f) {
     uint32_t fu = float_as_uint(f);
+    uint32_t sgn;
     uint32_t x_len;
-    uint32_t u_frc_4, u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o, u_frc_v;
-    int any_4, any_3, any_2, any_1, any_0, any_o;
-    int round;
+    uint32_t u_frc_4, u_frc_3, u_frc_2, u_frc_1, u_frc_0, u_frc_o, u_frc_v, u_frc_v2;
+    uint32_t any_4, any_3, any_2, any_1, any_0, any_o;
+    uint32_t i_err;
+    uint32_t err, round;
 
+    sgn = bits(fu, 31, 31);
     x_len = bits(bits(fu, 30, 23) - 0x7E, 8, 0);
 
     any_4 = 0;
@@ -74,13 +77,12 @@ int32_t ftoi_circuit(float f) {
     u_frc_v = u_frc_o >> 1;
     round = (bits(u_frc_o, 0, 0) & any_o) | (bits(u_frc_o, 1, 1) & bits(u_frc_o, 0, 0));
 
-    return bits(x_len, 8, 8) == 1 ? INT32_C(0x00000000) :
-           bits(fu, 31, 31) == 0 && bits(x_len, 7, 5) ? INT32_C(0x7FFFFFFF) :
-           bits(fu, 31, 31) == 1 && bits(x_len, 7, 5) ? INT32_C(0x80000000) :
-           (bits(fu, 31, 31) == 0) & (round == 0) ? u_frc_v :
-           (bits(fu, 31, 31) == 0) & (round == 1) ? u_frc_v + 1:
-           round == 0 ? -u_frc_v :
-           ~u_frc_v;
+    i_err = bits(x_len, 8, 8) == 1 ? UINT32_C(0x00000000) :
+            sgn == 0 ? UINT32_C(0x7FFFFFFF) :
+            UINT32_C(0x80000000);
+    err = (bits(x_len, 8, 8) == 1) | (bits(x_len, 7, 5) != 0);
+    u_frc_v2 = sgn == 0 ? u_frc_v : ~u_frc_v;
+    return err ? i_err : u_frc_v2 + (sgn ^ round);
 }
 
 float fflr_circuit(float f) {
