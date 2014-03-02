@@ -33,7 +33,7 @@ entity Top is
 end Top;
 
 architecture structural of Top is
-    component DCM
+    component DCM1
     port(
         CLKIN_IN : in std_logic;
         RST_IN : in std_logic;
@@ -129,7 +129,7 @@ architecture structural of Top is
     signal dataLine : value_t;
 
 begin
-    dcm_map : DCM port map (
+    dcm_map : DCM1 port map (
         CLKIN_IN => MCLK1,
         RST_IN => not XRST,
         CLKFX_OUT => clkfx,
