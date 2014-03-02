@@ -53,7 +53,9 @@ architecture structural of Top is
             -- 115200bps, 84MHz
             -- wTime : std_logic_vector(15 downto 0) := x"02f7"
             -- 115200bps, 99MHz
-            wTime : std_logic_vector(15 downto 0) := x"037f"
+            -- wTime : std_logic_vector(15 downto 0) := x"037f"
+            -- 115200bps, 99MHz
+            wTime : std_logic_vector(15 downto 0) := x"03e3"
         );
         port (
             clk : in std_logic;
@@ -74,7 +76,9 @@ architecture structural of Top is
             -- 115200bps, 84MHz
             -- wTime : std_logic_vector(15 downto 0) := x"02dd"
             -- 115200bps, 99MHz
-            wTime : std_logic_vector(15 downto 0) := x"0360"
+            -- wTime : std_logic_vector(15 downto 0) := x"0360"
+            -- 115200bps, 110MHz
+            wTime : std_logic_vector(15 downto 0) := x"03c0"
         );
         port (
             clk : in std_logic;
