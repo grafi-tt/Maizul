@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.types.all;
 
+-- prediction counter
+-- 10 00 <-fail-|-success-> 01  11
+
 entity Predict is
     port (
         clk : in std_logic;
@@ -10,173 +13,183 @@ entity Predict is
         q : out predict_out_t);
 end Predict;
 
-architecture behavioral of Predict is
+architecture twoproc of Predict is
     attribute ram_style : string;
 
-    constant gshare_wid : natural := 14;
+    constant gshare_wid : natural := 9;
     type gshare_ram_t is array(0 to (2**gshare_wid)-1) of std_logic_vector(1 downto 0);
     signal gshare_ram : gshare_ram_t := (others => (others => '0'));
-    attribute ram_style of gshare_ram : signal is "block";
+    attribute ram_style of gshare_ram : signal is "distributed";
+
     signal gshare_we : boolean;
-    signal gshare_key, gshare_wkey : unsigned(gshare_wid-1 downto 0) := (others => '0');
-    signal gshare_val : std_logic_vector(1 downto 0) := "00";
-    signal gshare_wval : std_logic_vector(1 downto 0) := (others => '0');
-    constant hist_len : natural := 8;
+    signal gshare_wkey : std_logic_vector(gshare_wid-1 downto 0) := (others => '0');
+    signal gshare_wval : std_logic_vector(1 downto 0) := "00";
+    type cont_t is record
+        gshared : boolean;
+        gshared_key : std_logic_vector(gshare_wid-1 downto 0);
+        gshared_val : std_logic_vector(1 downto 0);
+    end record;
+    signal cont : cont_t;
+
+    constant hist_len : natural := 4;
     signal hist : std_logic_vector(hist_len-1 downto 0) := (others => '0');
     signal hist_wval : std_logic;
 
-    constant stack_wid : natural := 11;
+    constant stack_wid : natural := 6;
     type stack_ram_t is array(0 to (2**stack_wid)-1) of blkram_addr;
     signal stack_ram : stack_ram_t := (others => (others => '0'));
-    attribute ram_style of stack_ram : signal is "block";
-    signal stack_top : unsigned(stack_wid-1 downto 0) := (others => '0');
-    signal stack_pred : unsigned(stack_wid-1 downto 0);
-    signal stack_push, stack_pop : boolean := false;
-    signal stack_addr : blkram_addr := (others => '0');
-    signal stack_waddr : blkram_addr := (others => '0');
+    attribute ram_style of stack_ram : signal is "distributed";
 
-    signal we : boolean := false;
-    signal addr : blkram_addr;
-    signal cont : std_logic_vector(2 downto 0);
+    signal stack_top, stack_top_next, stack_top_back : unsigned(stack_wid-1 downto 0) := (others => '0');
+    signal stack_push : boolean := false;
 
     constant buf_len : natural := 2;
-    type buf_t is array(buf_len-1 downto 0) of blkram_addr;
-    signal buf : buf_t := (others => (others => '0'));
-    type cont_buf_t is array(buf_len-1 downto 0) of std_logic_vector(2 downto 0);
-    signal cont_buf : cont_buf_t := (others => (others => '0'));
-    type key_buf_t is array(buf_len-1 downto 0) of unsigned(gshare_wid-1 downto 0);
-    signal key_buf : key_buf_t := (others => (others => '0'));
+    type buf_t      is array(buf_len-1 downto 0) of blkram_addr;
+    type cont_buf_t is array(buf_len-1 downto 0) of cont_t;
+    signal buf      : buf_t      := (others => (others => '0'));
+    signal cont_buf : cont_buf_t := (others => (false, (others => '0'), "00"));
+
+    signal addr : blkram_addr;
+    signal imm_addr : blkram_addr;
+    signal stack_addr : blkram_addr;
 
 begin
+    imm_addr <= blkram_addr(d.inst(15 downto 0));
+    stack_addr <= stack_ram(to_integer(stack_top));
+    q.addr <= addr;
+
     sequential : process(clk)
     begin
         if rising_edge(clk) then
-            gshare_val <= gshare_ram(to_integer(gshare_key));
-            stack_addr <= stack_ram(to_integer(stack_pred));
-
-            if we then
+            if d.enable_fetch then
                 buf <= addr & buf(buf_len-1 downto 1);
-                key_buf <= gshare_key & key_buf(buf_len-1 downto 1);
                 cont_buf <= cont & cont_buf(buf_len-1 downto 1);
-            end if;
+                stack_top <= stack_top_next;
+                stack_top_back <= stack_top;
 
-            if gshare_we then
-                hist <= hist_wval & hist(hist_len-1 downto 1);
-                gshare_ram(to_integer(gshare_wkey)) <= gshare_wval;
-            end if;
+                if gshare_we then
+                    hist <= hist_wval & hist(hist_len-1 downto 1);
+                    gshare_ram(to_integer(unsigned(gshare_wkey))) <= gshare_wval;
+                end if;
 
-            if stack_push then
-                stack_ram(to_integer(stack_top)) <= stack_waddr;
-                stack_top <= stack_top + 1;
-            end if;
+                if stack_push then
+                    stack_ram(to_integer(stack_top)) <= imm_addr;
+                end if;
 
-            if stack_pop then
-                stack_top <= stack_top - 1;
             end if;
         end if;
     end process;
 
-    predict : process(d, addr, gshare_val, stack_addr, stack_top)
-        variable imm_addr : blkram_addr;
+    combinatorial : process(d, imm_addr, stack_addr, gshare_ram, stack_top, buf(0), cont_buf(0), stack_top_back)
         variable upper : std_logic_vector(hist_len-1 downto 0);
         variable lower : std_logic_vector(gshare_wid-hist_len-1 downto 0);
-        variable comb : std_logic_vector(gshare_wid-1 downto 0);
+        variable gshare : boolean;
+        variable gshare_key : std_logic_vector(gshare_wid-1 downto 0);
+        variable gshare_val : std_logic_vector(1 downto 0);
 
-    begin
-        imm_addr := blkram_addr(d.inst(15 downto 0));
-        cont <= "100";
-
-        if d.inst(31) = '1' then
-            case d.inst(30 downto 29) is
-                when "00" | "01" => -- gshare (TODO: use 01 for loop prediction?)
-                    cont <= '0' & gshare_val;
-                    if gshare_val(0) = '0' then
-                        addr <= d.pc;
-                    else
-                        addr <= imm_addr;
-                    end if;
-                when "10" => -- static no jump
-                    addr <= d.pc;
-                when "11" => -- static jump
-                    addr <= imm_addr;
-                when others => null;
-            end case;
-
-        elsif d.inst(30 downto 28) = "101" then
-            case d.inst(27 downto 26) is
-                when "00" => -- imm jump
-                    addr <= imm_addr;
-                when "01" => -- call
-                    cont <= "101";
-                    addr <= imm_addr;
-                when "10" => -- ret
-                    cont <= "110";
-                    addr <= stack_addr;
-                when "11" => -- not jump
-                    addr <= d.pc;
-                when others => null;
-            end case;
-
-        else
-            addr <= d.pc;
-        end if;
-
-        upper := std_logic_vector(addr(gshare_wid-1 downto gshare_wid-hist_len));
-        lower := std_logic_vector(addr(gshare_wid-hist_len-1 downto 0));
-        comb := (upper xor hist) & lower;
-        gshare_key <= unsigned(comb);
-        stack_pred <= stack_top - 1;
-    end process;
-
-    confirm : process(d, buf, cont_buf, key_buf, addr)
-        variable cont_head : std_logic_vector(2 downto 0);
+        variable cont_head : cont_t;
         variable succeed : boolean;
+
+        variable stack_top_next_v : unsigned(stack_wid-1 downto 0);
+        variable stack_push_v : boolean;
 
     begin
         succeed := buf(0) = d.target or not d.enable_target;
         q.succeed <= succeed;
 
+        upper := std_logic_vector(imm_addr(gshare_wid-1 downto gshare_wid-hist_len));
+        lower := std_logic_vector(imm_addr(gshare_wid-hist_len-1 downto 0));
+        gshare_key := (upper xor hist) & lower;
+        gshare_val := gshare_ram(to_integer(unsigned(gshare_key)));
+
+        gshare := false;
+        stack_top_next_v := stack_top;
+        stack_push_v := false;
+
         if succeed then
-            hist_wval <= '1';
-            q.addr <= addr;
+            if d.inst(31) = '1' then
+                case d.inst(30 downto 29) is
+                    when "00" | "01" => -- gshare (TODO: use 01 for loop prediction?)
+                        gshare := true;
+                        if gshare_val(0) = '0' then
+                            addr <= d.pc;
+                        else
+                            addr <= imm_addr;
+                        end if;
+                    when "10" => -- static no jump
+                        addr <= d.pc;
+                    when "11" => -- static jump
+                        addr <= imm_addr;
+                    when others => null;
+                end case;
+
+            elsif d.inst(30 downto 28) = "101" then
+                case d.inst(27 downto 26) is
+                    when "00" => -- imm jump
+                        addr <= imm_addr;
+                    when "01" => -- call
+                        addr <= imm_addr;
+                        stack_push_v := true;
+                        stack_top_next_v := stack_top + 1;
+                    when "10" => -- ret
+                        addr <= stack_addr;
+                        stack_top_next_v := stack_top - 1;
+                    when "11" => -- not jump
+                        addr <= d.pc;
+                    when others => null;
+                end case;
+
+            else
+                addr <= d.pc;
+            end if;
+
         else
-            hist_wval <= '0';
-            q.addr <= d.target;
+            stack_top_next_v := stack_top_back;
+            addr <= d.target;
         end if;
+
+        stack_top_next <= stack_top_next_v;
+        stack_push <= stack_push_v;
+
+        cont <= (gshared => gshare, gshared_key => gshare_key, gshared_val => gshare_val);
 
         cont_head := cont_buf(0);
         if succeed then
-            case cont_head(1 downto 0) is
-                when "00" =>
-                    gshare_wval <= "10";
-                when "01" =>
-                    gshare_wval <= "11";
+            case cont_head.gshared_val is
                 when "10" =>
                     gshare_wval <= "10";
+                    hist_wval <= '0';
+                when "00" =>
+                    gshare_wval <= "10";
+                    hist_wval <= '0';
+                when "01" =>
+                    gshare_wval <= "11";
+                    hist_wval <= '1';
                 when "11" =>
                     gshare_wval <= "11";
+                    hist_wval <= '1';
                 when others => assert false;
             end case;
         else
-            case cont_head(1 downto 0) is
-                when "00" =>
-                    gshare_wval <= "01";
-                when "01" =>
-                    gshare_wval <= "00";
+            case cont_head.gshared_val is
                 when "10" =>
                     gshare_wval <= "00";
+                    hist_wval <= '1';
+                when "00" =>
+                    gshare_wval <= "01";
+                    hist_wval <= '1';
+                when "01" =>
+                    gshare_wval <= "00";
+                    hist_wval <= '0';
                 when "11" =>
                     gshare_wval <= "01";
+                    hist_wval <= '0';
                 when others => assert false;
             end case;
         end if;
 
-        we <= d.enable_fetch;
-        gshare_we <= d.enable_target and cont_head(2) = '0';
-        stack_push <= d.enable_target and cont_head = "101";
-        stack_pop <= d.enable_target and cont_head = "110";
-        stack_waddr <= buf(0);
-        gshare_wkey <= key_buf(0);
+        gshare_we <= d.enable_target and cont_head.gshared;
+        gshare_wkey <= cont_head.gshared_key;
     end process;
 
-end behavioral;
+end twoproc;
