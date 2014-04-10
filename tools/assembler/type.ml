@@ -20,7 +20,7 @@ type data_imm = [`Imm of _imm | `DataLabel of _label]
 type env = int M.t
 type mem_env = int M.t
 
-type word = int
+type word = [`Imm of _imm | `TextLabel of _label | `DataLabel of _label]
 type sign = Straight | Negate | Plus | Minus
 type hint = Jump | Call | Return
 
@@ -179,7 +179,9 @@ let dump_expr = function
   | Putb (x) -> dump_generic1 "putb" x
 
 let dump_mem_expr = function
-  | Word word -> sprintf "word\tw%d;\n" word
+  | Word (`Imm i) -> sprintf "word\tw%d;\n" i
+  | Word (`TextLabel l) -> sprintf "word\tw#%s@t;\n" l
+  | Word (`DataLabel l) -> sprintf "word\tw#%s@d;\n" l
 
 let construct_env = List.fold_left (fun env (l, i) -> M.add l i env) M.empty
 let construct_mem_env = List.fold_left (fun env (l, i) -> M.add l i env) M.empty

@@ -16,7 +16,9 @@ rule token = parse
   | (moji+ as l) "@t" { OPR (`TextLabel l) }
   | (moji+ as l) "@d" { OPR (`DataLabel l) }
   | digit as d { OPR (`Imm (int_of_string d)) }
-  | 'w' (natural as n) { WORD_VAL (int_of_string n) }
+  | 'w' (natural as n) { WORD_VAL (`Imm (int_of_string n)) }
+  | "w#" (moji+ as l) "@t" { WORD_VAL (`TextLabel l) }
+  | "w#" (moji+ as l) "@d" { WORD_VAL (`DataLabel l) }
   | ".text" { TEXT_SECTION }
   | ".data" { DATA_SECTION }
   | "add"       { ADD }

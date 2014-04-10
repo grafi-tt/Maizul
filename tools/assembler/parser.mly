@@ -18,7 +18,7 @@
 %token JMP JMPC JMPR
 %token GET PUT GETB PUTB
 %token WORD
-%token <int> WORD_VAL
+%token <Type.word> WORD_VAL
 %token <Type.opr> OPR
 %token <Type._label> LABEL
 

@@ -65,6 +65,18 @@ static inline float fsqr_native(float f) {
     return kill_denormal(sqrtf(f));
 }
 
+static inline float sin_native(float f) {
+    return kill_denormal(sinf(f));
+}
+
+static inline float cos_native(float f) {
+    return kill_denormal(cosf(f));
+}
+
+static inline float atan_native(float f) {
+    return kill_denormal(atanf(f));
+}
+
 /* TODO: consider denormalized number */
 static inline int count_ulp(float x, float y, int lim) {
     if (isnan(x) && isnan(y)) return 0;

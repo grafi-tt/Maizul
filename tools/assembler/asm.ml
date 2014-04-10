@@ -87,9 +87,14 @@ let change offset env menv = function
   | Getb (y) -> change_generic offset env menv 0b010111 (`Reg 0) y (`Imm 0b10)
   | Putb (x) -> change_generic offset env menv 0b010111 x (`Reg 0) (`Imm 0b11)
 
-let change_data_section ary =
+let change_data_section ary env menv =
   let expAry = Array.make (Array.length ary * 3 + 2) (Add (`Reg 0, `Reg 0, `Reg 0)) in
   Array.iteri (fun i (Word w) ->
+    let w = match w with
+      | `TextLabel _ as l -> (Array.length ary * 3 + 2) + find_env l env
+      | `DataLabel _ as l -> find_mem_env l menv
+      | `Imm i -> i
+    in
     let h, l = split_32bit w in
     expAry.(i * 3) <- Or (`Reg 1, `Reg 0, `Imm l);
     expAry.(i * 3 + 1) <- Cat (`Reg 1, `Reg 1, `Imm h);
@@ -100,5 +105,5 @@ let change_data_section ary =
   expAry
 
 let compile env exprs menv mexprs =
-  let prelude = change_data_section mexprs in
+  let prelude = change_data_section mexprs env menv in
   Array.map (change (Array.length prelude) env menv) (Array.append prelude exprs)

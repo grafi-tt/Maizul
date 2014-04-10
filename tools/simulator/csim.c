@@ -22,6 +22,8 @@
 #define FLG_STEP false
 #define FLG_COUNT_INST true
 #define FLG_FLUSH false
+/* used for ad-hoc debugging without the need for modifing assembler. */
+#define FLG_SRL_TRAP true
 #include <assert.h>
 
 typedef uint32_t inst_t;
@@ -74,6 +76,36 @@ static inline void set_fpr_sgn(inst_t tag, inst_t sgn, float v) {
 static void issue();
 static void step();
 
+static void trap_srl(uint32_t a, uint32_t b) {
+    static int s_ulp_max = 0;
+    if (!a) {
+        switch (b) {
+        case 0:
+            FPR[1] = sin_native(FPR[1]);
+            return issue();
+        case 1:
+            FPR[1] = cos_native(FPR[1]);
+            return issue();
+        case 2:
+            FPR[1] = atan_native(FPR[1]);
+            return issue();
+        case 3:
+            GPR[1] = count_ulp(FPR[1], FPR[2], GPR[1]);
+            s_ulp_max = GPR[1] > s_ulp_max ? GPR[1] : s_ulp_max;
+            return issue();
+        case 4:
+            GPR[1] = s_ulp_max;
+            return issue();
+        default:
+            assert(false);
+            return issue();
+        }
+    } else {
+        assert(false);
+        return issue();
+    }
+}
+
 static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t b) {
     switch (code) {
     case B(0000):
@@ -101,6 +133,9 @@ static void alu(inst_t code, inst_t tagD, uint32_t a, uint32_t b) {
         set_gpr(tagD, a << bits(b, 4, 0));
         return issue();
     case B(1000):
+        if (!tagD && FLG_SRL_TRAP) {
+            return trap_srl(a, b);
+        }
         set_gpr(tagD, a >> bits(b, 4, 0));
         return issue();
     case B(1001):
@@ -241,7 +276,8 @@ static void rrsp(inst_t func, inst_t tagX, uint32_t y) {
             return issue();
         case B(011):
             assert(tagX == 0);
-            putchar((unsigned char) y);
+            // putchar((unsigned char) y);
+            printf("%02x\n", (unsigned char) y);
             if (FLG_FLUSH) fflush(stdout);
             return issue();
         case B(100):

@@ -16,7 +16,7 @@ type data_imm = [`Imm of _imm | `DataLabel of _label]
 type env
 type mem_env
 
-type word = int
+type word = [`Imm of _imm | `TextLabel of _label | `DataLabel of _label]
 type sign = Straight | Negate | Plus | Minus
 type hint = Jump | Call | Return
 

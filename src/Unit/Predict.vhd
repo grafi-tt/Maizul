@@ -41,6 +41,7 @@ architecture twoproc of Predict is
     attribute ram_style of stack_ram : signal is "distributed";
 
     signal stack_top, stack_top_next, stack_top_back : unsigned(stack_wid-1 downto 0) := (others => '0');
+    signal stack_topp, stack_topp_next, stack_topp_back : unsigned(stack_wid-1 downto 0) := (others => '1');
     signal stack_push : boolean := false;
 
     constant buf_len : natural := 2;
@@ -55,7 +56,7 @@ architecture twoproc of Predict is
 
 begin
     imm_addr <= blkram_addr(d.inst(15 downto 0));
-    stack_addr <= stack_ram(to_integer(stack_top));
+    stack_addr <= stack_ram(to_integer(stack_topp));
     q.addr <= addr;
 
     sequential : process(clk)
@@ -65,7 +66,9 @@ begin
                 buf <= addr & buf(buf_len-1 downto 1);
                 cont_buf <= cont & cont_buf(buf_len-1 downto 1);
                 stack_top <= stack_top_next;
+                stack_topp <= stack_topp_next;
                 stack_top_back <= stack_top;
+                stack_topp_back <= stack_topp;
 
                 if gshare_we then
                     hist <= hist_wval & hist(hist_len-1 downto 1);
@@ -73,14 +76,14 @@ begin
                 end if;
 
                 if stack_push then
-                    stack_ram(to_integer(stack_top)) <= imm_addr;
+                    stack_ram(to_integer(stack_top)) <= d.pc;
                 end if;
 
             end if;
         end if;
     end process;
 
-    combinatorial : process(d, imm_addr, stack_addr, gshare_ram, stack_top, buf(0), cont_buf(0), stack_top_back)
+    combinatorial : process(d, imm_addr, stack_addr, gshare_ram, stack_top, stack_topp, buf(0), cont_buf(0), stack_top_back, stack_topp_back)
         variable upper : std_logic_vector(hist_len-1 downto 0);
         variable lower : std_logic_vector(gshare_wid-hist_len-1 downto 0);
         variable gshare : boolean;
@@ -90,7 +93,7 @@ begin
         variable cont_head : cont_t;
         variable succeed : boolean;
 
-        variable stack_top_next_v : unsigned(stack_wid-1 downto 0);
+        variable stack_top_next_v, stack_topp_next_v : unsigned(stack_wid-1 downto 0);
         variable stack_push_v : boolean;
 
     begin
@@ -104,6 +107,7 @@ begin
 
         gshare := false;
         stack_top_next_v := stack_top;
+        stack_topp_next_v := stack_topp;
         stack_push_v := false;
 
         if succeed then
@@ -131,9 +135,11 @@ begin
                         addr <= imm_addr;
                         stack_push_v := true;
                         stack_top_next_v := stack_top + 1;
+                        stack_topp_next_v := stack_topp + 1;
                     when "10" => -- ret
                         addr <= stack_addr;
                         stack_top_next_v := stack_top - 1;
+                        stack_topp_next_v := stack_topp - 1;
                     when "11" => -- not jump
                         addr <= d.pc;
                     when others => null;
@@ -145,10 +151,12 @@ begin
 
         else
             stack_top_next_v := stack_top_back;
+            stack_topp_next_v := stack_topp_back;
             addr <= d.target;
         end if;
 
         stack_top_next <= stack_top_next_v;
+        stack_topp_next <= stack_topp_next_v;
         stack_push <= stack_push_v;
 
         cont <= (gshared => gshare, gshared_key => gshare_key, gshared_val => gshare_val);
